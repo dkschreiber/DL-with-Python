@@ -1,0 +1,1365 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>9</title>
+    
+  <link href="../../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+  <h1 class="tochead" id="heading_id_2"><a id="pgfId-998407"></a><a id="pgfId-1025542"></a>9 Advanced deep learning for computer vision</h1>
+
+  <p class="co-summary-head"><a id="pgfId-1011754"></a>This chapter covers</p>
+
+  <ul class="calibre10">
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011760"></a>The different branches of computer vision: image classification, image segmentation, object detection</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011774"></a>Modern convnet architecture patterns: residual connections, batch normalization, depthwise separable convolutions</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011784"></a>Techniques for visualizing and interpreting what convnets learn</li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1011810"></a>The previous chapter gave you a first introduction to deep learning for computer vision via simple models (stacks of <code class="fm-code-in-text">Conv2D</code> and <code class="fm-code-in-text">MaxPooling2D</code> layers) and a simple use case (binary image classification). But there’s more to computer vision than image classification! This chapter dives deeper into more diverse applications and advanced best practices.</p>
+
+  <h2 class="fm-head" id="heading_id_3"><a id="pgfId-1011819"></a>9.1 Three essential computer vision tasks</h2>
+
+  <p class="body"><a id="pgfId-1011836"></a><a id="marker-1011832"></a>So far, we’ve focused on image classification models: an image goes in, a label comes out. “This image likely contains a cat; this other one likely contains a dog.” But image classification is only one of several possible applications of deep learning in computer vision. In general, there are three essential computer vision tasks you need to know about:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011841"></a><i class="fm-italics1">Image classification</i>—Where the <a class="calibre11" id="marker-1011858"></a>goal is to assign one or more labels to an image. It may be either single-label classification (an image can only be in one category, excluding the others), or multi-label classification (tagging all categories that an image belongs to, as seen in figure 9.1). For example, when you search for a keyword on the Google Photos app, behind the scenes you’re querying a very large multilabel classification model—one with over 20,000 different classes, trained on millions of images.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011868"></a><i class="fm-italics1">Image segmentation</i>—Where the <a class="calibre11" id="marker-1011881"></a>goal is to “segment” or “partition” an image into different areas, with each area usually representing a category (as seen in figure 9.1). For instance, when Zoom or Google Meet diplays a custom background behind you in a video call, it’s using an image segmentation model to tell your face apart from what’s behind it, at pixel precision.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011915"></a><i class="fm-italics1">Object detection</i>—Where the <a class="calibre11" id="marker-1011904"></a>goal is to draw rectangles (called <i class="fm-italics1">bounding boxes</i>) around objects of interest in an image, and associate each rectangle with a class. A self-driving car could use an object-detection model to monitor cars, pedestrians, and signs in view of its cameras, for instance.</p>
+    </li>
+  </ul>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-01.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052427"></a>Figure 9.1 The three main computer vision tasks: classification, segmentation, detection</p>
+
+  <p class="body"><a id="pgfId-1011934"></a>Deep learning for computer vision also encompasses a number of somewhat more niche tasks besides these three, such as image similarity scoring (estimating how visually similar two images are), keypoint detection (pinpointing attributes of interest in an image, such as facial features), pose estimation, 3D mesh estimation, and so on. But to start with, image classification, image segmentation, and object detection form the foundation that every machine learning engineer should be familiar with. Most computer vision applications boil down to one of these three.</p>
+
+  <p class="body"><a id="pgfId-1011954"></a>You’ve seen image classification in action in the previous chapter. Next, let’s dive into image segmentation. It’s a very useful and versatile technique, and you can straightforwardly approach it with what you’ve already learned so far.</p>
+
+  <p class="body"><a id="pgfId-1027423"></a>Note that we won’t cover object detection, because it would be too specialized and too complicated for an introductory book. However, you can check out the RetinaNet example on keras.io, which shows how to build and train an object detection model from scratch in Keras in around 450 lines of code (<span class="fm-hyperlink"><a class="url" href="https://keras.io/examples/vision/retinanet/">https://keras.io/examples/vision/retinanet/</a></span>). <a id="marker-1032397"></a></p>
+
+  <h2 class="fm-head" id="heading_id_4"><a id="pgfId-1013271"></a>9.2 An image segmentation example</h2>
+
+  <p class="body"><a id="pgfId-1013300"></a><a id="marker-1013284"></a><a id="marker-1013286"></a><a id="marker-1013288"></a><a id="marker-1013290"></a>Image segmentation with deep learning is about using a model to assign a class to each pixel in an image, thus <i class="fm-italics">segmenting</i> the image into different zones (such as “background” and “foreground,” or “road,” “car,” and “sidewalk”). This general category of techniques can be used to power a considerable variety of valuable applications in image and video editing, autonomous driving, robotics, medical imaging, and so on.</p>
+
+  <p class="body"><a id="pgfId-1013309"></a>There are two different flavors of image segmentation that you should know about:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013315"></a><i class="fm-italics1">Semantic segmentation</i>, where each <a class="calibre11" id="marker-1013332"></a>pixel is independently classified into a semantic category, like “cat.” If there are two cats in the image, the corresponding pixels are all mapped to the same generic “cat” category (see figure 9.2).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013342"></a><i class="fm-italics1">Instance segmentation</i>, which seeks <a class="calibre11" id="marker-1013355"></a>not only to classify image pixels by category, but also to parse out individual object instances. In an image with two cats in it, instance segmentation would treat “cat 1” and “cat 2” as two separate classes of pixels (see figure 9.2).</p>
+    </li>
+  </ul>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-02.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052473"></a>Figure 9.2 Semantic segmentation vs. instance segmentation</p>
+
+  <p class="body"><a id="pgfId-1013375"></a>In this example, we’ll focus on semantic segmentation: we’ll be looking once again at images of cats and dogs, and this time we’ll learn how to tell apart the main subject and its background.</p>
+
+  <p class="body"><a id="pgfId-1013395"></a>We’ll work with the Oxford-IIIT Pets dataset (<span class="fm-hyperlink"><a class="url" href="https://www.robots.ox.ac.uk/~vgg/data/pets/">www.robots.ox.ac.uk/~vgg/data/pets/</a></span>), which contains 7,390 pictures of various breeds of cats and dogs, together with foreground-background segmentation masks for each picture. A <i class="fm-italics">segmentation mask</i> is the <a id="marker-1032444"></a>image-segmentation equivalent of a label: it’s an image the same size as the input image, with a single color channel where each integer value corresponds to the class of the corresponding pixel in the input image. In our case, the pixels of our segmentation masks can take one of three integer values:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013416"></a>1 (foreground)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013430"></a>2 (background)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013440"></a>3 (contour)</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1013466"></a>Let’s start by downloading and uncompressing our dataset, using the <code class="fm-code-in-text">wget</code> and <code class="fm-code-in-text">tar</code> shell utilities:</p>
+  <pre class="programlisting"><a id="pgfId-1013475"></a>!wget http:/ /www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+<a id="pgfId-1013489"></a>!wget http:/ /www.robots.ox.ac.uk/~vgg/data/pets/data/annotations.tar.gz
+<a id="pgfId-1013495"></a>!tar -xf images.tar.gz
+<a id="pgfId-1013501"></a>!tar -xf annotations.tar.gz</pre>
+
+  <p class="body"><a id="pgfId-1013507"></a>The input pictures are stored as JPG files in the images/ folder (such as images/Abyssinian_1.jpg), and the corresponding segmentation mask is stored as a PNG file with the same name in the annotations/trimaps/ folder (such as annotations/trimaps/ Abyssinian_1.png).</p>
+
+  <p class="body"><a id="pgfId-1013513"></a>Let’s prepare the list of input file paths, as well as the list of the corresponding mask file paths:</p>
+  <pre class="programlisting"><a id="pgfId-1038903"></a><b class="fm-codebrown">import</b> os
+<a id="pgfId-1038904"></a>  
+<a id="pgfId-1038905"></a>input_dir = <span class="fm-codegreen">"images/"</span> 
+<a id="pgfId-1038906"></a>target_dir = <span class="fm-codegreen">"annotations/trimaps/"</span> 
+<a id="pgfId-1038907"></a>  
+<a id="pgfId-1038908"></a>input_img_paths = sorted(
+<a id="pgfId-1038909"></a>    [os.path.join(input_dir, fname)
+<a id="pgfId-1038910"></a>     <b class="fm-codebrown">for</b> fname <b class="fm-codebrown">in</b> os.listdir(input_dir)
+<a id="pgfId-1038911"></a>     <b class="fm-codebrown">if</b> fname.endswith(<span class="fm-codegreen">".jpg"</span>)])
+<a id="pgfId-1052564"></a>target_paths = sorted(
+<a id="pgfId-1038913"></a>    [os.path.join(target_dir, fname)
+<a id="pgfId-1038914"></a>     <b class="fm-codebrown">for</b> fname <b class="fm-codebrown">in</b> os.listdir(target_dir)
+<a id="pgfId-1013597"></a>     <b class="fm-codebrown">if</b> fname.endswith(<span class="fm-codegreen">".png"</span>) <b class="fm-codebrown">and</b> <b class="fm-codebrown">not</b> fname.startswith(<span class="fm-codegreen">"."</span>)])</pre>
+
+  <p class="body"><a id="pgfId-1013603"></a>Now, what does one of these inputs and its mask look like? Let’s take a quick look. Here’s a sample image (see figure 9.3):</p>
+  <pre class="programlisting"><a id="pgfId-1038927"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt 
+<a id="pgfId-1038928"></a><b class="fm-codebrown">from</b> tensorflow.keras.utils <b class="fm-codebrown">import</b> load_img, img_to_array
+<a id="pgfId-1038929"></a>  
+<a id="pgfId-1038930"></a>plt.axis(<span class="fm-codegreen">"off"</span>)
+<a id="pgfId-1013640"></a>plt.imshow(load_img(input_img_paths[<span class="fm-codeblue">9</span>]))     <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1051116"></a><span class="fm-combinumeral">❶</span> Display input image number 9.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-03.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052519"></a>Figure 9.3 An example image</p>
+
+  <p class="body"><a id="pgfId-1013682"></a>And here is its corresponding target (see figure 9.4):</p>
+  <pre class="programlisting"><a id="pgfId-1038975"></a><b class="fm-codebrown">def</b> display_target(target_array):
+<a id="pgfId-1013716"></a>    normalized_array = (target_array.astype(<span class="fm-codegreen">"uint8"</span>) - <span class="fm-codeblue">1</span>) * <span class="fm-codeblue">127</span>         <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1038993"></a>    plt.axis(<span class="fm-codegreen">"off"</span>)
+<a id="pgfId-1038994"></a>    plt.imshow(normalized_array[:, :, <span class="fm-codeblue">0</span>])
+<a id="pgfId-1038995"></a>  
+<a id="pgfId-1013740"></a>img = img_to_array(load_img(target_paths[<span class="fm-codeblue">9</span>], color_mode=<span class="fm-codegreen">"grayscale"</span>))   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1013757"></a>display_target(img)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050999"></a><span class="fm-combinumeral">❶</span> The original labels are 1, 2, and 3. We subtract 1 so that the labels range from 0 to 2, and then we multiply by 127 so that the labels become 0 (black), 127 (gray), 254 (near-white).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1051020"></a><span class="fm-combinumeral">❷</span> We use color_mode="grayscale" so that the image we load is treated as having a single color channel.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-04.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052584"></a>Figure 9.4 The corresponding target mask</p>
+
+  <p class="body"><a id="pgfId-1013809"></a>Next, let’s load our inputs and targets into two NumPy arrays, and let’s split the arrays into a training and a validation set. Since the dataset is very small, we can just load everything into memory:</p>
+  <pre class="programlisting"><a id="pgfId-1039012"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np 
+<a id="pgfId-1039013"></a><b class="fm-codebrown">import</b> random 
+<a id="pgfId-1039014"></a>  
+<a id="pgfId-1013849"></a>img_size = (<span class="fm-codeblue">200</span>, <span class="fm-codeblue">200</span>)                                                  <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1013866"></a>num_imgs = len(input_img_paths)                                        <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1013883"></a> 
+<a id="pgfId-1013878"></a>random.Random(<span class="fm-codeblue">1337</span>).shuffle(input_img_paths)                           <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1013895"></a>random.Random(<span class="fm-codeblue">1337</span>).shuffle(target_paths)                              <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1013912"></a> 
+<a id="pgfId-1039054"></a><b class="fm-codebrown">def</b> path_to_input_image(path):
+<a id="pgfId-1039055"></a>    <b class="fm-codebrown">return</b> img_to_array(load_img(path, target_size=img_size))
+<a id="pgfId-1039056"></a>  
+<a id="pgfId-1039057"></a><b class="fm-codebrown">def</b> path_to_target(path):
+<a id="pgfId-1039058"></a>    img = img_to_array(
+<a id="pgfId-1039059"></a>        load_img(path, target_size=img_size, color_mode=<span class="fm-codegreen">"grayscale"</span>))
+<a id="pgfId-1013947"></a>    img = img.astype(<span class="fm-codegreen">"uint8"</span>) - <span class="fm-codeblue">1</span>                                      <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1039078"></a>    <b class="fm-codebrown">return</b> img
+<a id="pgfId-1039079"></a>  
+<a id="pgfId-1013965"></a>input_imgs = np.zeros((num_imgs,) + img_size + (<span class="fm-codeblue">3</span>,), dtype=<span class="fm-codegreen">"float32"</span>)  <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1013982"></a>targets = np.zeros((num_imgs,) + img_size + (<span class="fm-codeblue">1</span>,), dtype=<span class="fm-codegreen">"uint8"</span>)       <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1013994"></a><b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(num_imgs):                                              <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1014006"></a>    input_imgs[i] = path_to_input_image(input_img_paths[i])            <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1014018"></a>    targets[i] = path_to_target(target_paths[i])                       <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1014035"></a> 
+<a id="pgfId-1014030"></a>num_val_samples = <span class="fm-codeblue">1000</span>                                                 <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1014047"></a>train_input_imgs = input_imgs[:-num_val_samples]                       <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1014059"></a>train_targets = targets[:-num_val_samples]                             <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1014071"></a>val_input_imgs = input_imgs[-num_val_samples:]                         <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1014083"></a>val_targets = targets[-num_val_samples:]                               <span class="fm-combinumeral">❼</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050310"></a><span class="fm-combinumeral">❶</span> We resize everything to 200 × 200.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050331"></a><span class="fm-combinumeral">❷</span> Total number of samples in the data</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050348"></a><span class="fm-combinumeral">❸</span> Shuffle the file paths (they were originally sorted by breed). We use the same seed (1337) in both statements to ensure that the input paths and target paths stay in the same order.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050365"></a><span class="fm-combinumeral">❹</span> Subtract 1 so that our labels become 0, 1, and 2.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050382"></a><span class="fm-combinumeral">❺</span> Load all images in the input_imgs float32 array and their masks in the targets uint8 array (same order). The inputs have three channels (RBG values) and the targets have a single channel (which contains integer labels).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050399"></a><span class="fm-combinumeral">❻</span> Reserve 1,000 samples for validation.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050416"></a><span class="fm-combinumeral">❼</span> Split the data into a training and a validation set.</p>
+
+  <p class="body"><a id="pgfId-1014211"></a>Now it’s time to define our model:</p>
+  <pre class="programlisting"><a id="pgfId-1039144"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1039145"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1039146"></a>  
+<a id="pgfId-1039147"></a><b class="fm-codebrown">def</b> get_model(img_size, num_classes):
+<a id="pgfId-1039148"></a>    inputs = keras.Input(shape=img_size + (<span class="fm-codeblue">3</span>,))
+<a id="pgfId-1014254"></a>    x = layers.Rescaling(<span class="fm-codeblue">1.</span>/<span class="fm-codeblue">255</span>)(inputs)                                     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014271"></a> 
+<a id="pgfId-1014266"></a>    x = layers.Conv2D(<span class="fm-codeblue">64</span>, <span class="fm-codeblue">3</span>, strides=<span class="fm-codeblue">2</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)<span class="fm-combinumeral">❷</span>
+<a id="pgfId-1039404"></a>    x = layers.Conv2D(<span class="fm-codeblue">64</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039405"></a>    x = layers.Conv2D(<span class="fm-codeblue">128</span>, <span class="fm-codeblue">3</span>, strides=<span class="fm-codeblue">2</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039406"></a>    x = layers.Conv2D(<span class="fm-codeblue">128</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039407"></a>    x = layers.Conv2D(<span class="fm-codeblue">256</span>, <span class="fm-codeblue">3</span>, strides=<span class="fm-codeblue">2</span>, padding=<span class="fm-codegreen">"same"</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1039408"></a>    x = layers.Conv2D(<span class="fm-codeblue">256</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039409"></a>  
+<a id="pgfId-1039410"></a>    x = layers.Conv2DTranspose(<span class="fm-codeblue">256</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039411"></a>    x = layers.Conv2DTranspose(
+<a id="pgfId-1041956"></a><span class="fm-codeblue">        256</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>, strides=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1039412"></a>    x = layers.Conv2DTranspose(<span class="fm-codeblue">128</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039413"></a>    x = layers.Conv2DTranspose(
+<a id="pgfId-1041967"></a><span class="fm-codeblue">        128</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>, strides=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1039414"></a>    x = layers.Conv2DTranspose(<span class="fm-codeblue">64</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039415"></a>    x = layers.Conv2DTranspose(
+<a id="pgfId-1041986"></a><span class="fm-codeblue">        64</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>, strides=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1039416"></a>  
+<a id="pgfId-1014354"></a>    outputs = layers.Conv2D(num_classes, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"softmax"</span>,            <span class="fm-combinumeral">❸</span>
+     padding=<span class="fm-codegreen">"same"</span>)(x)                                                      <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1014376"></a> 
+<a id="pgfId-1039516"></a>    model = keras.Model(inputs, outputs)
+<a id="pgfId-1039517"></a>    <b class="fm-codebrown">return</b> model
+<a id="pgfId-1039518"></a>  
+<a id="pgfId-1039519"></a>model = get_model(img_size=img_size, num_classes=<span class="fm-codeblue">3</span>)
+<a id="pgfId-1014399"></a>model.summary()</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049976"></a><span class="fm-combinumeral">❶</span> Don’t forget to rescale input images to the [0-1] range.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049997"></a><span class="fm-combinumeral">❷</span> Note how we use padding="same" everywhere to avoid the influence of border padding on feature map size.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1050014"></a><span class="fm-combinumeral">❸</span> We end the model with a per-pixel three-way softmax to classify each output pixel into one of our three categories.</p>
+
+  <p class="body"><a id="pgfId-1014470"></a>Here’s the output of <a id="marker-1039509"></a>the <code class="fm-code-in-text">model.summary()</code> call:</p>
+  <pre class="programlisting"><a id="pgfId-1039538"></a>Model: "model" 
+<a id="pgfId-1039539"></a>_________________________________________________________________
+<a id="pgfId-1039540"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1039541"></a>=================================================================
+<a id="pgfId-1039542"></a>input_1 (InputLayer)         [(None, 200, 200, 3)]     0 
+<a id="pgfId-1039543"></a>_________________________________________________________________
+<a id="pgfId-1039544"></a>rescaling (Rescaling)        (None, 200, 200, 3)       0 
+<a id="pgfId-1039545"></a>_________________________________________________________________
+<a id="pgfId-1039546"></a>conv2d (Conv2D)              (None, 100, 100, 64)      1792 
+<a id="pgfId-1039547"></a>_________________________________________________________________
+<a id="pgfId-1039548"></a>conv2d_1 (Conv2D)            (None, 100, 100, 64)      36928 
+<a id="pgfId-1039549"></a>_________________________________________________________________
+<a id="pgfId-1039550"></a>conv2d_2 (Conv2D)            (None, 50, 50, 128)       73856 
+<a id="pgfId-1039551"></a>_________________________________________________________________
+<a id="pgfId-1039552"></a>conv2d_3 (Conv2D)            (None, 50, 50, 128)       147584 
+<a id="pgfId-1039553"></a>_________________________________________________________________
+<a id="pgfId-1039554"></a>conv2d_4 (Conv2D)            (None, 25, 25, 256)       295168 
+<a id="pgfId-1039555"></a>_________________________________________________________________
+<a id="pgfId-1039556"></a>conv2d_5 (Conv2D)            (None, 25, 25, 256)       590080 
+<a id="pgfId-1039557"></a>_________________________________________________________________
+<a id="pgfId-1039558"></a>conv2d_transpose (Conv2DTran (None, 25, 25, 256)       590080 
+<a id="pgfId-1039559"></a>_________________________________________________________________
+<a id="pgfId-1039560"></a>conv2d_transpose_1 (Conv2DTr (None, 50, 50, 256)       590080 
+<a id="pgfId-1039561"></a>_________________________________________________________________
+<a id="pgfId-1039562"></a>conv2d_transpose_2 (Conv2DTr (None, 50, 50, 128)       295040 
+<a id="pgfId-1039563"></a>_________________________________________________________________
+<a id="pgfId-1039564"></a>conv2d_transpose_3 (Conv2DTr (None, 100, 100, 128)     147584 
+<a id="pgfId-1039565"></a>_________________________________________________________________
+<a id="pgfId-1039566"></a>conv2d_transpose_4 (Conv2DTr (None, 100, 100, 64)      73792 
+<a id="pgfId-1039567"></a>_________________________________________________________________
+<a id="pgfId-1039568"></a>conv2d_transpose_5 (Conv2DTr (None, 200, 200, 64)      36928 
+<a id="pgfId-1039569"></a>_________________________________________________________________
+<a id="pgfId-1039570"></a>conv2d_6 (Conv2D)            (None, 200, 200, 3)       1731 
+<a id="pgfId-1039571"></a>=================================================================
+<a id="pgfId-1039572"></a>Total params: 2,880,643 
+<a id="pgfId-1039573"></a>Trainable params: 2,880,643 
+<a id="pgfId-1039574"></a>Non-trainable params: 0 
+<a id="pgfId-1014709"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1014738"></a>The first half of the model closely resembles the kind of convnet you’d use for image classification: a stack <a id="marker-1014717"></a>of <code class="fm-code-in-text">Conv2D</code> layers, with gradually increasing filter sizes. We downsample our images three times by a factor of two each, ending up with activations of size <code class="fm-code-in-text">(25,</code> <code class="fm-code-in-text">25,</code> <code class="fm-code-in-text">256)</code>. The purpose of this first half is to encode the images into smaller feature maps, where each spatial location (or pixel) contains information about a large spatial chunk of the original image. You can understand it as a kind of compression.</p>
+
+  <p class="body"><a id="pgfId-1014779"></a>One important difference between the first half of this model and the classification models you’ve seen before is the way we do downsampling: in the classification convnets from the last chapter, we used <code class="fm-code-in-text">MaxPooling2D</code> layers to <a id="marker-1014758"></a>downsample feature maps. Here, we downsample by adding <i class="fm-italics">strides</i> to every other convolution layer (if you don’t remember the details of how convolution strides work, see “Understanding convolution strides” in section 8.1.1). We do this because, in the case of image segmentation, we care a lot about the <i class="fm-italics">spatial location</i> of information <a id="marker-1014784"></a>in the image, since we need to produce per-pixel target masks as output of the model. When you do 2 × 2 max pooling, you are completely destroying location information within each pooling window: you return one scalar value per window, with zero knowledge of which of the four locations in the windows the value came from. So while max pooling layers perform well for classification tasks, they would hurt us quite a bit for a segmentation task. Meanwhile, strided convolutions do a better job at downsampling feature maps while retaining location information. Throughout this book, you’ll notice that we tend to use strides instead of max pooling in any model that cares about feature location, such as the generative models in chapter 12.</p>
+
+  <p class="body"><a id="pgfId-1014950"></a>The second half of the model is a stack of <code class="fm-code-in-text">Conv2DTranspose</code> layers. What are those? Well, the output of the first half of the model is a feature map of shape <code class="fm-code-in-text">(25,</code> <code class="fm-code-in-text">25,</code> <code class="fm-code-in-text">256)</code>, but we want our final output to have the same shape as the target masks, <code class="fm-code-in-text">(200,</code> <code class="fm-code-in-text">200,</code> <code class="fm-code-in-text">3)</code>. Therefore, we need to apply a kind of <i class="fm-italics">inverse</i> of the transformations we’ve applied so far—something that will <i class="fm-italics">upsample</i> the feature maps instead of downsampling them. That’s the purpose of the <code class="fm-code-in-text">Conv2DTranspose</code> layer: you can think of it as a kind of convolution layer that <i class="fm-italics">learns to upsample</i>. If you have an input of shape <code class="fm-code-in-text">(100,</code> <code class="fm-code-in-text">100,</code> <code class="fm-code-in-text">64)</code>, and you run it through the layer <code class="fm-code-in-text">Conv2D(128,</code> <code class="fm-code-in-text">3,</code> <code class="fm-code-in-text">strides=2,</code> <code class="fm-code-in-text">padding="same")</code>, you get an output of shape <code class="fm-code-in-text">(50,</code> <code class="fm-code-in-text">50,</code> <code class="fm-code-in-text">128)</code>. If you run this output through the layer <code class="fm-code-in-text">Conv2DTranspose(64,</code> <code class="fm-code-in-text">3,</code> <code class="fm-code-in-text">strides=2,</code> <code class="fm-code-in-text">padding="same")</code>, you get back an output of shape <code class="fm-code-in-text">(100,</code> <code class="fm-code-in-text">100,</code> <code class="fm-code-in-text">64)</code>, the same as the original. So after compressing our inputs into feature maps of shape <code class="fm-code-in-text">(25,</code> <code class="fm-code-in-text">25,</code> <code class="fm-code-in-text">256)</code> via a stack of <code class="fm-code-in-text">Conv2D</code> layers, we can simply apply the corresponding sequence of <code class="fm-code-in-text">Conv2DTranspose</code> layers to get back to images of shape <code class="fm-code-in-text">(200,</code> <code class="fm-code-in-text">200,</code> <code class="fm-code-in-text">3)</code>.</p>
+
+  <p class="body"><a id="pgfId-1014959"></a>We can now compile and fit our model:</p>
+  <pre class="programlisting"><a id="pgfId-1039598"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>, loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>)
+<a id="pgfId-1039599"></a>  
+<a id="pgfId-1039600"></a>callbacks = [
+<a id="pgfId-1039601"></a>    keras.callbacks.ModelCheckpoint(<span class="fm-codegreen">"oxford_segmentation.keras"</span>,
+<a id="pgfId-1039602"></a>                                    save_best_only=<code class="fm-codegreen">True</code>)
+<a id="pgfId-1039603"></a>]
+<a id="pgfId-1039604"></a>  
+<a id="pgfId-1039605"></a>history = model.fit(train_input_imgs, train_targets,
+<a id="pgfId-1039606"></a>                    epochs=<span class="fm-codeblue">50</span>,
+<a id="pgfId-1039607"></a>                    callbacks=callbacks,
+<a id="pgfId-1039608"></a>                    batch_size=<span class="fm-codeblue">64</span>,
+<a id="pgfId-1015037"></a>                    validation_data=(val_input_imgs, val_targets))</pre>
+
+  <p class="body"><a id="pgfId-1015043"></a>Let’s display our training and validation loss (see figure 9.5):</p>
+  <pre class="programlisting"><a id="pgfId-1039629"></a>epochs = range(<span class="fm-codeblue">1</span>, len(history.history[<span class="fm-codegreen">"loss"</span>]) + <span class="fm-codeblue">1</span>)
+<a id="pgfId-1039630"></a>loss = history.history[<span class="fm-codegreen">"loss"</span>]
+<a id="pgfId-1039631"></a>val_loss = history.history[<span class="fm-codegreen">"val_loss"</span>]
+<a id="pgfId-1039632"></a>plt.figure()
+<a id="pgfId-1039633"></a>plt.plot(epochs, loss, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training loss"</span>)
+<a id="pgfId-1039634"></a>plt.plot(epochs, val_loss, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation loss"</span>)
+<a id="pgfId-1039635"></a>plt.title(<span class="fm-codegreen">"Training and validation loss"</span>)
+<a id="pgfId-1015099"></a>plt.legend()</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-05.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052644"></a>Figure 9.5 Displaying training and validation loss curves</p>
+
+  <p class="body"><a id="pgfId-1015115"></a>You can see that we start overfitting midway, around epoch 25. Let’s reload our best performing model according to the validation loss, and demonstrate how to use it to predict a segmentation mask (see figure 9.6):</p>
+  <pre class="programlisting"><a id="pgfId-1039660"></a><b class="fm-codebrown">from</b> tensorflow.keras.utils <b class="fm-codebrown">import</b> array_to_img
+<a id="pgfId-1039661"></a>  
+<a id="pgfId-1039662"></a>model = keras.models.load_model(<span class="fm-codegreen">"oxford_segmentation.keras"</span>)
+<a id="pgfId-1039663"></a>  
+<a id="pgfId-1039664"></a>i = <span class="fm-codeblue">4</span> 
+<a id="pgfId-1039665"></a>test_image = val_input_imgs[i]
+<a id="pgfId-1039666"></a>plt.axis(<span class="fm-codegreen">"off"</span>)
+<a id="pgfId-1039667"></a>plt.imshow(array_to_img(test_image))
+<a id="pgfId-1039668"></a>  
+<a id="pgfId-1039669"></a>mask = model.predict(np.expand_dims(test_image, <span class="fm-codeblue">0</span>))[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1039670"></a>  
+<a id="pgfId-1015200"></a><b class="fm-codebrown">def</b> display_mask(pred):                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1039717"></a>    mask = np.argmax(pred, axis=-<span class="fm-codeblue">1</span>)
+<a id="pgfId-1039718"></a>    mask *= <span class="fm-codeblue">127</span> 
+<a id="pgfId-1039719"></a>    plt.axis(<span class="fm-codegreen">"off"</span>)
+<a id="pgfId-1039720"></a>    plt.imshow(mask)
+<a id="pgfId-1039721"></a>  
+<a id="pgfId-1015241"></a>display_mask(mask)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049913"></a><span class="fm-combinumeral">❶</span> Utility to display a model’s prediction</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-06.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052690"></a>Figure 9.6 A test image and its predicted segmentation mask</p>
+
+  <p class="body"><a id="pgfId-1015282"></a>There are a couple of small artifacts in our predicted mask, caused by geometric shapes in the foreground and background. Nevertheless, our model appears to work nicely.</p>
+
+  <p class="body"><a id="pgfId-1015302"></a>By this point, throughout chapter 8 and the beginning of chapter 9, you’ve learned the basics of how to perform image classification and image segmentation: you can already accomplish a lot with what you know. However, the convnets that experienced engineers develop to solve real-world problems aren’t quite as simple as those we’ve been using in our demonstrations so far. You’re still lacking the essential mental models and thought processes that enable experts to make quick and accurate decisions about how to put together state-of-the-art models. To bridge that gap, you need to learn about <i class="fm-italics">architecture patterns</i>. Let’s dive in. <a id="marker-1015316"></a><a id="marker-1015318"></a></p>
+
+  <h2 class="fm-head" id="heading_id_5"><a id="pgfId-1015324"></a>9.3 Modern convnet architecture patterns</h2>
+
+  <p class="body"><a id="pgfId-1015363"></a><a id="marker-1015335"></a><a id="marker-1015337"></a>A model’s “architecture” is the sum of the choices that went into creating it: which layers to use, how to configure them, and in what arrangement to connect them. These choices define the <i class="fm-italics">hypothesis space</i> of your <a id="marker-1015352"></a>model: the space of possible functions that gradient descent can search over, parameterized by the model’s weights. Like feature engineering, a good hypothesis space encodes <i class="fm-italics">prior knowledge</i> that you have about the problem at hand and its solution. For instance, using convolution layers means that you know in advance that the relevant patterns present in your input images are translation-invariant. In order to effectively learn from data, you need to make assumptions about what you’re looking for.</p>
+
+  <p class="body"><a id="pgfId-1015398"></a>Model architecture is often the difference between success and failure. If you make inappropriate architecture choices, your model may be stuck with suboptimal metrics, and no amount of training data will save it. Inversely, a good model architecture will accelerate learning and will enable your model to make efficient use of the training data available, reducing the need for large datasets. A good model architecture is one that <i class="fm-italics">reduces the size of the search space</i> or otherwise <i class="fm-italics">makes it easier to converge to a good point of the search space</i>. Just like feature engineering and data curation, model architecture is all about <i class="fm-italics">making the problem simpler</i> for gradient descent to solve. And remember that gradient descent is a pretty stupid search process, so it needs all the help it can get.</p>
+
+  <p class="body"><a id="pgfId-1015423"></a>Model architecture is more an art than a science. Experienced machine learning engineers are able to intuitively cobble together high-performing models on their first try, while beginners often struggle to create a model that trains at all. The keyword here is <i class="fm-italics">intuitively</i>: no one can give you a clear explanation of what works and what doesn’t. Experts rely on pattern-matching, an ability that they acquire through extensive practical experience. You’ll develop your own intuition throughout this book. However, it’s not <i class="fm-italics">all</i> about intuition either—there isn’t much in the way of actual science, but as in any engineering discipline, there are best practices.</p>
+
+  <p class="body"><a id="pgfId-1015458"></a>In the following sections, we’ll review a few essential convnet architecture best practices: in particular, <i class="fm-italics">residual connections</i>, <i class="fm-italics">batch normalization</i>, and <i class="fm-italics">separable convolutions</i>. Once you master how to use them, you will be able to build highly effective image models. We will apply them to our cat vs. dog classification problem.</p>
+
+  <p class="body"><a id="pgfId-1015467"></a>Let’s start from the bird’s-eye view: the modularity-hierarchy-reuse (MHR) formula for system architecture.</p>
+
+  <h3 class="fm-head1" id="heading_id_6"><a id="pgfId-1015473"></a>9.3.1 Modularity, hierarchy, and reuse</h3>
+
+  <p class="body"><a id="pgfId-1015523"></a><a id="marker-1015484"></a>If you want to make a complex system simpler, there’s a universal recipe you can apply: just structure your amorphous soup of complexity into <i class="fm-italics">modules</i>, organize the modules into a <i class="fm-italics">hierarchy</i>, and start <i class="fm-italics">reusing</i> the same modules in multiple places as appropriate (“reuse” is another word for <i class="fm-italics">abstraction</i> in this context). That’s the MHR <a id="marker-1015528"></a>formula (modularity-hierarchy-reuse), and it underlies system architecture across pretty much every domain where the term “architecture” is used. It’s at the heart of the organization of any system of meaningful complexity, whether it’s a cathedral, your own body, the US Navy, or the Keras codebase (see figure 9.7).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-07.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052732"></a>Figure 9.7 Complex systems follow a hierarchical structure and are organized into distinct modules, which are reused multiple times (such as your four limbs, which are all variants of the same blueprint, or your 20 “fingers”).</p>
+
+  <p class="body"><a id="pgfId-1015548"></a>If you’re a software engineer, you’re already keenly familiar with these principles: an effective codebase is one that is modular, hierarchical, and where you don’t reimplement the same thing twice, but instead rely on reusable classes and functions. If you factor your code by following these principles, you could say you’re doing “software architecture.”</p>
+
+  <p class="body"><a id="pgfId-1015568"></a>Deep learning itself is simply the application of this recipe to continuous optimization via gradient descent: you take a classic optimization technique (gradient descent over a continuous function space), and you structure the search space into modules (layers), organized into a deep hierarchy (often just a stack, the simplest kind of hierarchy), where you reuse whatever you can (for instance, convolutions are all about reusing the same information in different spatial locations).</p>
+
+  <p class="body"><a id="pgfId-1015574"></a>Likewise, deep learning model architecture is primarily about making clever use of modularity, hierarchy, and reuse. You’ll notice that all popular convnet architectures are not only structured into layers, they’re structured into repeated groups of layers (called “blocks” or “modules”). For instance, the popular VGG16 architecture we used in the previous chapter is structured into repeated “conv, conv, max pooling” blocks (see figure 9.8).</p>
+
+  <p class="body"><a id="pgfId-1015580"></a>Further, most convnets often feature pyramid-like structures (<i class="fm-italics">feature hierarchies</i>). Recall, for example, the progression in the number of convolution filters we used in the first convnet we built in the previous chapter: 32, 64, 128. The number of filters grows with layer depth, while the size of the feature maps shrinks accordingly. You’ll notice the same pattern in the blocks of the VGG16 model (see figure 9.8).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-08.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052777"></a>Figure 9.8 The VGG16 architecture: note the repeated layer blocks and the pyramid-like structure of the feature maps</p>
+
+  <p class="body"><a id="pgfId-1015605"></a>Deeper hierarchies are intrinsically good because they encourage feature reuse, and therefore abstraction. In general, a deep stack of narrow layers performs better than a shallow stack of large layers. However, there’s a limit to how deep you can stack layers, due to the problem of <i class="fm-italics">vanishing gradients</i>. This leads <a id="marker-1015630"></a>us to our first essential model architecture pattern: residual connections.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1015640"></a>On the importance of ablation studies in deep learning research</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1015650"></a>Deep learning architectures are often more <i class="fm-italics">evolved</i> than designed—they were developed by repeatedly trying things and selecting what seemed to work. Much like in biological systems, if you take any complicated experimental deep learning setup, chances are you can remove a few modules (or replace some trained features with random ones) with no loss of performance.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1015665"></a>This is made worse by the incentives that deep learning researchers face: by making a system more complex than necessary, they can make it appear more interesting or more novel, and thus increase their chances of getting a paper through the peer-review process. If you read lots of deep learning papers, you will notice that they’re often optimized for peer review in both style and content in ways that actively hurt clarity of explanation and reliability of results. For instance, mathematics in deep learning papers is rarely used for clearly formalizing concepts or deriving non-obvious results—rather, it gets leveraged as a <i class="fm-italics">signal of seriousness</i>, like an expensive suit on a salesman.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1015696"></a>The goal of research shouldn’t be merely to publish, but to generate reliable knowledge. Crucially, understanding <i class="fm-italics">causality</i> in your system is the most straightforward way to generate reliable knowledge. And there’s a very low-effort way to look into causality: <i class="fm-italics">ablation studies</i>. Ablation studies <a id="marker-1051242"></a>consist of systematically trying to remove parts of a system—making it simpler—to identify where its performance actually comes from. If you find that X + Y + Z gives you good results, also try X, Y, Z, X + Y, X + Z, and Y + Z, and see what happens.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1052812"></a>If you become a deep learning researcher, cut through the noise in the research process: do ablation studies for your models. Always ask, “Could there be a simpler explanation? Is this added complexity really necessary? Why?”<a id="marker-1052821"></a></p>
+  </div>
+
+  <h3 class="fm-head1" id="heading_id_7"><a id="pgfId-1015720"></a>9.3.2 Residual connections</h3>
+
+  <p class="body"><a id="pgfId-1015753"></a><a id="marker-1015731"></a><a id="marker-1015733"></a>You probably know about the game of Telephone, also called <i class="fm-italics">Chinese whispers</i> in the UK and <i class="fm-italics">téléphone arabe</i> in France, where an initial message is whispered in the ear of a player, who then whispers it in the ear of the next player, and so on. The final message ends up bearing little resemblance to its original version. It’s a fun metaphor for the cumulative errors that occur in sequential transmission over a noisy channel.</p>
+
+  <p class="body"><a id="pgfId-1015762"></a>As it happens, backpropagation in a sequential deep learning model is pretty similar to the game of Telephone. You’ve got a chain of functions, like this one:</p>
+  <pre class="programlisting"><a id="pgfId-1015768"></a>y = f4(f3(f2(f1(x))))</pre>
+
+  <p class="body"><a id="pgfId-1015834"></a>The name of the game is to adjust the parameters of each function in the chain based on the error recorded on the output of <code class="fm-code-in-text">f4</code> (the loss of the model). To adjust <code class="fm-code-in-text">f1</code>, you’ll need to percolate error information through <code class="fm-code-in-text">f2</code>, <code class="fm-code-in-text">f3</code>, and <code class="fm-code-in-text">f4</code>. However, each successive function in the chain introduces some amount of noise. If your function chain is too deep, this noise starts overwhelming gradient information, and backpropagation stops working. Your model won’t train at all. This is the <i class="fm-italics">vanishing gradients</i> problem.</p>
+
+  <p class="body"><a id="pgfId-1015859"></a>The fix is simple: just force each function in the chain to be nondestructive—to retain a noiseless version of the information contained in the previous input. The easiest way to implement this is to use a <i class="fm-italics">residual connection</i>. It’s dead easy: just add the input of a layer or block of layers back to its output (see figure 9.9). The residual connection acts as an <i class="fm-italics">information shortcut</i> around destructive <a id="marker-1015864"></a>or noisy blocks (such as blocks that contain <code class="fm-code-in-text">relu</code> activations or dropout layers), enabling error gradient information from early layers to propagate noiselessly through a deep network. This technique was introduced in 2015 with the ResNet family of models (developed by He et al. at Microsoft).<a id="Id-1015871"></a><a href="../Text/09.htm#pgfId-1015871"><sup class="footnotenumber">1</sup></a></p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-09.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052863"></a>Figure 9.9 A residual connection around a processing block</p>
+
+  <p class="body"><a id="pgfId-1015895"></a>In practice, you’d implement a residual connection as follows.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015966"></a>Listing 9.1 A residual connection in pseudocode</p>
+  <pre class="programlisting"><a id="pgfId-1015915"></a>x = ...                  <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1016011"></a>residual = x             <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1016023"></a>x = block(x)             <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1016035"></a>x = add([x, residual])   <span class="fm-combinumeral">❹</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049681"></a><span class="fm-combinumeral">❶</span> Some input tensor</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049702"></a><span class="fm-combinumeral">❷</span> Save a pointer to the original input. This is called the residual.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049722"></a><span class="fm-combinumeral">❸</span> This computation block can potentially be destructive or noisy, and that’s fine.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049739"></a><span class="fm-combinumeral">❹</span> Add the original input to the layer’s output: the final output will thus always preserve full information about the original input.</p>
+
+  <p class="body"><a id="pgfId-1016131"></a>Note that adding the input back to the output of a block implies that the output should have the same shape as the input. However, this is not the case if your block includes convolutional layers with an increased number of filters, or a max pooling layer. In such cases, use a 1 × 1 <code class="fm-code-in-text">Conv2D</code> layer with no activation to linearly project the residual to the desired output shape (see listing 9.2). You’d typically use <code class="fm-code-in-text">padding= "same"</code> in the convolution layers in your target block so as to avoid spatial downsampling due to padding, and you’d use strides in the residual projection to match any downsampling caused by a max pooling layer (see listing 9.3).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016191"></a>Listing 9.2 Residual block where the number of filters changes</p>
+  <pre class="programlisting"><a id="pgfId-1039741"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1039742"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1039743"></a>  
+<a id="pgfId-1039744"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">32</span>, <span class="fm-codeblue">32</span>, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1039745"></a>x = layers.Conv2D(<span class="fm-codeblue">32</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1016253"></a>residual = x                                                     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1016265"></a>x = layers.Conv2D(<span class="fm-codeblue">64</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1016277"></a>residual = layers.Conv2D(<span class="fm-codeblue">64</span>, <span class="fm-codeblue">1</span>)(residual)                        <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1016289"></a>x = layers.add([x, residual])                                     <span class="fm-combinumeral">❹</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049419"></a><span class="fm-combinumeral">❶</span> Set aside the residual.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049439"></a><span class="fm-combinumeral">❷</span> This is the layer around which we create a residual connection: it increases the number of output filers from 32 to 64. Note that we use padding="same" to avoid downsampling due to padding.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049456"></a><span class="fm-combinumeral">❸</span> The residual only had 32 filters, so we use a 1 × 1 Conv2D to project it to the correct shape.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049473"></a><span class="fm-combinumeral">❹</span> Now the block output and the residual have the same shape and can be added.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016420"></a>Listing 9.3 Case where the target block includes a max pooling layer</p>
+  <pre class="programlisting"><a id="pgfId-1039786"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">32</span>, <span class="fm-codeblue">32</span>, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1039787"></a>x = layers.Conv2D(<span class="fm-codeblue">32</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1016465"></a>residual = x                                                    <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1016477"></a>x = layers.Conv2D(<span class="fm-codeblue">64</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)  <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1016489"></a>x = layers.MaxPooling2D(<span class="fm-codeblue">2</span>, padding=<span class="fm-codegreen">"same"</span>)(x)                   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1016501"></a>residual = layers.Conv2D(<span class="fm-codeblue">64</span>, <span class="fm-codeblue">1</span>, strides=<span class="fm-codeblue">2</span>)(residual)            <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1016513"></a>x = layers.add([x, residual])                                   <span class="fm-combinumeral">❹</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049075"></a><span class="fm-combinumeral">❶</span> Set aside the residual.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049099"></a><span class="fm-combinumeral">❷</span> This is the block of two layers around which we create a residual connection: it includes a 2 × 2 max pooling layer. Note that we use padding="same" in both the convolution layer and the max pooling layer to avoid downsampling due to padding.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049118"></a><span class="fm-combinumeral">❸</span> We use strides=2 in the residual projection to match the downsampling created by the max pooling layer.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1049139"></a><span class="fm-combinumeral">❹</span> Now the block output and the residual have the same shape and can be added.</p>
+
+  <p class="body"><a id="pgfId-1016593"></a>To make these ideas more concrete, here’s an example of a simple convnet structured into a series of blocks, each made of two convolution layers and one optional max pooling layer, with a residual connection around each block:</p>
+  <pre class="programlisting"><a id="pgfId-1039836"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">32</span>, <span class="fm-codeblue">32</span>, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1039837"></a>x = layers.Rescaling(<span class="fm-codeblue">1.</span>/<span class="fm-codeblue">255</span>)(inputs)
+<a id="pgfId-1039838"></a>  
+<a id="pgfId-1016619"></a><b class="fm-codebrown">def</b> residual_block(x, filters, pooling=<code class="fm-codegreen">False</code>):                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1039851"></a>    residual = x
+<a id="pgfId-1039852"></a>    x = layers.Conv2D(filters, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039853"></a>    x = layers.Conv2D(filters, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1039854"></a>    <b class="fm-codebrown">if</b> pooling:
+<a id="pgfId-1039855"></a>        x = layers.MaxPooling2D(<span class="fm-codeblue">2</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1016666"></a>        residual = layers.Conv2D(filters, <span class="fm-codeblue">1</span>, strides=<span class="fm-codeblue">2</span>)(residual)         <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1039868"></a>    <b class="fm-codebrown">elif</b> filters != residual.shape[-<span class="fm-codeblue">1</span>]:
+<a id="pgfId-1016684"></a>        residual = layers.Conv2D(filters, <span class="fm-codeblue">1</span>)(residual)                    <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1039881"></a>    x = layers.add([x, residual])
+<a id="pgfId-1039882"></a>    <b class="fm-codebrown">return</b> x
+<a id="pgfId-1039883"></a>  
+<a id="pgfId-1016708"></a>x = residual_block(x, filters=<span class="fm-codeblue">32</span>, pooling=<code class="fm-codegreen">True</code>)                           <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1016725"></a>x = residual_block(x, filters=<span class="fm-codeblue">64</span>, pooling=<code class="fm-codegreen">True</code>)                           <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1016737"></a>x = residual_block(x, filters=128, pooling=<code class="fm-codegreen">False</code>)                         <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1016754"></a> 
+<a id="pgfId-1039952"></a>x = layers.GlobalAveragePooling2D()(x)
+<a id="pgfId-1039953"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)(x)
+<a id="pgfId-1039954"></a>model = keras.Model(inputs=inputs, outputs=outputs)
+<a id="pgfId-1016772"></a>model.summary()</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048620"></a><span class="fm-combinumeral">❶</span> Utility function to apply a convolutional block with a residual connection, with an option to add max pooling</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048648"></a><span class="fm-combinumeral">❷</span> If we use max pooling, we add a strided convolution to project the residual to the expected shape.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048668"></a><span class="fm-combinumeral">❸</span> If we don’t use max pooling, we only project the residual if the number of channels has changed.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048685"></a><span class="fm-combinumeral">❹</span> First block</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048702"></a><span class="fm-combinumeral">❺</span> Second block; note the increasing filter count in each block.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048719"></a><span class="fm-combinumeral">❻</span> The last block doesn’t need a max pooling layer, since we will apply global average pooling right after it.</p>
+
+  <p class="body"><a id="pgfId-1016878"></a>This is the model summary we get:</p>
+  <pre class="programlisting"><a id="pgfId-1039969"></a>Model: "model" 
+<a id="pgfId-1039970"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039971"></a>Layer (type)                    Output Shape         Param #     Connected to 
+<a id="pgfId-1039972"></a>==================================================================================================
+<a id="pgfId-1039973"></a>input_1 (InputLayer)            [(None, 32, 32, 3)]  0 
+<a id="pgfId-1039974"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039975"></a>rescaling (Rescaling)           (None, 32, 32, 3)    0           input_1[0][0] 
+<a id="pgfId-1039976"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039977"></a>conv2d (Conv2D)                 (None, 32, 32, 32)   896         rescaling[0][0] 
+<a id="pgfId-1039978"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039979"></a>conv2d_1 (Conv2D)               (None, 32, 32, 32)   9248        conv2d[0][0]
+<a id="pgfId-1039980"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039981"></a>max_pooling2d (MaxPooling2D)    (None, 16, 16, 32)   0           conv2d_1[0][0]
+<a id="pgfId-1039982"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039983"></a>conv2d_2 (Conv2D)               (None, 16, 16, 32)   128         rescaling[0][0]
+<a id="pgfId-1039984"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039985"></a>add (Add)                       (None, 16, 16, 32)   0           max_pooling2d[0][0]
+<a id="pgfId-1039986"></a>                                                                 conv2d_2[0][0]
+<a id="pgfId-1039987"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039988"></a>conv2d_3 (Conv2D)               (None, 16, 16, 64)   18496       add[0][0]
+<a id="pgfId-1039989"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039990"></a>conv2d_4 (Conv2D)               (None, 16, 16, 64)   36928       conv2d_3[0][0]
+<a id="pgfId-1039991"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039992"></a>max_pooling2d_1 (MaxPooling2D)  (None, 8, 8, 64)     0           conv2d_4[0][0]
+<a id="pgfId-1039993"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039994"></a>conv2d_5 (Conv2D)               (None, 8, 8, 64)     2112        add[0][0]
+<a id="pgfId-1039995"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039996"></a>add_1 (Add)                     (None, 8, 8, 64)     0           max_pooling2d_1[0][0]
+<a id="pgfId-1039997"></a>                                                                 conv2d_5[0][0]
+<a id="pgfId-1039998"></a>__________________________________________________________________________________________________
+<a id="pgfId-1039999"></a>conv2d_6 (Conv2D)               (None, 8, 8, 128)    73856       add_1[0][0]
+<a id="pgfId-1040000"></a>__________________________________________________________________________________________________
+<a id="pgfId-1040001"></a>conv2d_7 (Conv2D)               (None, 8, 8, 128)    147584      conv2d_6[0][0]
+<a id="pgfId-1040002"></a>__________________________________________________________________________________________________
+<a id="pgfId-1040003"></a>conv2d_8 (Conv2D)               (None, 8, 8, 128)    8320        add_1[0][0]
+<a id="pgfId-1040004"></a>__________________________________________________________________________________________________
+<a id="pgfId-1040005"></a>add_2 (Add)                     (None, 8, 8, 128)    0           conv2d_7[0][0]
+<a id="pgfId-1040006"></a>                                                                 conv2d_8[0][0]
+<a id="pgfId-1040007"></a>__________________________________________________________________________________________________
+<a id="pgfId-1040008"></a>global_average_pooling2d (Globa (None, 128)          0           add_2[0][0]
+<a id="pgfId-1040009"></a>__________________________________________________________________________________________________
+<a id="pgfId-1040010"></a>dense (Dense)                   (None, 1)            129         global_average_pooling2d[0][0]
+<a id="pgfId-1040011"></a>==================================================================================================
+<a id="pgfId-1040012"></a>Total params: 297,697 
+<a id="pgfId-1040013"></a>Trainable params: 297,697 
+<a id="pgfId-1040014"></a>Non-trainable params: 0 
+<a id="pgfId-1017168"></a>__________________________________________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1017174"></a>With residual connections, you can build networks of arbitrary depth, without having to worry about vanishing gradients.</p>
+
+  <p class="body"><a id="pgfId-1017180"></a>Now let’s move on to the next essential convnet architecture pattern: <i class="fm-italics">batch normalization</i>. <a id="marker-1017191"></a><a id="marker-1017194"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_8"><a id="pgfId-1017200"></a>9.3.3 Batch normalization</h3>
+
+  <p class="body"><a id="pgfId-1017219"></a><a id="marker-1017211"></a><a id="marker-1017213"></a><i class="fm-italics">Normalization</i> is a broad category of methods that seek to make different samples seen by a machine learning model more similar to each other, which helps the model learn and generalize well to new data. The most common form of data normalization is one you’ve already seen several times in this book: centering the data on zero by subtracting the mean from the data, and giving the data a unit standard deviation by dividing the data by its standard deviation. In effect, this makes the assumption that the data follows a normal (or Gaussian) distribution and makes sure this distribution is centered and scaled to unit variance:</p>
+  <pre class="programlisting"><a id="pgfId-1017228"></a>normalized_data = (data - np.mean(data, axis=...)) / np.std(data, axis=...)</pre>
+
+  <p class="body"><a id="pgfId-1017258"></a>Previous examples in this book normalized data before feeding it into models. But data normalization may be of interest after every transformation operated by the network: even if the data entering a <code class="fm-code-in-text">Dense</code> or <code class="fm-code-in-text">Conv2D</code> network has a 0 mean and unit variance, there’s no reason to expect a priori that this will be the case for the data coming out. Could normalizing intermediate activations help?</p>
+
+  <p class="body"><a id="pgfId-1017267"></a>Batch normalization does just that. It’s a type of layer (<code class="fm-code-in-text">BatchNormalization</code> in Keras) introduced in 2015 by Ioffe and Szegedy;<a id="Id-1017279"></a><a href="../Text/09.htm#pgfId-1017279"><sup class="footnotenumber">2</sup></a> it can adaptively normalize data even as the mean and variance change over time during training. During training, it uses the mean and variance of the current batch of data to normalize samples, and during inference (when a big enough batch of representative data may not be available), it uses an exponential moving average of the batch-wise mean and variance of the data seen during training.</p>
+
+  <p class="body"><a id="pgfId-1017321"></a>Although the original paper stated that batch normalization operates by “reducing internal covariate shift,” no one really knows for sure why batch normalization helps. There are various hypotheses, but no certitudes. You’ll find that this is true of many things in deep learning—deep learning is not an exact science, but a set of ever-changing, empirically derived engineering best practices, woven together by unreliable narratives. You will sometimes feel like the book you have in hand tells you <i class="fm-italics">how</i> to do something but doesn’t quite satisfactorily say <i class="fm-italics">why</i> it works: that’s because we know the how but we don’t know the why. Whenever a reliable explanation is available, I make sure to mention it. Batch normalization isn’t one of those cases.</p>
+
+  <p class="body"><a id="pgfId-1017343"></a>In practice, the main effect of batch normalization appears to be that it helps with gradient propagation—much like residual connections—and thus allows for deeper networks. Some very deep networks can only be trained if they include <a id="marker-1017332"></a>multiple <code class="fm-code-in-text">BatchNormalization</code> layers. For instance, batch normalization is used liberally in many of the advanced convnet architectures that come packaged with Keras, such as ResNet50, EfficientNet, and Xception.</p>
+
+  <p class="body"><a id="pgfId-1017378"></a>The <code class="fm-code-in-text">BatchNormalization</code> layer can be used after any layer—<code class="fm-code-in-text">Dense</code>, <code class="fm-code-in-text">Conv2D</code>, etc.:</p>
+  <pre class="programlisting"><a id="pgfId-1040056"></a>x = ...
+<a id="pgfId-1017401"></a>x = layers.Conv2D(<span class="fm-codeblue">32</span>, <span class="fm-codeblue">3</span>, use_bias=<code class="fm-codegreen">False</code>)(x)     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1017413"></a>x = layers.BatchNormalization()(x)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048544"></a><span class="fm-combinumeral">❶</span> Because the output of the Conv2D layer gets normalized, the layer doesn’t need its own bias vector.</p>
+
+  <p class="fm-callout"><a id="pgfId-1017439"></a><span class="fm-callout-head">Note</span> Both <code class="fm-code-in-text1">Dense</code> and <code class="fm-code-in-text1">Conv2D</code> involve a <i class="fm-italics">bias vector</i>, a learned <a id="marker-1017480"></a>variable whose purpose is to make the layer <i class="fm-italics">affine</i> rather than purely linear. For instance, <code class="fm-code-in-text1">Conv2D</code> returns, schematically, <code class="fm-code-in-text1">y</code> <code class="fm-code-in-text1">=</code> <code class="fm-code-in-text1">conv(x,</code> <code class="fm-code-in-text1">kernel)</code> <code class="fm-code-in-text1">+</code> <code class="fm-code-in-text1">bias</code>, and <code class="fm-code-in-text1">Dense</code> returns <code class="fm-code-in-text1">y</code> <code class="fm-code-in-text1">=</code> <code class="fm-code-in-text1">dot(x,</code> <code class="fm-code-in-text1">kernel)</code> <code class="fm-code-in-text1">+</code> <code class="fm-code-in-text1">bias</code>. Because the normalization step will take care of centering the layer’s output on zero, the bias vector is no longer needed when using <code class="fm-code-in-text1">BatchNormalization</code>, and the layer can be created without it via the option <code class="fm-code-in-text1">use_bias=False</code>. This makes the layer slightly leaner.</p>
+
+  <p class="body"><a id="pgfId-1017560"></a>Importantly, I would generally recommend placing the previous layer’s activation <i class="fm-italics">after</i> the batch normalization layer (although this is still a subject of debate). So instead of doing what is shown in listing 9.4, you would do what’s shown in listing 9.5.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017626"></a>Listing 9.4 How not to use batch normalization</p>
+  <pre class="programlisting"><a id="pgfId-1040072"></a>x = layers.Conv2D(<span class="fm-codeblue">32</span>, <span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1017665"></a>x = layers.BatchNormalization()(x)</pre>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017722"></a>Listing 9.5 How to use batch normalization: the activation comes last</p>
+  <pre class="programlisting"><a id="pgfId-1017671"></a>x = layers.Conv2D(<span class="fm-codeblue">32</span>, <span class="fm-codeblue">3</span>, use_bias=<code class="fm-codegreen">False</code>)(x)    <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1040097"></a>x = layers.BatchNormalization()(x)
+<a id="pgfId-1017773"></a>x = layers.Activation(<span class="fm-codegreen">"relu"</span>)(x)               <span class="fm-combinumeral">❷</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048407"></a><span class="fm-combinumeral">❶</span> Note the lack of activation here.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048435"></a><span class="fm-combinumeral">❷</span> We place the activation after the BatchNormalization layer.</p>
+
+  <p class="body"><a id="pgfId-1017821"></a>The intuitive reason for this approach is that batch normalization will center your inputs on zero, while your <code class="fm-code-in-text">relu</code> activation uses zero as a pivot for keeping or dropping activated channels: doing normalization before the activation maximizes the utilization of the <code class="fm-code-in-text">relu</code>. That said, this ordering best practice is not exactly critical, so if you do convolution, then activation, and then batch normalization, your model will still train, and you won’t necessarily see worse results.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1017827"></a>On batch normalization and fine-tuning</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1017873"></a>Batch normalization has many quirks. One of the main ones relates to fine-tuning: when fine-tuning a model that includes <code class="fm-code-in-text1">BatchNormalization</code> layers, I recommend leaving these layers frozen (set their <code class="fm-code-in-text1">trainable</code> attribute to <code class="fm-code-in-text1">False</code>). Otherwise they will keep updating their internal mean and variance, which can interfere with the very small updates applied to the surrounding <code class="fm-code-in-text1">Conv2D</code> layers.</p>
+  </div>
+
+  <p class="body"><a id="pgfId-1017882"></a>Now let’s take a look at the last architecture pattern in our series: depthwise separable convolutions. <a id="marker-1017884"></a><a id="marker-1017887"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_9"><a id="pgfId-1017893"></a>9.3.4 Depthwise separable convolutions</h3>
+
+  <p class="body"><a id="pgfId-1017936"></a><a id="marker-1017904"></a><a id="marker-1017906"></a>What if I told you that there’s a layer you can use as a drop-in replacement for <code class="fm-code-in-text">Conv2D</code> that will make your model smaller (fewer trainable weight parameters) and leaner (fewer floating-point operations) and cause it to perform a few percentage points better on its task? That is precisely what the <i class="fm-italics">depthwise separable convolution</i> layer does (<code class="fm-code-in-text">SeparableConv2D</code> in Keras). This layer performs a spatial convolution on each channel of its input, independently, before mixing output channels via a pointwise convolution (a 1 × 1 convolution), as shown in figure 9.10.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-10.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052905"></a>Figure 9.10 Depthwise separable convolution: a depthwise convolution followed by a pointwise convolution</p>
+
+  <p class="body"><a id="pgfId-1018005"></a>This is equivalent to separating the learning of spatial features and the learning of channel-wise features. In much the same way that convolution relies on the assumption that the patterns in images are not tied to specific locations, depthwise separable convolution relies on the assumption that <i class="fm-italics">spatial locations</i> in intermediate activations are <i class="fm-italics">highly correlated</i>, but <i class="fm-italics">different channels</i> are <i class="fm-italics">highly independent</i>. Because this assumption is generally true for the image representations learned by deep neural networks, it serves as a useful prior that helps the model make more efficient use of its training data. A model with stronger priors about the structure of the information it will have to process is a better model—as long as the priors are accurate.</p>
+
+  <p class="body"><a id="pgfId-1018014"></a>Depthwise separable convolution requires significantly fewer parameters and involves fewer computations compared to regular convolution, while having comparable representational power. It results in smaller models that converge faster and are less prone to overfitting. These advantages become especially important when you’re training small models from scratch on limited data.</p>
+
+  <p class="body"><a id="pgfId-1018020"></a>When it comes to larger-scale models, depthwise separable convolutions are the basis of the Xception architecture, a high-performing convnet that comes packaged with Keras. You can read more about the theoretical grounding for depthwise separable convolutions and Xception in the paper “Xception: Deep Learning with Depthwise Separable Convolutions.”<a id="Id-1018023"></a><a href="../Text/09.htm#pgfId-1018023"><sup class="footnotenumber">3</sup></a></p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1018037"></a>The co-evolution of hardware, software, and algorithms</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1018047"></a>Consider a regular convolution operation with a 3 × 3 window, 64 input channels, and 64 output channels. It uses 3*3*64*64 = 36,864 trainable parameters, and when you apply it to an image, it runs a number of floating-point operations that is proportional to this parameter count. Meanwhile, consider an equivalent depthwise separable convolution: it only involves 3*3*64 + 64*64 = 4,672 trainable parameters, and proportionally fewer floating-point operations. This efficiency improvement only increases as the number of filters or the size of the convolution windows gets larger.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1018053"></a>As a result, you would expect depthwise separable convolutions to be dramatically faster, right? Hold on. This would be true if you were writing simple CUDA or C implementations of these algorithms—in fact, you do see a meaningful speedup when running on CPU, where the underlying implementation is parallelized C. But in practice, you’re probably using a GPU, and what you’re executing on it is far from a “simple” CUDA implementation: it’s a <i class="fm-italics">cuDNN kernel</i>, a piece <a id="marker-1034923"></a>of code that has been extraordinarily optimized, down to each machine instruction. It certainly makes sense to spend a lot of effort optimizing this code, since cuDNN convolutions on NVIDIA hardware are responsible for many exaFLOPS of computation every day. But a side effect of this extreme micro-optimization is that alternative approaches have little chance to compete on performance—even approaches that have significant intrinsic advantages, like depthwise separable convolutions.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1018074"></a>Despite repeated requests to NVIDIA, depthwise separable convolutions have not benefited from nearly the same level of software and hardware optimization as regular convolutions, and as a result they remain only about as fast as regular convolutions, even though they’re using quadratically fewer parameters and floating-point operations. Note, though, that using depthwise separable convolutions remains a good idea even if it does not result in a speedup: their lower parameter count means that you are less at risk of overfitting, and their assumption that channels should be uncorrelated leads to faster model convergence and more robust representations.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1018080"></a>What is a slight inconvenience in this case can become an impassable wall in other situations: because the entire hardware and software ecosystem of deep learning has been micro-optimized for a very specific set of algorithms (in particular, convnets trained via backpropagation), there’s an extremely high cost to steering away from the beaten path. If you were to experiment with alternative algorithms, such as gradient-free optimization or spiking neural networks, the first few parallel C++ or CUDA implementations you’d come up with would be orders of magnitude slower than a good old convnet, no matter how clever and efficient your ideas were. Convincing other researchers to adopt your method would be a tough sell, even if it were just plain better.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1052937"></a>You could say that modern deep learning is the product of a co-evolution process between hardware, software, and algorithms: the availability of NVIDIA GPUs and CUDA led to the early success of backpropagation-trained convnets, which led NVIDIA to optimize its hardware and software for these algorithms, which in turn led to consolidation of the research community behind these methods. At this point, figuring out a different path would require a multi-year re-engineering of the entire ecosystem. <a id="marker-1052946"></a><a id="marker-1052947"></a></p>
+  </div>
+
+  <h3 class="fm-head1" id="heading_id_10"><a id="pgfId-1018097"></a>9.3.5 Putting it together: A mini Xception-like model</h3>
+
+  <p class="body"><a id="pgfId-1018107"></a><a id="marker-1018108"></a>As a reminder, here are the convnet architecture principles you’ve learned so far:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018116"></a>Your model should be organized into repeated <i class="fm-italics1">blocks</i> of layers, usually made of multiple convolution layers and a max pooling layer.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018139"></a>The number of filters in your layers should increase as the size of the spatial feature maps decreases.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018149"></a>Deep and narrow is better than broad and shallow.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018159"></a>Introducing residual connections around blocks of layers helps you train deeper networks.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018169"></a>It can be beneficial to introduce batch normalization layers after your convolution layers.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018199"></a>It can be beneficial to replace <code class="fm-code-in-text">Conv2D</code> layers with <code class="fm-code-in-text">SeparableConv2D</code> layers, which are <a class="calibre11" id="marker-1018204"></a>more parameter-efficient.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1018214"></a>Let’s bring these ideas together into a single model. Its architecture will resemble a smaller version of Xception, and we’ll apply it to the dogs vs. cats task from the last chapter. For data loading and model training, we’ll simply reuse the setup we used in section 8.2.5, but we’ll replace the model definition with the following convnet:</p>
+  <pre class="programlisting"><a id="pgfId-1040113"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1018234"></a>x = data_augmentation(inputs)                                      <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1018251"></a> 
+<a id="pgfId-1018246"></a>x = layers.Rescaling(<span class="fm-codeblue">1.</span>/<span class="fm-codeblue">255</span>)(x)                                    <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1018263"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">32</span>, kernel_size=<span class="fm-codeblue">5</span>, use_bias=<code class="fm-codegreen">False</code>)(x)    <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1018280"></a> 
+<a id="pgfId-1018275"></a><b class="fm-codebrown">for</b> size <b class="fm-codebrown">in</b> [<span class="fm-codeblue">32</span>, <span class="fm-codeblue">64</span>, <span class="fm-codeblue">128</span>, <span class="fm-codeblue">256</span>, <span class="fm-codeblue">512</span>]:                               <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1018292"></a>    residual = x
+<a id="pgfId-1018303"></a> 
+<a id="pgfId-1040290"></a>    x = layers.BatchNormalization()(x)
+<a id="pgfId-1040291"></a>    x = layers.Activation(<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1040292"></a>    x = layers.SeparableConv2D(size, <span class="fm-codeblue">3</span>, padding=<span class="fm-codegreen">"same"</span>, use_bias=<code class="fm-codegreen">False</code>)(x)
+<a id="pgfId-1040293"></a>  
+<a id="pgfId-1040294"></a>    x = layers.BatchNormalization()(x)
+<a id="pgfId-1040295"></a>    x = layers.Activation(<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1040296"></a>    x = layers.SeparableConv2D(size, <span class="fm-codeblue">3</span>, padding=<span class="fm-codegreen">"same"</span>, use_bias=<code class="fm-codegreen">False</code>)(x)
+<a id="pgfId-1040297"></a>  
+<a id="pgfId-1040298"></a>    x = layers.MaxPooling2D(<span class="fm-codeblue">3</span>, strides=<span class="fm-codeblue">2</span>, padding=<span class="fm-codegreen">"same"</span>)(x)
+<a id="pgfId-1040299"></a>  
+<a id="pgfId-1040300"></a>    residual = layers.Conv2D(
+<a id="pgfId-1040301"></a>        size, <span class="fm-codeblue">1</span>, strides=<span class="fm-codeblue">2</span>, padding=<span class="fm-codegreen">"same"</span>, use_bias=<code class="fm-codegreen">False</code>)(residual)
+<a id="pgfId-1040302"></a>    x = layers.add([x, residual])
+<a id="pgfId-1040303"></a>  
+<a id="pgfId-1018378"></a>x = layers.GlobalAveragePooling2D()(x)                             <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1018395"></a>x = layers.Dropout(<span class="fm-codeblue">0.5</span>)(x)                                         <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1040354"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)(x)
+<a id="pgfId-1018413"></a>model = keras.Model(inputs=inputs, outputs=outputs)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047984"></a><span class="fm-combinumeral">❶</span> We use the same data augmentation configuration as before.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048008"></a><span class="fm-combinumeral">❷</span> Don’t forget input rescaling!</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048042"></a><span class="fm-combinumeral">❸</span> Note that the assumption that underlies separable convolution, “feature channels are largely independent,” does not hold for RGB images! Red, green, and blue color channels are actually highly correlated in natural images. As such, the first layer in our model is a regular Conv2D layer. We’ll start using SeparableConv2D afterwards.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048025"></a><span class="fm-combinumeral">❹</span> We apply a series of convolutional blocks with increasing feature depth. Each block consists of two batch-normalized depthwise separable convolution layers and a max pooling layer, with a residual connection around the entire block.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048059"></a><span class="fm-combinumeral">❺</span> In the original model, we used a Flatten layer before the Dense layer. Here, we go with a GlobalAveragePooling2D layer.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1048076"></a><span class="fm-combinumeral">❻</span> Like in the original model, we add a dropout layer for regularization.</p>
+
+  <p class="body"><a id="pgfId-1018519"></a>This convnet has a trainable parameter count of 721,857, slightly lower than the 991,041 trainable parameters of the original model, but still in the same ballpark. Figure 9.11 shows its training and validation curves.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-11.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1052981"></a>Figure 9.11 Training and validation metrics with an Xception-like architecture</p>
+
+  <p class="body"><a id="pgfId-1018535"></a>You’ll find that our new model achieves a test accuracy of 90.8%, compared to 83.5% for the naive model in the last chapter. As you can see, following architecture best practices does have an immediate, sizable impact on model performance!</p>
+
+  <p class="body"><a id="pgfId-1018555"></a>At this point, if you want to further improve performance, you should start systematically tuning the hyperparameters of your architecture—a topic we’ll cover in detail in chapter 13. We haven’t gone through this step here, so the configuration of the preceding model is purely based on the best practices we discussed, plus, when it comes to gauging model size, a small amount of intuition.</p>
+
+  <p class="body"><a id="pgfId-1018561"></a>Note that these architecture best practices are relevant to computer vision in general, not just image classification. For example, Xception is used as the standard convolutional base in DeepLabV3, a popular state-of-the-art image segmentation solution.<a id="Id-1018564"></a><a href="../Text/09.htm#pgfId-1018564"><sup class="footnotenumber">4</sup></a></p>
+
+  <p class="body"><a id="pgfId-1018578"></a>This concludes our introduction to essential convnet architecture best practices. With these principles in hand, you’ll be able to develop higher-performing models across a wide range of computer vision tasks. You’re now well on your way to becoming a proficient computer vision practitioner. To further deepen your expertise, there’s one last important topic we need to cover: interpreting how a model arrives at its predictions. <a id="marker-1018580"></a><a id="marker-1018583"></a><a id="marker-1018585"></a></p>
+
+  <h2 class="fm-head" id="heading_id_11"><a id="pgfId-1018591"></a>9.4 Interpreting what convnets learn</h2>
+
+  <p class="body"><a id="pgfId-1018624"></a><a id="marker-1018602"></a><a id="marker-1018604"></a>A fundamental problem when building a computer vision application is that of <i class="fm-italics">interpretability</i>: <i class="fm-italics">why</i> did your classifier think a particular image contained a fridge, when all you can see is a truck? This is especially relevant to use cases where deep learning is used to complement human expertise, such as in medical imaging use cases. We will end this chapter by getting you familiar with a range of different techniques for visualizing what convnets learn and understanding the decisions they make.</p>
+
+  <p class="body"><a id="pgfId-1018633"></a>It’s often said that deep learning models are “black boxes”: they learn representations that are difficult to extract and present in a human-readable form. Although this is partially true for certain types of deep learning models, it’s definitely not true for convnets. The representations learned by convnets are highly amenable to visualization, in large part because they’re <i class="fm-italics">representations of visual concepts</i>. Since 2013, a wide array of techniques has been developed for visualizing and interpreting these representations. We won’t survey all of them, but we’ll cover three of the most accessible and useful ones:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018648"></a><i class="fm-italics1">Visualizing intermediate convnet outputs (intermediate activations)</i>—Useful for understanding how successive convnet layers transform their input, and for getting a first idea of the meaning of individual convnet filters</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018669"></a><i class="fm-italics1">Visualizing convnet filters</i>—Useful for understanding precisely what visual pattern or concept each filter in a convnet is receptive to</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018686"></a><i class="fm-italics1">Visualizing heatmaps of class activation in an image</i>—Useful for understanding which parts of an image were identified as belonging to a given class, thus allowing you to localize objects in images</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1018703"></a>For the first method—activation visualization—we’ll use the small convnet that we trained from scratch on the dogs-versus-cats classification problem in section 8.2. For the next two methods, we’ll use a pretrained Xception model.</p>
+
+  <h3 class="fm-head1" id="heading_id_12"><a id="pgfId-1018709"></a>9.4.1 Visualizing intermediate activations</h3>
+
+  <p class="body"><a id="pgfId-1018729"></a><a id="marker-1018720"></a>Visualizing intermediate activations consists of displaying the values returned by various convolution and pooling layers in a model, given a certain input (the output of a layer is often called its <i class="fm-italics">activation</i>, the output of the activation function). This gives a view into how an input is decomposed into the different filters learned by the network. We want to visualize feature maps with three dimensions: width, height, and depth (channels). Each channel encodes relatively independent features, so the proper way to visualize these feature maps is by independently plotting the contents of every channel as a 2D image. Let’s start by loading the model that you saved in section 8.2:</p>
+  <pre class="programlisting"><a id="pgfId-1040373"></a>&gt;&gt;&gt; <b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras
+<a id="pgfId-1040374"></a>&gt;&gt;&gt; model = keras.models.load_model(
+<a id="pgfId-1042526"></a><span class="fm-codeblue">    "convnet_from_scratch_with_augmentation.keras"</span>)
+<a id="pgfId-1040375"></a>&gt;&gt;&gt; model.summary()
+<a id="pgfId-1040376"></a>Model: "model_1" 
+<a id="pgfId-1040377"></a>_________________________________________________________________
+<a id="pgfId-1040378"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1040379"></a>=================================================================
+<a id="pgfId-1040380"></a>input_2 (InputLayer)         [(None, 180, 180, 3)]     0 
+<a id="pgfId-1040381"></a>_________________________________________________________________
+<a id="pgfId-1040382"></a>sequential (Sequential)      (None, 180, 180, 3)       0 
+<a id="pgfId-1040383"></a>_________________________________________________________________ 
+<a id="pgfId-1040384"></a>rescaling_1 (Rescaling)      (None, 180, 180, 3)       0 
+<a id="pgfId-1040385"></a>_________________________________________________________________
+<a id="pgfId-1040386"></a>conv2d_5 (Conv2D)            (None, 178, 178, 32)      896 
+<a id="pgfId-1040387"></a>_________________________________________________________________
+<a id="pgfId-1040388"></a>max_pooling2d_4 (MaxPooling2 (None, 89, 89, 32)        0 
+<a id="pgfId-1040389"></a>_________________________________________________________________
+<a id="pgfId-1040390"></a>conv2d_6 (Conv2D)            (None, 87, 87, 64)        18496 
+<a id="pgfId-1040391"></a>_________________________________________________________________
+<a id="pgfId-1040392"></a>max_pooling2d_5 (MaxPooling2 (None, 43, 43, 64)        0 
+<a id="pgfId-1040393"></a>_________________________________________________________________
+<a id="pgfId-1040394"></a>conv2d_7 (Conv2D)            (None, 41, 41, 128)       73856 
+<a id="pgfId-1040395"></a>_________________________________________________________________
+<a id="pgfId-1040396"></a>max_pooling2d_6 (MaxPooling2 (None, 20, 20, 128)       0 
+<a id="pgfId-1040397"></a>_________________________________________________________________
+<a id="pgfId-1040398"></a>conv2d_8 (Conv2D)            (None, 18, 18, 256)       295168 
+<a id="pgfId-1040399"></a>_________________________________________________________________
+<a id="pgfId-1040400"></a>max_pooling2d_7 (MaxPooling2 (None, 9, 9, 256)         0 
+<a id="pgfId-1040401"></a>_________________________________________________________________
+<a id="pgfId-1040402"></a>conv2d_9 (Conv2D)            (None, 7, 7, 256)         590080 
+<a id="pgfId-1040403"></a>_________________________________________________________________
+<a id="pgfId-1040404"></a>flatten_1 (Flatten)          (None, 12544)             0 
+<a id="pgfId-1040405"></a>_________________________________________________________________
+<a id="pgfId-1040406"></a>dropout (Dropout)            (None, 12544)             0 
+<a id="pgfId-1040407"></a>_________________________________________________________________
+<a id="pgfId-1040408"></a>dense_1 (Dense)              (None, 1)                 12545 
+<a id="pgfId-1040409"></a>=================================================================
+<a id="pgfId-1040410"></a>Total params: 991,041 
+<a id="pgfId-1040411"></a>Trainable params: 991,041 
+<a id="pgfId-1040412"></a>Non-trainable params: 0 
+<a id="pgfId-1018986"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1018992"></a>Next, we’ll get an input image—a picture of a cat, not part of the images the network was trained on.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019049"></a>Listing 9.6 Preprocessing a single image</p>
+  <pre class="programlisting"><a id="pgfId-1040432"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1040433"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np
+<a id="pgfId-1040434"></a>  
+<a id="pgfId-1019094"></a>img_path = keras.utils.get_file(                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1019111"></a>    fname=<span class="fm-codegreen">"cat.jpg"</span>,                                        <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1019123"></a>    origin=<span class="fm-codegreen">"https://img-datasets.s3.amazonaws.com/cat.jpg"</span>) <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1019140"></a> 
+<a id="pgfId-1040477"></a><b class="fm-codebrown">def</b> get_img_array(img_path, target_size):
+<a id="pgfId-1019146"></a>    img = keras.utils.load_img(                             <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1019158"></a>        img_path, target_size=target_size)                  <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1019170"></a>    array = keras.utils.img_to_array(img)                   <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1019182"></a>    array = np.expand_dims(array, axis=<span class="fm-codeblue">0</span>)                   <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1040506"></a>    <b class="fm-codebrown">return</b> array
+<a id="pgfId-1040507"></a>  
+<a id="pgfId-1019200"></a>img_tensor = get_img_array(img_path, target_size=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>))</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047685"></a><span class="fm-combinumeral">❶</span> Download a test image.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047706"></a><span class="fm-combinumeral">❷</span> Open the image file and resize it.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047723"></a><span class="fm-combinumeral">❸</span> Turn the image into a float32 NumPy array of shape (180, 180, 3).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047740"></a><span class="fm-combinumeral">❹</span> Add a dimension to transform the array into a “batch” of a single sample. Its shape is now (1, 180, 180, 3).</p>
+
+  <p class="body"><a id="pgfId-1019279"></a>Let’s display the picture (see figure 9.12).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019336"></a>Listing 9.7 Displaying the test picture</p>
+  <pre class="programlisting"><a id="pgfId-1040522"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1040523"></a>plt.axis(<span class="fm-codegreen">"off"</span>)
+<a id="pgfId-1040524"></a>plt.imshow(img_tensor[<span class="fm-codeblue">0</span>].astype(<span class="fm-codegreen">"uint8"</span>))
+<a id="pgfId-1019387"></a>plt.show()</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-12.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053286"></a>Figure 9.12 The test cat picture</p>
+
+  <p class="body"><a id="pgfId-1019403"></a>In order to extract the feature maps we want to look at, we’ll create a Keras model that takes batches of images as input, and that outputs the activations of all convolution and pooling layers.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019474"></a>Listing 9.8 Instantiating a model that returns layer activations</p>
+  <pre class="programlisting"><a id="pgfId-1040549"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1040550"></a>  
+<a id="pgfId-1040551"></a>layer_outputs = []
+<a id="pgfId-1040552"></a>layer_names = [] 
+<a id="pgfId-1019530"></a><b class="fm-codebrown">for</b> layer <b class="fm-codebrown">in</b> model.layers:                                                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1019542"></a>    <b class="fm-codebrown">if</b> isinstance(layer, (layers.Conv2D, layers.MaxPooling2D)):           <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1019554"></a>        layer_outputs.append(layer.output)                                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1019566"></a>        layer_names.append(layer.name)                                    <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1019578"></a>activation_model = keras.Model(inputs=model.input, outputs=layer_outputs) <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047468"></a><span class="fm-combinumeral">❶</span> Extract the outputs of all Conv2D and MaxPooling2D layers and put them in a list.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047489"></a><span class="fm-combinumeral">❷</span> Save the layer names for later.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047506"></a><span class="fm-combinumeral">❸</span> Create a model that will return these outputs, given the model input.</p>
+
+  <p class="body"><a id="pgfId-1019642"></a>When fed an image input, this model returns the values of the layer activations in the original model, as a list. This is the first time you’ve encountered a multi-output model in this book in practice since you learned about them in chapter 7; until now, the models you’ve seen have had exactly one input and one output. This one has one input and nine outputs: one output per layer activation.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019699"></a>Listing 9.9 Using the model to compute layer activations</p>
+  <pre class="programlisting"><a id="pgfId-1019648"></a>activations = activation_model.predict(img_tensor)     <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1047415"></a><span class="fm-combinumeral">❶</span> Return a list of nine NumPy arrays: one array per layer activation.</p>
+
+  <p class="body"><a id="pgfId-1019764"></a>For instance, this is the activation of the first convolution layer for the cat image input:</p>
+  <pre class="programlisting"><a id="pgfId-1042574"></a>&gt;&gt;&gt; first_layer_activation = activations[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1019784"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(first_layer_activation.shape)
+<a id="pgfId-1019790"></a>(1, 178, 178, 32)</pre>
+
+  <p class="body"><a id="pgfId-1019796"></a>It’s a 178 × 178 feature map with 32 channels. Let’s try plotting the fifth channel of the activation of the first layer of the original model (see figure 9.13).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019853"></a>Listing 9.10 Visualizing the fifth channel</p>
+  <pre class="programlisting"><a id="pgfId-1040602"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1019892"></a>plt.matshow(first_layer_activation[<span class="fm-codeblue">0</span>, :, :, <span class="fm-codeblue">5</span>], cmap=<span class="fm-codegreen">"viridis"</span>)</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-13.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053088"></a>Figure 9.13 Fifth channel of the activation of the first layer on the test cat picture</p>
+
+  <p class="body"><a id="pgfId-1019908"></a>This channel appears to encode a diagonal edge detector—but note that your own channels may vary, because the specific filters learned by convolution layers aren’t deterministic.</p>
+
+  <p class="body"><a id="pgfId-1019928"></a>Now, let’s plot a complete visualization of all the activations in the network (see figure 9.14). We’ll extract and plot every channel in each of the layer activations, and we’ll stack the results in one big grid, with channels stacked side by side.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019985"></a>Listing 9.11 Visualizing every channel in every intermediate activation</p>
+  <pre class="programlisting"><a id="pgfId-1040617"></a>images_per_row = <span class="fm-codeblue">16</span> 
+<a id="pgfId-1020024"></a><b class="fm-codebrown">for</b> layer_name, layer_activation <b class="fm-codebrown">in</b> zip(layer_names, activations):         <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1020036"></a>    n_features = layer_activation.shape[-<span class="fm-codeblue">1</span>]                                <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1020048"></a>    size = layer_activation.shape[<span class="fm-codeblue">1</span>]                                       <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1040658"></a>    n_cols = n_features // images_per_row
+<a id="pgfId-1020066"></a>    display_grid = np.zeros(((size + <span class="fm-codeblue">1</span>) * n_cols - <span class="fm-codeblue">1</span>,                      <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1020078"></a>                             images_per_row * (size + <span class="fm-codeblue">1</span>) - <span class="fm-codeblue">1</span>))             <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1040685"></a>    <b class="fm-codebrown">for</b> col <b class="fm-codebrown">in</b> range(n_cols):
+<a id="pgfId-1040686"></a>        <b class="fm-codebrown">for</b> row <b class="fm-codebrown">in</b> range(images_per_row):
+<a id="pgfId-1040687"></a>            channel_index = col * images_per_row + row
+<a id="pgfId-1020108"></a>            channel_image = layer_activation[<span class="fm-codeblue">0</span>, :, :, channel_index].copy()<span class="fm-combinumeral">❹</span>
+<a id="pgfId-1020120"></a>            <b class="fm-codebrown">if</b> channel_image.sum() != <span class="fm-codeblue">0</span>:                                   <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1020132"></a>                channel_image -= channel_image.mean()                      <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1020144"></a>                channel_image /= channel_image.std()                       <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1020156"></a>                channel_image *= <span class="fm-codeblue">64</span>                                        <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1020168"></a>                channel_image += <span class="fm-codeblue">128</span>                                       <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1020180"></a>            channel_image = np.clip(channel_image, <span class="fm-codeblue">0</span>, <span class="fm-codeblue">255</span>).astype(<span class="fm-codegreen">"uint8"</span>) <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1040781"></a>            display_grid[
+<a id="pgfId-1020198"></a>                col * (size + <span class="fm-codeblue">1</span>): (col + <span class="fm-codeblue">1</span>) * size + col,                  <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1020210"></a>                row * (size + <span class="fm-codeblue">1</span>) : (row + <span class="fm-codeblue">1</span>) * size + row] = channel_image <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1020222"></a>    scale = <span class="fm-codeblue">1.</span> / size                                                      <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020234"></a>    plt.figure(figsize=(scale * display_grid.shape[<span class="fm-codeblue">1</span>],                     <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020246"></a>                        scale * display_grid.shape[<span class="fm-codeblue">0</span>]))                    <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020258"></a>    plt.title(layer_name)                                                  <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020270"></a>    plt.grid(<code class="fm-codegreen">False</code>)                                                        <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020282"></a>    plt.axis(<span class="fm-codegreen">"off"</span>)                                                        <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020294"></a>    plt.imshow(display_grid, aspect=<span class="fm-codegreen">"auto"</span>, cmap=<span class="fm-codegreen">"viridis"</span>)                <span class="fm-combinumeral">❼</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046749"></a><span class="fm-combinumeral">❶</span> Iterate over the activations (and the names of the corresponding layers).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046770"></a><span class="fm-combinumeral">❷</span> The layer activation has shape (1, size, size, n_features).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046787"></a><span class="fm-combinumeral">❸</span> Prepare an empty grid for displaying all the channels in this activation.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046804"></a><span class="fm-combinumeral">❹</span> This is a single channel (or feature).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046821"></a><span class="fm-combinumeral">❺</span> Normalize channel values within the [0, 255] range. All-zero channels are kept at zero.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046838"></a><span class="fm-combinumeral">❻</span> Place the channel matrix in the empty grid we prepared.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046855"></a><span class="fm-combinumeral">❼</span> Display the grid for the layer.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-14.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053244"></a>Figure 9.14 Every channel of every layer activation on the test cat picture</p>
+
+  <p class="body"><a id="pgfId-1020432"></a>There are a few things to note here:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020452"></a>The first layer acts as a collection of various edge detectors. At that stage, the activations retain almost all of the information present in the initial picture.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020466"></a>As you go deeper, the activations become increasingly abstract and less visually interpretable. They begin to encode higher-level concepts such as “cat ear” and “cat eye.” Deeper presentations carry increasingly less information about the visual contents of the image, and increasingly more information related to the class of the image.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020476"></a>The sparsity of the activations increases with the depth of the layer: in the first layer, almost all filters are activated by the input image, but in the following layers, more and more filters are blank. This means the pattern encoded by the filter isn’t found in the input image.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1020486"></a>We have just evidenced an important universal characteristic of the representations learned by deep neural networks: the features extracted by a layer become increasingly abstract with the depth of the layer. The activations of higher layers carry less and less information about the specific input being seen, and more and more information about the target (in this case, the class of the image: cat or dog). A deep neural network effectively acts as an <i class="fm-italics">information distillation pipeline</i>, with raw <a id="marker-1020497"></a>data going in (in this case, RGB pictures) and being repeatedly transformed so that irrelevant information is filtered out (for example, the specific visual appearance of the image), and useful information is magnified and refined (for example, the class of the image).</p>
+
+  <p class="body"><a id="pgfId-1020507"></a>This is analogous to the way humans and animals perceive the world: after observing a scene for a few seconds, a human can remember which abstract objects were present in it (bicycle, tree) but can’t remember the specific appearance of these objects. In fact, if you tried to draw a generic bicycle from memory, chances are you couldn’t get it even remotely right, even though you’ve seen thousands of bicycles in your lifetime (see, for example, figure 9.15). Try it right now: this effect is absolutely real. Your brain has learned to completely abstract its visual input—to transform it into high-level visual concepts while filtering out irrelevant visual details—making it tremendously difficult to remember how things around you look. <a id="marker-1053196"></a></p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-15.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053360"></a>Figure 9.15 Left: attempts to draw a bicycle from memory. Right: what a schematic bicycle should look like.</p>
+
+  <h3 class="fm-head1" id="heading_id_13"><a id="pgfId-1020526"></a>9.4.2 Visualizing convnet filters</h3>
+
+  <p class="body"><a id="pgfId-1020586"></a><a id="marker-1053277"></a>Another easy way to inspect the filters learned by convnets is to display the visual pattern that each filter is meant to respond to. This can be done with <i class="fm-italics">gradient ascent in input space</i>: applying <i class="fm-italics">gradient descent</i> to the <a id="marker-1053279"></a>value of the input image of a convnet so as to <i class="fm-italics">maximize</i> the response of a specific filter, starting from a blank input image. The resulting input image will be one that the chosen filter is maximally responsive to.</p>
+
+  <p class="body"><a id="pgfId-1020608"></a>Let’s try this with the filters of the Xception model, pretrained on ImageNet. The process is simple: we’ll build a loss function that maximizes the value of a given filter in a given convolution layer, and then we’ll use stochastic gradient descent to adjust the values of the input image so as to maximize this activation value. This will be our second example of a low-level gradient descent loop leveraging <a id="marker-1020597"></a>the <code class="fm-code-in-text">GradientTape</code> object (the first one was in chapter 2).</p>
+
+  <p class="body"><a id="pgfId-1020617"></a>First, let’s instantiate the Xception model, loaded with weights pretrained on the ImageNet dataset.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020674"></a>Listing 9.12 Instantiating the Xception convolutional base</p>
+  <pre class="programlisting"><a id="pgfId-1040874"></a>model = keras.applications.xception.Xception(
+<a id="pgfId-1040875"></a>    weights=<span class="fm-codegreen">"imagenet"</span>,
+<a id="pgfId-1020719"></a>    include_top=<code class="fm-codegreen">False</code>)      <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046693"></a><span class="fm-combinumeral">❶</span> The classification layers are irrelevant for this use case, so we don’t include the top stage of the model.</p>
+
+  <p class="body"><a id="pgfId-1020767"></a>We’re interested in the convolutional layers of the model—the <code class="fm-code-in-text">Conv2D</code> and <code class="fm-code-in-text">SeparableConv2D</code> layers. We’ll need to know their names so we can retrieve their outputs. Let’s print their names, in order of depth.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020827"></a>Listing 9.13 Printing the names of all convolutional layers in Xception</p>
+  <pre class="programlisting"><a id="pgfId-1040894"></a><b class="fm-codebrown">for</b> layer <b class="fm-codebrown">in</b> model.layers:
+<a id="pgfId-1040895"></a>    <b class="fm-codebrown">if</b> isinstance(layer, (keras.layers.Conv2D, keras.layers.SeparableConv2D)):
+<a id="pgfId-1020872"></a>        <b class="fm-codebrown">print</b>(layer.name)</pre>
+
+  <p class="body"><a id="pgfId-1020904"></a>You’ll notice that the <code class="fm-code-in-text">SeparableConv2D</code> layers here are all named something like <code class="fm-code-in-text">block6_sepconv1</code>, <code class="fm-code-in-text">block7_sepconv2</code>, etc. Xception is structured into blocks, each containing several convolutional layers.</p>
+
+  <p class="body"><a id="pgfId-1020935"></a>Now, let’s create a second model that returns the output of a specific layer—a <i class="fm-italics">feature extractor</i> model. Because our <a id="marker-1020924"></a>model is a Functional API model, it is inspectable: we can query the <code class="fm-code-in-text">output</code> of one of its layers and reuse it in a new model. No need to copy the entire Xception code.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020995"></a>Listing 9.14 Creating a feature extractor model</p>
+  <pre class="programlisting"><a id="pgfId-1020944"></a>layer_name = <span class="fm-codegreen">"block3_sepconv1"</span>                                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1021040"></a>layer = model.get_layer(name=layer_name)                                  <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1021052"></a>feature_extractor = keras.Model(inputs=model.input, outputs=layer.output) <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046466"></a><span class="fm-combinumeral">❶</span> You could replace this with the name of any layer in the Xception convolutional base.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046487"></a><span class="fm-combinumeral">❷</span> This is the layer object we’re interested in.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046504"></a><span class="fm-combinumeral">❸</span> We use model.input and layer.output to create a model that, given an input image, returns the output of our target layer.</p>
+
+  <p class="body"><a id="pgfId-1021116"></a>To use this model, simply call it on some input data (note that Xception requires inputs to be preprocessed via the <code class="fm-code-in-text">keras.applications.xception.preprocess_input</code> function).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021182"></a>Listing 9.15 Using the feature extractor</p>
+  <pre class="programlisting"><a id="pgfId-1021131"></a>activation = feature_extractor(
+<a id="pgfId-1021221"></a>    keras.applications.xception.preprocess_input(img_tensor)
+<a id="pgfId-1021227"></a>)</pre>
+
+  <p class="body"><a id="pgfId-1021233"></a>Let’s use our feature extractor model to define a function that returns a scalar value quantifying how much a given input image “activates” a given filter in the layer. This is the “loss function” that we’ll maximize during the gradient ascent process:</p>
+  <pre class="programlisting"><a id="pgfId-1040938"></a><b class="fm-codebrown">import</b> tensorflow <b class="fm-codebrown">as</b> tf
+<a id="pgfId-1040939"></a>  
+<a id="pgfId-1021253"></a><b class="fm-codebrown">def</b> compute_loss(image, filter_index):                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1040954"></a>    activation = feature_extractor(image)
+<a id="pgfId-1021276"></a>    filter_activation = activation[:, <span class="fm-codeblue">2</span>:-<span class="fm-codeblue">2</span>, <span class="fm-codeblue">2</span>:-<span class="fm-codeblue">2</span>, filter_index]   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1021288"></a>    <b class="fm-codebrown">return</b> tf.reduce_mean(filter_activation)                      <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046267"></a><span class="fm-combinumeral">❶</span> The loss function takes an image tensor and the index of the filter we are considering (an integer).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046288"></a><span class="fm-combinumeral">❷</span> Note that we avoid border artifacts by only involving non-border pixels in the loss; we discard the first two pixels along the sides of the activation.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1046305"></a><span class="fm-combinumeral">❸</span> Return the mean of the activation values for the filter.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1021372"></a>The difference between <code class="fm-code-in-text2">model.predict(x)</code> and <code class="fm-code-in-text2">model(x)</code></p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1021394"></a>In the previous chapter, we used <code class="fm-code-in-text1">predict(x)</code> for feature extraction. Here, we’re using <code class="fm-code-in-text1">model(x)</code>. What gives?</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1021449"></a>Both <code class="fm-code-in-text1">y</code> <code class="fm-code-in-text1">=</code> <code class="fm-code-in-text1">model.predict(x)</code> and <code class="fm-code-in-text1">y</code> <code class="fm-code-in-text1">=</code> <code class="fm-code-in-text1">model(x)</code> (where <code class="fm-code-in-text1">x</code> is an array of input data) mean “run the model on <code class="fm-code-in-text1">x</code> and retrieve the output <code class="fm-code-in-text1">y</code>.” Yet they aren’t exactly the same thing.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1021478"></a><code class="fm-code-in-text1">predict()</code> loops over <a id="marker-1031684"></a>the data in batches (in fact, you can specify the batch size via <code class="fm-code-in-text1">predict(x,</code> <code class="fm-code-in-text1">batch_size=64)</code>), and it extracts the NumPy value of the outputs. It’s schematically equivalent to this:</p>
+    <pre class="programlisting"><a id="pgfId-1053400"></a><b class="fm-codebrown">def</b> predict(x):
+<a id="pgfId-1053401"></a>    y_batches = []
+<a id="pgfId-1053402"></a>    <b class="fm-codebrown">for</b> x_batch <b class="fm-codebrown">in</b> get_batches(x):
+<a id="pgfId-1053403"></a>        y_batch = model(x).numpy()
+<a id="pgfId-1053404"></a>        y_batches.append(y_batch)
+<a id="pgfId-1053405"></a>    <b class="fm-codebrown">return</b> np.concatenate(y_batches)</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1053407"></a>This means that <code class="fm-code-in-text1">predict()</code> calls can <a id="marker-1053406"></a>scale to very large arrays. Meanwhile, <code class="fm-code-in-text1">model(x)</code> happens in-memory and doesn’t scale. On the other hand, <code class="fm-code-in-text1">predict()</code> is not differentiable: you cannot retrieve its gradient if you call it in a <code class="fm-code-in-text1">GradientTape</code> scope.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1053392"></a>You should use <code class="fm-code-in-text1">model(x)</code> when you need to retrieve the gradients of the model call, and you should use <code class="fm-code-in-text1">predict()</code> if you just need the output value. In other words, always use <code class="fm-code-in-text1">predict()</code> unless you’re in the middle of writing a low-level gradient descent loop (as we are now).</p>
+  </div>
+
+  <p class="body"><a id="pgfId-1021637"></a>Let’s set up the gradient ascent step function, using the <code class="fm-code-in-text">GradientTape</code>. Note that we’ll use a <code class="fm-code-in-text">@tf.function</code> decorator to <a id="marker-1021642"></a>speed it up.</p>
+
+  <p class="body"><a id="pgfId-1021652"></a>A non-obvious trick to help the gradient descent process go smoothly is to normalize the gradient tensor by dividing it by its L2 norm (the square root of the average of the square of the values in the tensor). This ensures that the magnitude of the updates done to the input image is always within the same range.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021709"></a>Listing 9.16 Loss maximization via stochastic gradient ascent</p>
+  <pre class="programlisting"><a id="pgfId-1041031"></a><code class="fm-codeblue">@tf.function</code> 
+<a id="pgfId-1041032"></a><b class="fm-codebrown">def</b> gradient_ascent_step(image, filter_index, learning_rate):
+<a id="pgfId-1041033"></a>    <b class="fm-codebrown">with</b> tf.GradientTape() <b class="fm-codebrown">as</b> tape:
+<a id="pgfId-1021760"></a>        tape.watch(image)                             <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1021772"></a>        loss = compute_loss(image, filter_index)      <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1021784"></a>    grads = tape.gradient(loss, image)                <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1021796"></a>    grads = tf.math.l2_normalize(grads)               <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1021808"></a>    image += learning_rate * grads                    <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1021820"></a>    <b class="fm-codebrown">return</b> image                                      <span class="fm-combinumeral">❻</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045828"></a><span class="fm-combinumeral">❶</span> Explicitly watch the image tensor, since it isn’t a TensorFlow Variable (only Variables are automatically watched in a gradient tape).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045849"></a><span class="fm-combinumeral">❷</span> Compute the loss scalar, indicating how much the current image activates the filter.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045869"></a><span class="fm-combinumeral">❸</span> Compute the gradients of the loss with respect to the image.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045886"></a><span class="fm-combinumeral">❹</span> Apply the “gradient normalization trick.”</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045903"></a><span class="fm-combinumeral">❺</span> Move the image a little bit in a direction that activates our target filter more strongly.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045920"></a><span class="fm-combinumeral">❻</span> Return the updated image so we can run the step function in a loop.</p>
+
+  <p class="body"><a id="pgfId-1021932"></a>Now we have all the pieces. Let’s put them together into a Python function that takes as input a layer name and a filter index, and returns a tensor representing the pattern that maximizes the activation of the specified filter.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021989"></a>Listing 9.17 Function to generate filter visualizations</p>
+  <pre class="programlisting"><a id="pgfId-1041064"></a>img_width = <span class="fm-codeblue">200</span> 
+<a id="pgfId-1041065"></a>img_height = <span class="fm-codeblue">200</span> 
+<a id="pgfId-1041066"></a>  
+<a id="pgfId-1041067"></a><b class="fm-codebrown">def</b> generate_filter_pattern(filter_index):
+<a id="pgfId-1022045"></a>    iterations = <span class="fm-codeblue">30</span>                                                       <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1022057"></a>    learning_rate = <span class="fm-codeblue">10.</span>                                                   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1041096"></a>    image = tf.random.uniform(
+<a id="pgfId-1041097"></a>        minval=<span class="fm-codeblue">0.4</span>,
+<a id="pgfId-1041098"></a>        maxval=<span class="fm-codeblue">0.6</span>,
+<a id="pgfId-1022087"></a>        shape=(<span class="fm-codeblue">1</span>, img_width, img_height, <span class="fm-codeblue">3</span>))                              <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1022099"></a>    <b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(iterations):                                           <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1022111"></a>        image = gradient_ascent_step(image, filter_index, learning_rate)  <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1022123"></a>    <b class="fm-codebrown">return</b> image[<span class="fm-codeblue">0</span>].numpy()</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045501"></a><span class="fm-combinumeral">❶</span> Number of gradient ascent steps to apply</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045522"></a><span class="fm-combinumeral">❷</span> Amplitude of a single step</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045542"></a><span class="fm-combinumeral">❸</span> Initialize an image tensor with random values (the Xception model expects input values in the [0, 1] range, so here we pick a range centered on 0.5).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045559"></a><span class="fm-combinumeral">❹</span> Repeatedly update the values of the image tensor so as to maximize our loss function.</p>
+
+  <p class="body"><a id="pgfId-1022213"></a>The resulting image tensor is a floating-point array of shape <code class="fm-code-in-text">(200,</code> <code class="fm-code-in-text">200,</code> <code class="fm-code-in-text">3)</code>, with values that may not be integers within <code class="fm-code-in-text">[0,</code> <code class="fm-code-in-text">255]</code>. Hence, we need to post-process this tensor to turn it into a displayable image. We do so with the following straightforward utility function.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1022273"></a>Listing 9.18 Utility function to convert a tensor into a valid image</p>
+  <pre class="programlisting"><a id="pgfId-1041143"></a><b class="fm-codebrown">def</b> deprocess_image(image):
+<a id="pgfId-1022312"></a>    image -= image.mean()                           <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1022324"></a>    image /= image.std()                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1022336"></a>    image *= <span class="fm-codeblue">64</span>                                     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1022348"></a>    image += <span class="fm-codeblue">128</span>                                    <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1022360"></a>    image = np.clip(image, <span class="fm-codeblue">0</span>, <span class="fm-codeblue">255</span>).astype(<span class="fm-codegreen">"uint8"</span>)  <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1022372"></a>    image = image[<span class="fm-codeblue">25</span>:-<span class="fm-codeblue">25</span>, <span class="fm-codeblue">25</span>:-<span class="fm-codeblue">25</span>, :]                <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1022384"></a>    <b class="fm-codebrown">return</b> image</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045326"></a><span class="fm-combinumeral">❶</span> Normalize image values within the [0, 255] range.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045354"></a><span class="fm-combinumeral">❷</span> Center crop to avoid border artifacts.</p>
+
+  <p class="body"><a id="pgfId-1022426"></a>Let’s try it (see figure 9.16):</p>
+  <pre class="programlisting"><a id="pgfId-1043242"></a>&gt;&gt;&gt; plt.axis(<span class="fm-codegreen">"off"</span>)
+<a id="pgfId-1022446"></a>&gt;&gt;&gt; plt.imshow(deprocess_image(generate_filter_pattern(filter_index=<span class="fm-codeblue">2</span>)))</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-16.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053439"></a>Figure 9.16 Pattern that the second channel in layer <code class="fm-code-in-text">block3_sepconv1</code> responds to maximally</p>
+
+  <p class="body"><a id="pgfId-1022471"></a>It seems that filter 0 in layer <code class="fm-code-in-text">block3_sepconv1</code> is responsive to a horizontal lines pattern, somewhat water-like or fur-like.</p>
+
+  <p class="body"><a id="pgfId-1022500"></a>Now the fun part: you can start visualizing every filter in the layer, and even every filter in every layer in the model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1022557"></a>Listing 9.19 Generating a grid of all filter response patterns in a layer</p>
+  <pre class="programlisting"><a id="pgfId-1022506"></a>all_images = []                             <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1041252"></a><b class="fm-codebrown">for</b> filter_index <b class="fm-codebrown">in</b> range(<span class="fm-codeblue">64</span>):
+<a id="pgfId-1041253"></a>    <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Processing filter {filter_index}"</span>)
+<a id="pgfId-1041254"></a>    image = deprocess_image(
+<a id="pgfId-1041255"></a>        generate_filter_pattern(filter_index)
+<a id="pgfId-1041256"></a>    )
+<a id="pgfId-1041257"></a>    all_images.append(image)
+<a id="pgfId-1041258"></a>  
+<a id="pgfId-1022638"></a>margin = <span class="fm-codeblue">5</span>                                  <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1041277"></a>n = <span class="fm-codeblue">8</span> 
+<a id="pgfId-1041278"></a>cropped_width = img_width - <span class="fm-codeblue">25</span> * <span class="fm-codeblue">2</span> 
+<a id="pgfId-1041279"></a>cropped_height = img_height - <span class="fm-codeblue">25</span> * <span class="fm-codeblue">2</span> 
+<a id="pgfId-1041280"></a>width = n * cropped_width + (n - <span class="fm-codeblue">1</span>) * margin
+<a id="pgfId-1041281"></a>height = n * cropped_height + (n - <span class="fm-codeblue">1</span>) * margin
+<a id="pgfId-1041282"></a>stitched_filters = np.zeros((width, height, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1041283"></a>  
+<a id="pgfId-1022691"></a><b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(n):                          <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1041300"></a>    <b class="fm-codebrown">for</b> j <b class="fm-codebrown">in</b> range(n):
+<a id="pgfId-1041301"></a>        image = all_images[i * n + j]
+<a id="pgfId-1041302"></a>        stitched_filters[
+<a id="pgfId-1042613"></a>            row_start = (cropped_width + margin) * i
+<a id="pgfId-1042614"></a>            row_end = (cropped_width + margin) * i + cropped_width
+<a id="pgfId-1042615"></a>            column_start = (cropped_height + margin) * j
+<a id="pgfId-1042616"></a>            column_end = (cropped_height + margin) * j + cropped_height
+<a id="pgfId-1042617"></a> 
+<a id="pgfId-1042618"></a>            stitched_filters[
+<a id="pgfId-1042619"></a>                row_start: row_end,
+<a id="pgfId-1042606"></a>                column_start: column_end, :] = image
+<a id="pgfId-1041308"></a>  
+<a id="pgfId-1022756"></a>keras.utils.save_img(                       <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1022773"></a>    f<span class="fm-codegreen">"filters_for_layer_{layer_name}.png"</span>, stitched_filters)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045035"></a><span class="fm-combinumeral">❶</span> Generate and save visualizations for the first 64 filters in the layer.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045056"></a><span class="fm-combinumeral">❷</span> Prepare a blank canvas for us to paste filter visualizations on.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045073"></a><span class="fm-combinumeral">❸</span> Fill the picture with the saved filters.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1045097"></a><span class="fm-combinumeral">❹</span> Save the canvas to disk.</p>
+
+  <p class="body"><a id="pgfId-1022847"></a>These filter visualizations (see figure 9.17) tell you a lot about how convnet layers see the world: each layer in a convnet learns a collection of filters such that their inputs can be expressed as a combination of the filters. This is similar to how the Fourier transform decomposes signals onto a bank of cosine functions. The filters in these convnet filter banks get increasingly complex and refined as you go deeper in the model:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022853"></a>The filters from the first layers in the model encode simple directional edges and colors (or colored edges, in some cases).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022867"></a>The filters from layers a bit further up the stack, such as <code class="fm-code-in-text">block4_sepconv1</code>, encode simple textures made from combinations of edges and colors.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022886"></a>The filters in higher layers begin to resemble textures found in natural images: feathers, eyes, leaves, and so on. <a class="calibre11" id="marker-1022892"></a></p>
+    </li>
+  </ul>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-17.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053487"></a>Figure 9.17 Some filter patterns for layers <code class="fm-code-in-text">block2_sepconv1</code>, <code class="fm-code-in-text">block4_sepconv1</code>, and <code class="fm-code-in-text">block8_sepconv1</code></p>
+
+  <h3 class="fm-head1" id="heading_id_14"><a id="pgfId-1022938"></a>9.4.3 Visualizing heatmaps of class activation</h3>
+
+  <p class="body"><a id="pgfId-1022972"></a><a id="marker-1022963"></a>We’ll introduce one last visualization technique—one that is useful for understanding which parts of a given image led a convnet to its final classification decision. This is helpful for “debugging” the decision process of a convnet, particularly in the case of a classification mistake (a problem domain called <i class="fm-italics">model interpretability</i>). It can also allow you to locate specific objects in an image.</p>
+
+  <p class="body"><a id="pgfId-1022994"></a>This general category of techniques is <a id="marker-1022983"></a>called <i class="fm-italics">class activation map</i> (CAM) visualization, and it consists of producing heatmaps of class activation over input images. A class activation heatmap is a 2D grid of scores associated with a specific output class, computed for every location in any input image, indicating how important each location is with respect to the class under consideration. For instance, given an image fed into a dogs-versus-cats convnet, CAM visualization would allow you to generate a heatmap for the class “cat,” indicating how cat-like different parts of the image are, and also a heatmap for the class “dog,” indicating how dog-like parts of the image are.</p>
+
+  <p class="body"><a id="pgfId-1023003"></a>The specific implementation we’ll use is the one described in an article titled “Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization.”<a id="Id-1023006"></a><a href="../Text/09.htm#pgfId-1023006"><sup class="footnotenumber">5</sup></a></p>
+
+  <p class="body"><a id="pgfId-1023020"></a>Grad-CAM consists of taking the output feature map of a convolution layer, given an input image, and weighing every channel in that feature map by the gradient of the class with respect to the channel. Intuitively, one way to understand this trick is to imagine that you’re weighting a spatial map of “how intensely the input image activates different channels” by “how important each channel is with regard to the class,” resulting in a spatial map of “how intensely the input image activates the class.”</p>
+
+  <p class="body"><a id="pgfId-1023026"></a>Let’s demonstrate this technique using the pretrained Xception model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1023083"></a>Listing 9.20 Loading the Xception network with pretrained weights</p>
+  <pre class="programlisting"><a id="pgfId-1023032"></a>model = keras.applications.xception.Xception(weights=<span class="fm-codegreen">"imagenet"</span>)   <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044982"></a><span class="fm-combinumeral">❶</span> Note that we include the densely connected classifier on top; in all previous cases, we discarded it.</p>
+
+  <p class="body"><a id="pgfId-1023171"></a>Consider the image of two African elephants shown in figure 9.18, possibly a mother and her calf, strolling on the savanna. Let’s convert this image into something the Xception model can read: the model was trained on images of size 299 × 299, preprocessed according to a few rules that are packaged <a id="marker-1023150"></a>in the <code class="fm-code-in-text">keras.applications.xception .preprocess_input</code> utility function. So we need to load the image, resize it to 299 × 299, convert it to a NumPy <code class="fm-code-in-text">float32</code> tensor, and apply these preprocessing rules.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1023255"></a>Listing 9.21 Preprocessing an input image for Xception</p>
+  <pre class="programlisting"><a id="pgfId-1041353"></a>img_path = keras.utils.get_file(
+<a id="pgfId-1041354"></a>    fname=<span class="fm-codegreen">"elephant.jpg"</span>,
+<a id="pgfId-1023300"></a>    origin=<span class="fm-codegreen">"https://img-datasets.s3.amazonaws.com/elephant.jpg"</span>)    <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1023317"></a> 
+<a id="pgfId-1041404"></a><b class="fm-codebrown">def</b> get_img_array(img_path, target_size):
+<a id="pgfId-1023323"></a>    img = keras.utils.load_img(img_path, target_size=target_size)   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1023335"></a>    array = keras.utils.img_to_array(img)                           <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1023347"></a>    array = np.expand_dims(array, axis=<span class="fm-codeblue">0</span>)                           <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1023359"></a>    array = keras.applications.xception.preprocess_input(array)     <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1023371"></a>    <b class="fm-codebrown">return</b> array
+<a id="pgfId-1023382"></a> 
+<a id="pgfId-1023377"></a>img_array = get_img_array(img_path, target_size=(<span class="fm-codeblue">299</span>, <span class="fm-codeblue">299</span>))</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044672"></a><span class="fm-combinumeral">❶</span> Download the image and store it locally under the path img_path.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044693"></a><span class="fm-combinumeral">❷</span> Return a Python Imaging Library (PIL) image of size 299 × 299.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044713"></a><span class="fm-combinumeral">❸</span> Return a float32 NumPy array of shape (299, 299, 3).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044730"></a><span class="fm-combinumeral">❹</span> Add a dimension to transform the array into a batch of size (1, 299, 299, 3).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044747"></a><span class="fm-combinumeral">❺</span> Preprocess the batch (this does channel-wise color normalization).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-18.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053533"></a>Figure 9.18 Test picture of African elephants</p>
+
+  <p class="body"><a id="pgfId-1023472"></a>You can now run the pretrained network on the image and decode its prediction vector back to a human-readable format:</p>
+  <pre class="programlisting"><a id="pgfId-1042770"></a>&gt;&gt;&gt; preds = model.predict(img_array)
+<a id="pgfId-1023492"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(keras.applications.xception.decode_predictions(preds, top=<span class="fm-codeblue">3</span>)[<span class="fm-codeblue">0</span>])
+<a id="pgfId-1041464"></a>[("n02504458", "African_elephant", 0.8699266),
+<a id="pgfId-1041465"></a> ("n01871265", "tusker", 0.076968715),
+<a id="pgfId-1023510"></a> ("n02504013", "Indian_elephant", 0.02353728)]</pre>
+
+  <p class="body"><a id="pgfId-1023516"></a>The top three classes predicted for this image are as follows:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023522"></a>African elephant (with 87% probability)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023536"></a>Tusker (with 7% probability)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023546"></a>Indian elephant (with 2% probability)</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1023556"></a>The network has recognized the image as containing an undetermined quantity of African elephants. The entry in the prediction vector that was maximally activated is the one corresponding to the “African elephant” class, at index 386:</p>
+  <pre class="programlisting"><a id="pgfId-1023562"></a>&gt;&gt;&gt; np.argmax(preds[<span class="fm-codeblue">0</span>])
+<a id="pgfId-1023576"></a>386 </pre>
+
+  <p class="body"><a id="pgfId-1023582"></a>To visualize which parts of the image are the most African-elephant–like, let’s set up the Grad-CAM process.</p>
+
+  <p class="body"><a id="pgfId-1023588"></a>First, we create a model that maps the input image to the activations of the last convolutional layer.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1023645"></a>Listing 9.22 Setting up a model that returns the last convolutional output</p>
+  <pre class="programlisting"><a id="pgfId-1041502"></a>last_conv_layer_name = <span class="fm-codegreen">"block14_sepconv2_act"</span> 
+<a id="pgfId-1041503"></a>classifier_layer_names = [
+<a id="pgfId-1041504"></a>    <span class="fm-codegreen">"avg_pool"</span>,
+<a id="pgfId-1041505"></a>    <span class="fm-codegreen">"predictions"</span>,
+<a id="pgfId-1041506"></a>]
+<a id="pgfId-1041507"></a>last_conv_layer = model.get_layer(last_conv_layer_name)
+<a id="pgfId-1023714"></a>last_conv_layer_model = keras.Model(model.inputs, last_conv_layer.output)</pre>
+
+  <p class="body"><a id="pgfId-1023720"></a>Second, we create a model that maps the activations of the last convolutional layer to the final class predictions.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1023777"></a>Listing 9.23 Reapplying the classifier on top of the last convolutional output</p>
+  <pre class="programlisting"><a id="pgfId-1041526"></a>classifier_input = keras.Input(shape=last_conv_layer.output.shape[<span class="fm-codeblue">1</span>:])
+<a id="pgfId-1041527"></a>x = classifier_input 
+<a id="pgfId-1041528"></a><b class="fm-codebrown">for</b> layer_name <b class="fm-codebrown">in</b> classifier_layer_names:
+<a id="pgfId-1041529"></a>    x = model.get_layer(layer_name)(x)
+<a id="pgfId-1023834"></a>classifier_model = keras.Model(classifier_input, x)</pre>
+
+  <p class="body"><a id="pgfId-1023840"></a>Then we compute the gradient of the top predicted class for our input image with respect to the activations of the last convolution layer.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1023897"></a>Listing 9.24 Retrieving the gradients of the top predicted class</p>
+  <pre class="programlisting"><a id="pgfId-1041546"></a><b class="fm-codebrown">import</b> tensorflow <b class="fm-codebrown">as</b> tf
+<a id="pgfId-1041547"></a>  
+<a id="pgfId-1041548"></a><b class="fm-codebrown">with</b> tf.GradientTape() <b class="fm-codebrown">as</b> tape:
+<a id="pgfId-1023947"></a>    last_conv_layer_output = last_conv_layer_model(img_array)     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1023959"></a>    tape.watch(last_conv_layer_output)                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1023971"></a>    preds = classifier_model(last_conv_layer_output)              <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1023983"></a>    top_pred_index = tf.argmax(preds[<span class="fm-codeblue">0</span>])                          <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1023995"></a>    top_class_channel = preds[:, top_pred_index]                  <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1024012"></a> 
+<a id="pgfId-1024007"></a>grads = tape.gradient(top_class_channel, last_conv_layer_output)  <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044436"></a><span class="fm-combinumeral">❶</span> Compute activations of the last conv layer and make the tape watch it.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044457"></a><span class="fm-combinumeral">❷</span> Retrieve the activation channel corresponding to the top predicted class.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044474"></a><span class="fm-combinumeral">❸</span> This is the gradient of the top predicted class with regard to the output feature map of the last convolutional layer.</p>
+
+  <p class="body"><a id="pgfId-1024076"></a>Now we apply pooling and importance weighting to the gradient tensor to obtain our heatmap of class activation.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1024133"></a>Listing 9.25 Gradient pooling and channel-importance weighting</p>
+  <pre class="programlisting"><a id="pgfId-1024082"></a>pooled_grads = tf.reduce_mean(grads, axis=(<span class="fm-codeblue">0</span>, <span class="fm-codeblue">1</span>, <span class="fm-codeblue">2</span>)).numpy()   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1041587"></a>last_conv_layer_output = last_conv_layer_output.numpy()[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1024184"></a><b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(pooled_grads.shape[-<span class="fm-codeblue">1</span>]):                        <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1024196"></a>    last_conv_layer_output[:, :, i] *= pooled_grads[i]         <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1024208"></a>heatmap = np.mean(last_conv_layer_output, axis=-<span class="fm-codeblue">1</span>)             <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044234"></a><span class="fm-combinumeral">❶</span> This is a vector where each entry is the mean intensity of the gradient for a given channel. It quantifies the importance of each channel with regard to the top predicted class.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044255"></a><span class="fm-combinumeral">❷</span> Multiply each channel in the output of the last convolutional layer by “how important this channel is.”</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1044272"></a><span class="fm-combinumeral">❸</span> The channel-wise mean of the resulting feature map is our heatmap of class activation.</p>
+
+  <p class="body"><a id="pgfId-1024272"></a>For visualization purposes, we’ll also normalize the heatmap between 0 and 1. The result is shown in figure 9.19.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1024329"></a>Listing 9.26 Heatmap post-processing</p>
+  <pre class="programlisting"><a id="pgfId-1041618"></a>heatmap = np.maximum(heatmap, <span class="fm-codeblue">0</span>)
+<a id="pgfId-1041619"></a>heatmap /= np.max(heatmap)
+<a id="pgfId-1024374"></a>plt.matshow(heatmap)</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-19.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053579"></a>Figure 9.19 Standalone class activation heatmap</p>
+
+  <p class="body"><a id="pgfId-1024390"></a>Finally, let’s generate an image that superimposes the original image on the heatmap we just obtained (see figure 9.20).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1024461"></a>Listing 9.27 Superimposing the heatmap on the original picture</p>
+  <pre class="programlisting"><a id="pgfId-1041638"></a><b class="fm-codebrown">import</b> matplotlib.cm <b class="fm-codebrown">as</b> cm
+<a id="pgfId-1041639"></a>  
+<a id="pgfId-1024500"></a>img = keras.utils.load_img(img_path)                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1024517"></a>img = keras.utils.img_to_array(img)                             <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1024529"></a>heatmap = np.uint8(<span class="fm-codeblue">255</span> * heatmap)                               <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1024551"></a> 
+<a id="pgfId-1024546"></a>jet = cm.get_cmap(<span class="fm-codegreen">"jet"</span>)                                        <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1024563"></a>jet_colors = jet(np.arange(<span class="fm-codeblue">256</span>))[:, :<span class="fm-codeblue">3</span>]                         <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1024575"></a>jet_heatmap = jet_colors[heatmap]                               <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1024592"></a> 
+<a id="pgfId-1024587"></a>jet_heatmap = keras.utils.array_to_img(jet_heatmap)             <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1024604"></a>jet_heatmap = jet_heatmap.resize((img.shape[<span class="fm-codeblue">1</span>], img.shape[<span class="fm-codeblue">0</span>]))  <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1024616"></a>jet_heatmap = keras.utils.img_to_array(jet_heatmap)             <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1024633"></a> 
+<a id="pgfId-1024628"></a>superimposed_img = jet_heatmap * <span class="fm-codeblue">0.4</span> + img                      <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1024645"></a>superimposed_img = keras.utils.array_to_img(superimposed_img)   <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1024662"></a> 
+<a id="pgfId-1024657"></a>save_path = <span class="fm-codegreen">"elephant_cam.jpg"</span>                                  <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1024674"></a>superimposed_img.save(save_path)                                <span class="fm-combinumeral">❻</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1043641"></a><span class="fm-combinumeral">❶</span> Load the original image.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1043675"></a><span class="fm-combinumeral">❷</span> Rescale the heatmap to the range 0–255.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1043692"></a><span class="fm-combinumeral">❸</span> Use the "jet" colormap to recolorize the heatmap.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1043709"></a><span class="fm-combinumeral">❹</span> Create an image that contains the recolorized heatmap.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1043726"></a><span class="fm-combinumeral">❺</span> Superimpose the heatmap and the original image, with the heatmap at 40% opacity.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1043642"></a><span class="fm-combinumeral">❻</span> Save the superimposed image.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/09-20.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1053625"></a>Figure 9.20 African elephant class activation heatmap over the test picture</p>
+
+  <p class="body"><a id="pgfId-1024796"></a>This visualization technique answers two important questions:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024816"></a>Why did the network think this image contained an African elephant?</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024830"></a>Where is the African elephant located in the picture?</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1024840"></a>In particular, it’s interesting to note that the ears of the elephant calf are strongly activated: this is probably how the network can tell the difference between African and Indian elephants. <a id="marker-1024842"></a><a id="marker-1024845"></a><a id="marker-1024847"></a></p>
+
+  <h2 class="fm-head" id="heading_id_15"><a id="pgfId-1024853"></a>Summary</h2>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024863"></a>There are three essential computer vision tasks you can do with deep learning: image classification, image segmentation, and object detection.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024877"></a>Following modern convnet architecture best practices will help you get the most out of your models. Some of these best practices include using residual connections, batch normalization, and depthwise separable convolutions.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024887"></a>The representations that convnets learn are easy to inspect—convnets are the opposite of black boxes!</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024897"></a>You can generate visualizations of the filters learned by your convnets, as well as heatmaps of class activity.</p>
+    </li>
+  </ul>
+  <hr class="calibre15"/>
+
+  <p class="fm-footnote"><a href="../Text/09.htm#Id-1015871"><sup class="footnotenumber1">1</sup></a> <a id="pgfId-1015871"></a>Kaiming He et al., “Deep Residual Learning for Image Recognition,” Conference on Computer Vision and Pattern Recognition (2015), <span class="fm-hyperlink"><a class="url" href="https://arxiv.org/abs/1512.03385">https://arxiv.org/abs/1512.03385</a></span>.</p>
+
+  <p class="fm-footnote"><a href="../Text/09.htm#Id-1017279"><sup class="footnotenumber1">2</sup></a> <a id="pgfId-1017279"></a>Sergey Ioffe and Christian Szegedy, “Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift,” <i class="fm-italics">Proceedings of the 32nd International Conference on Machine Learning</i> (2015), <span class="fm-hyperlink"><a class="url" href="https://arxiv.org/abs/1502.03167">https:// arxiv.org/abs/1502.03167</a></span>.</p>
+
+  <p class="fm-footnote"><a href="../Text/09.htm#Id-1018023"><sup class="footnotenumber1">3</sup></a> <a id="pgfId-1018023"></a>François Chollet, “Xception: Deep Learning with Depthwise Separable Convolutions,” Conference on Computer Vision and Pattern Recognition (2017), <span class="fm-hyperlink"><a class="url" href="https://arxiv.org/abs/1610.02357">https://arxiv.org/abs/1610.02357</a></span>.</p>
+
+  <p class="fm-footnote"><a href="../Text/09.htm#Id-1018564"><sup class="footnotenumber1">4</sup></a> <a id="pgfId-1018564"></a>Liang-Chieh Chen et al., “Encoder-Decoder with Atrous Separable Convolution for Semantic Image Segmentation,” ECCV (2018), <span class="fm-hyperlink"><a class="url" href="https://arxiv.org/abs/1802.02611">https://arxiv.org/abs/1802.02611</a></span>.</p>
+
+  <p class="fm-footnote"><a href="../Text/09.htm#Id-1023006"><sup class="footnotenumber1">5</sup></a> <a id="pgfId-1023006"></a>Ramprasaath R. Selvaraju et al., arXiv (2017), <span class="fm-hyperlink"><a class="url" href="https://arxiv.org/abs/1610.0239">https://arxiv.org/abs/1610.02391</a></span>.</p>
+</body>
+</html>

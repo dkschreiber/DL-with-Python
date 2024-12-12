@@ -1,0 +1,850 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>10</title>
+    
+  <link href="../../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+  <h1 class="tochead" id="heading_id_2"><a id="pgfId-998407"></a><a id="pgfId-1020464"></a>10 Deep learning for timeseries</h1>
+
+  <p class="co-summary-head"><a id="pgfId-1011754"></a>This chapter covers</p>
+
+  <ul class="calibre10">
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011760"></a>Examples of machine learning tasks that involve timeseries data</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011774"></a>Understanding recurrent neural networks (RNNs)</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011784"></a>Applying RNNs to a temperature-forecasting example</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011794"></a>Advanced RNN usage patterns</li>
+  </ul>
+
+  <h2 class="fm-head" id="heading_id_3"><a id="pgfId-1011804"></a>10.1 Different kinds of timeseries tasks</h2>
+
+  <p class="body"><a id="pgfId-1011837"></a><a id="marker-1011817"></a>A <i class="fm-italics">timeseries</i> can be any data obtained via measurements at regular intervals, like the daily price of a stock, the hourly electricity consumption of a city, or the weekly sales of a store. Timeseries are everywhere, whether we’re looking at natural phenomena (like seismic activity, the evolution of fish populations in a river, or the weather at a location) or human activity patterns (like visitors to a website, a country’s GDP, or credit card transactions). Unlike the types of data you’ve encountered so far, working with timeseries involves understanding the <i class="fm-italics">dynamics</i> of a system—its periodic cycles, how it trends over time, its regular regime and its sudden spikes.</p>
+
+  <p class="body"><a id="pgfId-1011846"></a>By far, the most common timeseries-related task is <i class="fm-italics">forecasting</i>: predicting what <a id="marker-1023325"></a>will happen next in a series. Forecast electricity consumption a few hours in advance so you can anticipate demand; forecast revenue a few months in advance so you can plan your budget; forecast the weather a few days in advance so you can plan your schedule. Forecasting is what this chapter focuses on. But there’s actually a wide range of other things you can do with timeseries:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011867"></a><i class="fm-italics1">Classification</i>—Assign one <a class="calibre11" id="marker-1023327"></a>or more categorical labels to a timeseries. For instance, given the timeseries of the activity of a visitor on a website, classify whether the visitor is a bot or a human.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011894"></a><i class="fm-italics1">Event detection</i>—Identify the <a class="calibre11" id="marker-1011907"></a>occurrence of a specific expected event within a continuous data stream. A particularly useful application is “hotword detection,” where a model monitors an audio stream and detects utterances like “Ok Google” or “Hey Alexa.”</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011917"></a><i class="fm-italics1">Anomaly detection</i>—Detect anything <a class="calibre11" id="marker-1011930"></a>unusual happening within a continuous datastream. Unusual activity on your corporate network? Might be an attacker. Unusual readings on a manufacturing line? Time for a human to go take a look. Anomaly detection is typically done via unsupervised learning, because you often don’t know what kind of anomaly you’re looking for, so you can’t train on specific anomaly examples.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1011940"></a>When working with timeseries, you’ll encounter a wide range of domain-specific data-representation techniques. For instance, you have likely already heard about the <i class="fm-italics">Fourier transform</i>, which consists <a id="marker-1011951"></a>of expressing a series of values in terms of a superposition of waves of different frequencies. The Fourier transform can be highly valuable when preprocessing any data that is primarily characterized by its cycles and oscillations (like sound, the vibrations of the frame of a skyscraper, or your brain waves). In the context of deep learning, Fourier analysis (or the related Mel-frequency analysis) and other domain-specific representations can be useful as a form of feature engineering, a way to prepare data before training a model on it, to make the job of the model easier. However, we won’t cover these techniques in these pages; we will instead focus on the modeling part.</p>
+
+  <p class="body"><a id="pgfId-1011961"></a>In this chapter, you’ll learn about recurrent neural <a id="marker-1028344"></a>networks (RNNs) and how to apply them to timeseries forecasting.<a id="marker-1028347"></a></p>
+
+  <h2 class="fm-head" id="heading_id_4"><a id="pgfId-1011978"></a>10.2 A temperature-forecasting example</h2>
+
+  <p class="body"><a id="pgfId-1011997"></a><a id="marker-1011991"></a><a id="marker-1011993"></a>Throughout this chapter, all of our code examples will target a single problem: predicting the temperature 24 hours in the future, given a timeseries of hourly measurements of quantities such as atmospheric pressure and humidity, recorded over the recent past by a set of sensors on the roof of a building. As you will see, it’s a fairly challenging problem!</p>
+
+  <p class="body"><a id="pgfId-1012002"></a>We’ll use this temperature-forecasting task to highlight what makes timeseries data fundamentally different from the kinds of datasets you’ve encountered so far. You’ll see that densely connected networks and convolutional networks aren’t well-equipped to deal with this kind of dataset, while a different kind of machine learning technique—recurrent neural networks (RNNs)—really shines on this type of problem.</p>
+
+  <p class="body"><a id="pgfId-1012008"></a>We’ll work with a weather timeseries dataset recorded at the weather station at the Max Planck Institute for Biogeochemistry in Jena, Germany.<a id="Id-1012011"></a><a href="../Text/10.htm#pgfId-1012011"><sup class="footnotenumber">1</sup></a> In this dataset, 14 different quantities (such as temperature, pressure, humidity, wind direction, and so on) were recorded every 10 minutes over several years. The original data goes back to 2003, but the subset of the data we’ll download is limited to 2009–2016.</p>
+
+  <p class="body"><a id="pgfId-1012027"></a>Let’s start by downloading and uncompressing the data:</p>
+  <pre class="programlisting"><a id="pgfId-1030011"></a>!wget https://s3.amazonaws.com/keras-datasets/jena_climate_2009_2016.csv.zip
+<a id="pgfId-1012047"></a>!unzip jena_climate_2009_2016.csv.zip</pre>
+
+  <p class="body"><a id="pgfId-1012053"></a>Now let’s look at the data.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012110"></a>Listing 10.1 Inspecting the data of the Jena weather dataset</p>
+  <pre class="programlisting"><a id="pgfId-1030024"></a><b class="fm-codebrown">import</b> os
+<a id="pgfId-1030025"></a>fname = os.path.join(<span class="fm-codegreen">"jena_climate_2009_2016.csv"</span>)
+<a id="pgfId-1030026"></a>  
+<a id="pgfId-1030027"></a><b class="fm-codebrown">with</b> open(fname) <b class="fm-codebrown">as</b> f:
+<a id="pgfId-1030028"></a>    data = f.read()
+<a id="pgfId-1030029"></a>  
+<a id="pgfId-1030030"></a>lines = data.split(<span class="fm-codegreen">"\n"</span>)
+<a id="pgfId-1030031"></a>header = lines[<span class="fm-codeblue">0</span>].split(<span class="fm-codegreen">","</span>)
+<a id="pgfId-1030032"></a>lines = lines[<span class="fm-codeblue">1</span>:] 
+<a id="pgfId-1030033"></a><b class="fm-codebrown">print</b>(header) 
+<a id="pgfId-1012201"></a><b class="fm-codebrown">print</b>(len(lines))</pre>
+
+  <p class="body"><a id="pgfId-1012207"></a>This outputs a count of 420,551 lines of data (each line is a timestep: a record of a date and 14 weather-related values), as well as the following header:</p>
+  <pre class="programlisting"><a id="pgfId-1030046"></a>["Date Time",
+<a id="pgfId-1030047"></a> "p (mbar)",
+<a id="pgfId-1030048"></a> "T (degC)",
+<a id="pgfId-1030049"></a> "Tpot (K)",
+<a id="pgfId-1030050"></a> "Tdew (degC)",
+<a id="pgfId-1030051"></a> "rh (%)",
+<a id="pgfId-1030052"></a> "VPmax (mbar)",
+<a id="pgfId-1030053"></a> "VPact (mbar)",
+<a id="pgfId-1030054"></a> "VPdef (mbar)",
+<a id="pgfId-1030055"></a> "sh (g/kg)",
+<a id="pgfId-1030056"></a> "H2OC (mmol/mol)",
+<a id="pgfId-1030057"></a> "rho (g/m**3)",
+<a id="pgfId-1030058"></a> "wv (m/s)",
+<a id="pgfId-1030059"></a> "max. wv (m/s)",
+<a id="pgfId-1012305"></a> "wd (deg)"]</pre>
+
+  <p class="body"><a id="pgfId-1012311"></a>Now, convert all 420,551 lines of data into NumPy arrays: one array for the temperature (in degrees Celsius), and another one for the rest of the data—the features we will use to predict future temperatures. Note that we discard the “Date Time” column.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012368"></a>Listing 10.2 Parsing the data</p>
+  <pre class="programlisting"><a id="pgfId-1030072"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np
+<a id="pgfId-1030073"></a>temperature = np.zeros((len(lines),))
+<a id="pgfId-1030074"></a>raw_data = np.zeros((len(lines), len(header) - <span class="fm-codeblue">1</span>)) 
+<a id="pgfId-1030075"></a><b class="fm-codebrown">for</b> i, line <b class="fm-codebrown">in</b> enumerate(lines):
+<a id="pgfId-1030076"></a>    values = [float(x) <b class="fm-codebrown">for</b> x <b class="fm-codebrown">in</b> line.split(<span class="fm-codegreen">","</span>)[<span class="fm-codeblue">1</span>:]]
+<a id="pgfId-1012431"></a>    temperature[i] = values[<span class="fm-codeblue">1</span>]                       <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1012443"></a>    raw_data[i, :] = values[:]                       <span class="fm-combinumeral">❷</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1034307"></a><span class="fm-combinumeral">❶</span> We store column 1 in the “temperature” array.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1034335"></a><span class="fm-combinumeral">❷</span> We store all columns (including the temperature) in the “raw_data” array.</p>
+
+  <p class="body"><a id="pgfId-1012491"></a>Figure 10.1 shows the plot of temperature (in degrees Celsius) over time. On this plot, you can clearly see the yearly periodicity of temperature—the data spans 8 years.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012548"></a>Listing 10.3 Plotting the temperature timeseries</p>
+  <pre class="programlisting"><a id="pgfId-1030103"></a><b class="fm-codebrown">from</b> matplotlib <b class="fm-codebrown">import</b> pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1012587"></a>plt.plot(range(len(temperature)), temperature)</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-01.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035463"></a>Figure 10.1 Temperature over the full temporal range of the dataset (ºC)</p>
+
+  <p class="body"><a id="pgfId-1012603"></a>Figure 10.2 shows a more narrow plot of the first 10 days of temperature data. Because the data is recorded every 10 minutes, you get 24 × 6 = 144 data points per day.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012674"></a>Listing 10.4 Plotting the first 10 days of the temperature timeseries</p>
+  <pre class="programlisting"><a id="pgfId-1012623"></a>plt.plot(range(<span class="fm-codeblue">1440</span>), temperature[:<span class="fm-codeblue">1440</span>])</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-02.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035516"></a>Figure 10.2 Temperature over the first 10 days of the dataset (ºC)</p>
+
+  <p class="body"><a id="pgfId-1012723"></a>On this plot, you can see daily periodicity, especially for the last 4 days. Also note that this 10-day period must be coming from a fairly cold winter month.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1012743"></a>Always look for periodicity in your data</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1012753"></a>Periodicity over multiple timescales is an important and very common property of timeseries data. Whether you’re looking at the weather, mall parking occupancy, traffic to a website, sales of a grocery store, or steps logged in a fitness tracker, you’ll see daily cycles and yearly cycles (human-generated data also tends to feature weekly cycles). When exploring your data, make sure to look for these patterns.</p>
+  </div>
+
+  <p class="body"><a id="pgfId-1012759"></a>With our dataset, if you were trying to predict average temperature for the next month given a few months of past data, the problem would be easy, due to the reliable year-scale periodicity of the data. But looking at the data over a scale of days, the temperature looks a lot more chaotic. Is this timeseries predictable at a daily scale? Let’s find out.</p>
+
+  <p class="body"><a id="pgfId-1012765"></a>In all our experiments, we’ll use the first 50% of the data for training, the following 25% for validation, and the last 25% for testing. When working with timeseries data, it’s important to use validation and test data that is more recent than the training data, because you’re trying to predict the future given the past, not the reverse, and your validation/test splits should reflect that. Some problems happen to be considerably simpler if you reverse the time axis!</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012822"></a>Listing 10.5 Computing the number of samples we’ll use for each data split</p>
+  <pre class="programlisting"><a id="pgfId-1031486"></a>&gt;&gt;&gt; num_train_samples = int(<span class="fm-codeblue">0.5</span> * len(raw_data))
+<a id="pgfId-1031487"></a>&gt;&gt;&gt; num_val_samples = int(<span class="fm-codeblue">0.25</span> * len(raw_data))
+<a id="pgfId-1031488"></a>&gt;&gt;&gt; num_test_samples = len(raw_data) - num_train_samples - num_val_samples
+<a id="pgfId-1031489"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"num_train_samples:"</span>, num_train_samples)
+<a id="pgfId-1031490"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"num_val_samples:"</span>, num_val_samples)
+<a id="pgfId-1012885"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"num_test_samples:"</span>, num_test_samples)
+<a id="pgfId-1030140"></a>num_train_samples: 210225 
+<a id="pgfId-1030141"></a>num_val_samples: 105112 
+<a id="pgfId-1012903"></a>num_test_samples: 105114 </pre>
+
+  <h3 class="fm-head1" id="heading_id_5"><a id="pgfId-1012909"></a>10.2.1 Preparing the data</h3>
+
+  <p class="body"><a id="pgfId-1012928"></a><a id="marker-1024349"></a><a id="marker-1024350"></a><a id="marker-1024351"></a>The exact formulation of the problem will be as follows: given data covering the previous five days and sampled once per hour, can we predict the temperature in 24 hours?</p>
+
+  <p class="body"><a id="pgfId-1012933"></a>First, let’s preprocess the data to a format a neural network can ingest. This is easy: the data is already numerical, so you don’t need to do any vectorization. But each timeseries in the data is on a different scale (for example, atmospheric pressure, measured in mbar, is around 1,000, while H2OC, measured in millimoles per mole, is around 3). We’ll normalize each timeseries independently so that they all take small values on a similar scale. We’re going to use the first 210,225 timesteps as training data, so we’ll compute the mean and standard deviation only on this fraction of the data.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012990"></a>Listing 10.6 Normalizing the data</p>
+  <pre class="programlisting"><a id="pgfId-1030191"></a>mean = raw_data[:num_train_samples].mean(axis=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1030192"></a>raw_data -= mean
+<a id="pgfId-1030193"></a>std = raw_data[:num_train_samples].std(axis=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1013041"></a>raw_data /= std</pre>
+
+  <p class="body"><a id="pgfId-1013105"></a>Next, let’s create a <code class="fm-code-in-text">Dataset</code> object that <a id="marker-1030183"></a>yields batches of data from the past five days along with a target temperature 24 hours in the future. Because the samples in the dataset are highly redundant (sample <i class="fm-italics">N</i> and sample <i class="fm-italics">N</i> <code class="fm-code-in-text">+</code> <code class="fm-code-in-text">1</code> will have most of their timesteps in common), it would be wasteful to explicitly allocate memory for every sample. Instead, we’ll generate the samples on the fly while only keeping in memory the original <code class="fm-code-in-text">raw_data</code> and <code class="fm-code-in-text">temperature</code> arrays, and nothing more.</p>
+
+  <p class="body"><a id="pgfId-1013114"></a>We could easily write a Python generator to do this, but there’s a built-in dataset utility in Keras that does just that (<code class="fm-code-in-text">timeseries_dataset_from_array()</code>), so we can save ourselves some work by using it. You can generally use it for any kind of timeseries forecasting task.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1013129"></a>Understanding <code class="fm-code-in-text2">timeseries_dataset_from_array()</code></p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1013171"></a>To understand what <code class="fm-code-in-text1">timeseries_dataset_from_array()</code> does, let’s look at a simple example. The general idea is that you provide an array of timeseries data (the <code class="fm-code-in-text1">data</code> argument), and <code class="fm-code-in-text1">timeseries_dataset_from_array()</code> gives you windows extracted from the original timeseries (we’ll call them “sequences”).</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1013256"></a>For example, if you use <code class="fm-code-in-text1">data</code> <code class="fm-code-in-text1">=</code> <code class="fm-code-in-text1">[0</code> <code class="fm-code-in-text1">1</code> <code class="fm-code-in-text1">2</code> <code class="fm-code-in-text1">3</code> <code class="fm-code-in-text1">4</code> <code class="fm-code-in-text1">5</code> <code class="fm-code-in-text1">6]</code> and <code class="fm-code-in-text1">sequence_length=3</code>, then <code class="fm-code-in-text1">timeseries_dataset_from_array()</code> will generate the following samples: <code class="fm-code-in-text1">[0</code> <code class="fm-code-in-text1">1</code> <code class="fm-code-in-text1">2]</code>, <code class="fm-code-in-text1">[1</code> <code class="fm-code-in-text1">2</code> <code class="fm-code-in-text1">3]</code>, <code class="fm-code-in-text1">[2</code> <code class="fm-code-in-text1">3</code> <code class="fm-code-in-text1">4]</code>, <code class="fm-code-in-text1">[3</code> <code class="fm-code-in-text1">4</code> <code class="fm-code-in-text1">5]</code>, <code class="fm-code-in-text1">[4</code> <code class="fm-code-in-text1">5</code> <code class="fm-code-in-text1">6]</code>.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035559"></a>You can also pass a <code class="fm-code-in-text1">targets</code> argument (an array) to <code class="fm-code-in-text1">timeseries_dataset_ from_array()</code>. The first entry of the <code class="fm-code-in-text1">targets</code> array should <a id="marker-1035560"></a>match the desired target for the first sequence that will be generated from the <code class="fm-code-in-text1">data</code> array. So if you’re doing timeseries forecasting, <code class="fm-code-in-text1">targets</code> should be the same array as <code class="fm-code-in-text1">data</code>, offset by some amount.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035561"></a>For instance, with <code class="fm-code-in-text1">data</code> <code class="fm-code-in-text1">=</code> <code class="fm-code-in-text1">[0</code> <code class="fm-code-in-text1">1</code> <code class="fm-code-in-text1">2</code> <code class="fm-code-in-text1">3</code> <code class="fm-code-in-text1">4</code> <code class="fm-code-in-text1">5</code> <code class="fm-code-in-text1">6</code> <code class="fm-code-in-text1">...]</code> and <code class="fm-code-in-text1">sequence_length=3</code>, you could create a dataset to predict the next step in the series by passing <code class="fm-code-in-text1">targets</code> <code class="fm-code-in-text1">=</code> <code class="fm-code-in-text1">[3</code> <code class="fm-code-in-text1">4</code> <code class="fm-code-in-text1">5</code> <code class="fm-code-in-text1">6</code> <code class="fm-code-in-text1">...]</code>. Let’s try it:</p>
+    <pre class="programlisting"><a id="pgfId-1035562"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np 
+<a id="pgfId-1035563"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras
+<a id="pgfId-1035564"></a>int_sequence = np.arange(<span class="fm-codeblue">10</span>)                                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1035565"></a>dummy_dataset = keras.utils.timeseries_dataset_from_array(
+<a id="pgfId-1035566"></a>    data=int_sequence[:-<span class="fm-codeblue">3</span>],                                 <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1035567"></a>    targets=int_sequence[<span class="fm-codeblue">3</span>:],                               <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1035568"></a>    sequence_length=<span class="fm-codeblue">3</span>,                                      <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1035569"></a>    batch_size=<span class="fm-codeblue">2</span>,                                           <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1035570"></a>)
+<a id="pgfId-1035571"></a> 
+<a id="pgfId-1035572"></a><b class="fm-codebrown">for</b> inputs, targets <b class="fm-codebrown">in</b> dummy_dataset:
+<a id="pgfId-1035573"></a>    <b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(inputs.shape[<span class="fm-codeblue">0</span>]):
+<a id="pgfId-1035574"></a>        <b class="fm-codebrown">print</b>([int(x) <b class="fm-codebrown">for</b> x <b class="fm-codebrown">in</b> inputs[i]], int(targets[i]))</pre>
+
+    <p class="fm-code-annotation"><a id="pgfId-1035575"></a><span class="fm-combinumeral">❶</span> Generate an array of sorted integers from 0 to 9.</p>
+
+    <p class="fm-code-annotation"><a id="pgfId-1035576"></a><span class="fm-combinumeral">❷</span> The sequences we generate will be sampled from [0 1 2 3 4 5 6].</p>
+
+    <p class="fm-code-annotation"><a id="pgfId-1035577"></a><span class="fm-combinumeral">❸</span> The target for the sequence that starts at data[N] will be data[N + 3].</p>
+
+    <p class="fm-code-annotation"><a id="pgfId-1035578"></a><span class="fm-combinumeral">❹</span> The sequences will be 3 steps long.</p>
+
+    <p class="fm-code-annotation"><a id="pgfId-1035579"></a><span class="fm-combinumeral">❺</span> The sequences will be batched in batches of size 2.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035580"></a>This bit of code prints the following results:</p>
+    <pre class="programlisting"><a id="pgfId-1035581"></a>[0, 1, 2] 3 
+<a id="pgfId-1035582"></a>[1, 2, 3] 4 
+<a id="pgfId-1035583"></a>[2, 3, 4] 5 
+<a id="pgfId-1035584"></a>[3, 4, 5] 6
+<a id="pgfId-1035585"></a>[4, 5, 6] 7</pre>
+  </div>
+
+  <p class="body"><a id="pgfId-1013622"></a>We’ll use <code class="fm-code-in-text">timeseries_dataset_from_array()</code> to instantiate three datasets: one for training, one for validation, and one for testing.</p>
+
+  <p class="body"><a id="pgfId-1013637"></a>We’ll use the following parameter values:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013643"></a><code class="fm-code-in-text">sampling_rate</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">6</code>—Observations will be sampled at one data point per hour: we will only keep one data point out of 6.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013664"></a><code class="fm-code-in-text">sequence_length</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">120</code>—Observations will go back 5 days (120 hours).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013681"></a><code class="fm-code-in-text">delay</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">sampling_rate</code> <code class="fm-code-in-text">*</code> <code class="fm-code-in-text">(sequence_length</code> <code class="fm-code-in-text">+</code> <code class="fm-code-in-text">24</code> <code class="fm-code-in-text">-</code> <code class="fm-code-in-text">1)</code>—The target for a sequence will be the temperature 24 hours after the end of the sequence.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1013744"></a>When making the training dataset, we’ll pass <code class="fm-code-in-text">start_index</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">0</code> and <code class="fm-code-in-text">end_index</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">num_train_samples</code> to only use the first 50% of the data. For the validation dataset, we’ll pass <code class="fm-code-in-text">start_index</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">num_train_samples</code> and <code class="fm-code-in-text">end_index</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">num_train_samples</code> <code class="fm-code-in-text">+</code> <code class="fm-code-in-text">num_val_samples</code> to use the next 25% of the data. Finally, for the test dataset, we’ll pass <code class="fm-code-in-text">start_index</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">num_train_samples</code> <code class="fm-code-in-text">+</code> <code class="fm-code-in-text">num_val_samples</code> to use the remaining samples.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1013804"></a>Listing 10.7 Instantiating datasets for training, validation, and testing</p>
+  <pre class="programlisting"><a id="pgfId-1030338"></a>sampling_rate = <span class="fm-codeblue">6</span> 
+<a id="pgfId-1030339"></a>sequence_length = <span class="fm-codeblue">120</span> 
+<a id="pgfId-1030340"></a>delay = sampling_rate * (sequence_length + <span class="fm-codeblue">24</span> - <span class="fm-codeblue">1</span>)
+<a id="pgfId-1030341"></a>batch_size = <span class="fm-codeblue">256</span> 
+<a id="pgfId-1030342"></a>  
+<a id="pgfId-1030343"></a>train_dataset = keras.utils.timeseries_dataset_from_array(
+<a id="pgfId-1030344"></a>    raw_data[:-delay],
+<a id="pgfId-1030345"></a>    targets=temperature[delay:],
+<a id="pgfId-1030346"></a>    sampling_rate=sampling_rate,
+<a id="pgfId-1030347"></a>    sequence_length=sequence_length,
+<a id="pgfId-1030348"></a>    shuffle=<code class="fm-codegreen">True</code>,
+<a id="pgfId-1030349"></a>    batch_size=batch_size,
+<a id="pgfId-1030350"></a>    start_index=<span class="fm-codeblue">0</span>,
+<a id="pgfId-1030351"></a>    end_index=num_train_samples)
+<a id="pgfId-1030352"></a>  
+<a id="pgfId-1030353"></a>val_dataset = keras.utils.timeseries_dataset_from_array(
+<a id="pgfId-1030354"></a>    raw_data[:-delay],
+<a id="pgfId-1030355"></a>    targets=temperature[delay:],
+<a id="pgfId-1030356"></a>    sampling_rate=sampling_rate,
+<a id="pgfId-1030357"></a>    sequence_length=sequence_length,
+<a id="pgfId-1030358"></a>    shuffle=<code class="fm-codegreen">True</code>,
+<a id="pgfId-1030359"></a>    batch_size=batch_size,
+<a id="pgfId-1030360"></a>    start_index=num_train_samples,
+<a id="pgfId-1030361"></a>    end_index=num_train_samples + num_val_samples)
+<a id="pgfId-1030362"></a>  
+<a id="pgfId-1030363"></a>test_dataset = keras.utils.timeseries_dataset_from_array(
+<a id="pgfId-1030364"></a>    raw_data[:-delay],
+<a id="pgfId-1030365"></a>    targets=temperature[delay:],
+<a id="pgfId-1030366"></a>    sampling_rate=sampling_rate,
+<a id="pgfId-1030367"></a>    sequence_length=sequence_length,
+<a id="pgfId-1030368"></a>    shuffle=<code class="fm-codegreen">True</code>,
+<a id="pgfId-1030369"></a>    batch_size=batch_size,
+<a id="pgfId-1014026"></a>    start_index=num_train_samples + num_val_samples)</pre>
+
+  <p class="body"><a id="pgfId-1014078"></a>Each dataset yields a tuple <code class="fm-code-in-text">(samples,</code> <code class="fm-code-in-text">targets)</code>, where <code class="fm-code-in-text">samples</code> is a batch of 256 samples, each containing 120 consecutive hours of input data, and <code class="fm-code-in-text">targets</code> is the corresponding array of 256 target temperatures. Note that the samples are randomly shuffled, so two consecutive sequences in a batch (like <code class="fm-code-in-text">samples[0]</code> and <code class="fm-code-in-text">samples[1]</code>) aren’t necessarily temporally close. <a id="marker-1028210"></a><a id="marker-1028211"></a><a id="marker-1028212"></a></p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014145"></a>Listing 10.8 Inspecting the output of one of our datasets</p>
+  <pre class="programlisting"><a id="pgfId-1031531"></a>&gt;&gt;&gt; <b class="fm-codebrown">for</b> samples, targets <b class="fm-codebrown">in</b> train_dataset:
+<a id="pgfId-1031532"></a>&gt;&gt;&gt;     <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"samples shape:"</span>, samples.shape)
+<a id="pgfId-1031533"></a>&gt;&gt;&gt;     <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"targets shape:"</span>, targets.shape)
+<a id="pgfId-1014196"></a>&gt;&gt;&gt;     <b class="fm-codebrown">break</b>
+<a id="pgfId-1030391"></a>samples shape: (256, 120, 14)
+<a id="pgfId-1014208"></a>targets shape: (256,)</pre>
+
+  <h3 class="fm-head1" id="heading_id_6"><a id="pgfId-1014214"></a>10.2.2 A common-sense, non-machine learning baseline</h3>
+
+  <p class="body"><a id="pgfId-1014231"></a><a id="marker-1031377"></a><a id="marker-1031378"></a>Before we start using black-box deep learning models to solve the temperature-prediction problem, let’s try a simple, common-sense approach. It will serve as a sanity check, and it will establish a baseline that we’ll have to beat in order to demonstrate the usefulness of more-advanced machine learning models. Such common-sense baselines can be useful when you’re approaching a new problem for which there is no known solution (yet). A classic example is that of unbalanced classification tasks, where some classes are much more common than others. If your dataset contains 90% instances of class A and 10% instances of class B, then a common-sense approach to the classification task is to always predict “A” when presented with a new sample. Such a classifier is 90% accurate overall, and any learning-based approach should therefore beat this 90% score in order to demonstrate usefulness. Sometimes, such elementary baselines can prove surprisingly hard to beat.</p>
+
+  <p class="body"><a id="pgfId-1014236"></a>In this case, the temperature timeseries can safely be assumed to be continuous (the temperatures tomorrow are likely to be close to the temperatures today) as well as periodical with a daily period. Thus a common-sense approach is to always predict that the temperature 24 hours from now will be equal to the temperature right now. Let’s evaluate this approach, using the mean absolute <a id="marker-1014238"></a>error (MAE) metric, defined as follows:</p>
+  <pre class="programlisting"><a id="pgfId-1014248"></a>np.mean(np.abs(preds - targets))</pre>
+
+  <p class="body"><a id="pgfId-1014262"></a>Here’s the evaluation loop.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014319"></a>Listing 10.9 Computing the common-sense baseline MAE</p>
+  <pre class="programlisting"><a id="pgfId-1030410"></a><b class="fm-codebrown">def</b> evaluate_naive_method(dataset):
+<a id="pgfId-1030411"></a>    total_abs_err = <span class="fm-codeblue">0.</span> 
+<a id="pgfId-1030412"></a>    samples_seen = <span class="fm-codeblue">0</span> 
+<a id="pgfId-1030413"></a>    <b class="fm-codebrown">for</b> samples, targets <b class="fm-codebrown">in</b> dataset:
+<a id="pgfId-1014376"></a>        preds = samples[:, -<span class="fm-codeblue">1</span>, <span class="fm-codeblue">1</span>] * std[<span class="fm-codeblue">1</span>] + mean[<span class="fm-codeblue">1</span>]         <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1030463"></a>        total_abs_err += np.sum(np.abs(preds - targets))
+<a id="pgfId-1030464"></a>        samples_seen += samples.shape[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1030465"></a>    <b class="fm-codebrown">return</b> total_abs_err / samples_seen
+<a id="pgfId-1030466"></a>  
+<a id="pgfId-1030467"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Validation MAE: {evaluate_naive_method(val_dataset):.2f}"</span>) 
+<a id="pgfId-1014417"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test MAE: {evaluate_naive_method(test_dataset):.2f}"</span>)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033829"></a><span class="fm-combinumeral">❶</span> The temperature feature is at column 1, so samples[:, -1, 1] is the last temperature measurement in the input sequence. Recall that we normalized our features, so to retrieve a temperature in degrees Celsius, we need to un-normalize it by multiplying it by the standard deviation and adding back the mean.</p>
+
+  <p class="body"><a id="pgfId-1014443"></a>This common-sense baseline achieves a validation MAE of 2.44 degrees Celsius and a test MAE of 2.62 degrees Celsius. So if you always assume that the temperature 24 hours in the future will be the same as it is now, you will be off by two and a half degrees on average. It’s not too bad, but you probably won’t launch a weather forecasting service based on this heuristic. Now the game is to use your knowledge of deep learning to do better. <a id="marker-1030456"></a><a id="marker-1030457"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_7"><a id="pgfId-1014454"></a>10.2.3 Let’s try a basic machine learning model</h3>
+
+  <p class="body"><a id="pgfId-1014471"></a><a id="marker-1014465"></a><a id="marker-1014467"></a>In the same way that it’s useful to establish a common-sense baseline before trying machine learning approaches, it’s useful to try simple, cheap machine learning models (such as small, densely connected networks) before looking into complicated and computationally expensive models such as RNNs. This is the best way to make sure any further complexity you throw at the problem is legitimate and delivers real benefits.</p>
+
+  <p class="body"><a id="pgfId-1014515"></a>The following listing shows a fully connected model that starts by flattening the data and then runs it through <a id="marker-1030513"></a>two <code class="fm-code-in-text">Dense</code> layers. Note the lack of an activation function on the last <code class="fm-code-in-text">Dense</code> layer, which is typical for a regression problem. We use mean squared <a id="marker-1030514"></a>error (MSE) as the loss, rather than MAE, because unlike MAE, it’s smooth around zero, which is a useful property for gradient descent. We will monitor MAE by adding it as a metric in <code class="fm-code-in-text">compile()</code>.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014575"></a>Listing 10.10 Training and evaluating a densely connected model</p>
+  <pre class="programlisting"><a id="pgfId-1030542"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1030543"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1030544"></a>  
+<a id="pgfId-1030545"></a>inputs = keras.Input(shape=(sequence_length, raw_data.shape[-<span class="fm-codeblue">1</span>]))
+<a id="pgfId-1030546"></a>x = layers.Flatten()(inputs)
+<a id="pgfId-1030547"></a>x = layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030548"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>)(x)
+<a id="pgfId-1030549"></a>model = keras.Model(inputs, outputs)
+<a id="pgfId-1030550"></a>  
+<a id="pgfId-1030551"></a>callbacks = [
+<a id="pgfId-1014666"></a>    keras.callbacks.ModelCheckpoint(<span class="fm-codegreen">"jena_dense.keras"</span>,          <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1030564"></a>                                    save_best_only=<code class="fm-codegreen">True</code>)
+<a id="pgfId-1030565"></a>] 
+<a id="pgfId-1030566"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>, loss=<span class="fm-codegreen">"mse"</span>, metrics=[<span class="fm-codegreen">"mae"</span>])
+<a id="pgfId-1030567"></a>history = model.fit(train_dataset,
+<a id="pgfId-1030568"></a>                    epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1030569"></a>                    validation_data=val_dataset,
+<a id="pgfId-1030570"></a>                    callbacks=callbacks)
+<a id="pgfId-1030571"></a>  
+<a id="pgfId-1014720"></a>model = keras.models.load_model(<span class="fm-codegreen">"jena_dense.keras"</span>)              <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014737"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test MAE: {model.evaluate(test_dataset)[1]:.2f}"</span>)        <span class="fm-combinumeral">❷</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033682"></a><span class="fm-combinumeral">❶</span> We use a callback to save the best-performing model.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033703"></a><span class="fm-combinumeral">❷</span> Reload the best model and evaluate it on the test data.</p>
+
+  <p class="body"><a id="pgfId-1014785"></a>Let’s display the loss curves for validation and training (see figure 10.3).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014842"></a>Listing 10.11 Plotting results</p>
+  <pre class="programlisting"><a id="pgfId-1030599"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1030600"></a>loss = history.history[<span class="fm-codegreen">"mae"</span>]
+<a id="pgfId-1030601"></a>val_loss = history.history[<span class="fm-codegreen">"val_mae"</span>]
+<a id="pgfId-1030602"></a>epochs = range(<span class="fm-codeblue">1</span>, len(loss) + <span class="fm-codeblue">1</span>)
+<a id="pgfId-1030603"></a>plt.figure()
+<a id="pgfId-1030604"></a>plt.plot(epochs, loss, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training MAE"</span>)
+<a id="pgfId-1030605"></a>plt.plot(epochs, val_loss, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation MAE"</span>)
+<a id="pgfId-1030606"></a>plt.title(<span class="fm-codegreen">"Training and validation MAE"</span>)
+<a id="pgfId-1030607"></a>plt.legend()
+<a id="pgfId-1014929"></a>plt.show()</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-03.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035618"></a>Figure 10.3 Training and validation MAE on the Jena temperature-forecasting task with a simple, densely connected network</p>
+
+  <p class="body"><a id="pgfId-1014945"></a>Some of the validation losses are close to the no-learning baseline, but not reliably. This goes to show the merit of having this baseline in the first place: it turns out to be not easy to outperform. Your common sense contains a lot of valuable information to which a machine learning model doesn’t have access.</p>
+
+  <p class="body"><a id="pgfId-1014965"></a>You may wonder, if a simple, well-performing model exists to go from the data to the targets (the common-sense baseline), why doesn’t the model you’re training find it and improve on it? Well, the space of models in which you’re searching for a solution—that is, your hypothesis space—is the space of all possible two-layer networks with the configuration you defined. The common-sense heuristic is just one model among millions that can be represented in this space. It’s like looking for a needle in a haystack. Just because a good solution technically exists in your hypothesis space doesn’t mean you’ll be able to find it via gradient descent.</p>
+
+  <p class="body"><a id="pgfId-1014971"></a>That’s a pretty significant limitation of machine learning in general: unless the learning algorithm is hardcoded to look for a specific kind of simple model, it can sometimes fail to find a simple solution to a simple problem. That’s why leveraging good feature engineering and relevant architecture priors is essential: you need to precisely tell your model what it should be looking for. <a id="marker-1014973"></a><a id="marker-1014976"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_8"><a id="pgfId-1014982"></a>10.2.4 Let’s try a 1D convolutional model</h3>
+
+  <p class="body"><a id="pgfId-1014999"></a><a id="marker-1014993"></a><a id="marker-1014995"></a>Speaking of leveraging the right architecture priors, since our input sequences feature daily cycles, perhaps a convolutional model could work. A temporal convnet could reuse the same representations across different days, much like a spatial convnet can reuse the same representations across different locations in an image.</p>
+
+  <p class="body"><a id="pgfId-1015123"></a>You already know about <a id="marker-1015006"></a>the <code class="fm-code-in-text">Conv2D</code> and <code class="fm-code-in-text">SeparableConv2D</code> layers, which see <a id="marker-1015032"></a>their inputs through small windows that swipe across 2D grids. There are also 1D and even 3D versions <a id="marker-1015038"></a>of <a id="marker-1015044"></a>these <a id="marker-1015050"></a>layers: <code class="fm-code-in-text">Conv1D</code>, <code class="fm-code-in-text">SeparableConv1D</code>, and <code class="fm-code-in-text">Conv3D</code>.<a id="Id-1015087"></a><a href="../Text/10.htm#pgfId-1015087"><sup class="footnotenumber">2</sup></a> The <code class="fm-code-in-text">Conv1D</code> layer relies on 1D windows that slide across input sequences, and the <code class="fm-code-in-text">Conv3D</code> layer relies on cubic windows that slide across input volumes.</p>
+
+  <p class="body"><a id="pgfId-1015132"></a>You can thus build 1D convnets, strictly analogous to 2D convnets. They’re a great fit for any sequence data that follows the translation invariance assumption (meaning that if you slide a window over the sequence, the content of the window should follow the same properties independently of the location of the window).</p>
+
+  <p class="body"><a id="pgfId-1015138"></a>Let’s try one on our temperature-forecasting problem. We’ll pick an initial window length of 24, so that we look at 24 hours of data at a time (one cycle). As we downsample the sequences (via <code class="fm-code-in-text">MaxPooling1D</code> layers), we’ll reduce the window size accordingly:</p>
+  <pre class="programlisting"><a id="pgfId-1030702"></a>inputs = keras.Input(shape=(sequence_length, raw_data.shape[-<span class="fm-codeblue">1</span>]))
+<a id="pgfId-1030703"></a>x = layers.Conv1D(<span class="fm-codeblue">8</span>, <span class="fm-codeblue">24</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1030704"></a>x = layers.MaxPooling1D(<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030705"></a>x = layers.Conv1D(<span class="fm-codeblue">8</span>, <span class="fm-codeblue">12</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030706"></a>x = layers.MaxPooling1D(<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030707"></a>x = layers.Conv1D(<span class="fm-codeblue">8</span>, <span class="fm-codeblue">6</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030708"></a>x = layers.GlobalAveragePooling1D()(x)
+<a id="pgfId-1030709"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>)(x)
+<a id="pgfId-1030710"></a>model = keras.Model(inputs, outputs)
+<a id="pgfId-1030711"></a>  
+<a id="pgfId-1030712"></a>callbacks = [
+<a id="pgfId-1030713"></a>    keras.callbacks.ModelCheckpoint(<span class="fm-codegreen">"jena_conv.keras"</span>,
+<a id="pgfId-1030714"></a>                                    save_best_only=<code class="fm-codegreen">True</code>)
+<a id="pgfId-1030715"></a>]
+<a id="pgfId-1030716"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>, loss=<span class="fm-codegreen">"mse"</span>, metrics=[<span class="fm-codegreen">"mae"</span>])
+<a id="pgfId-1030717"></a>history = model.fit(train_dataset,
+<a id="pgfId-1030718"></a>                    epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1030719"></a>                    validation_data=val_dataset,
+<a id="pgfId-1030720"></a>                    callbacks=callbacks)
+<a id="pgfId-1030721"></a>  
+<a id="pgfId-1030722"></a>model = keras.models.load_model(<span class="fm-codegreen">"jena_conv.keras"</span>)
+<a id="pgfId-1015285"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test MAE: {model.evaluate(test_dataset)[1]:.2f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1015291"></a>We get the training and validation curves shown in figure 10.4.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-04.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035660"></a>Figure 10.4 Training and validation MAE on the Jena temperature-forecasting task with a 1D convnet</p>
+
+  <p class="body"><a id="pgfId-1015307"></a>As it turns out, this model performs even worse than the densely connected one, only achieving a validation MAE of about 2.9 degrees, far from the common-sense baseline. What went wrong here? Two things:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015327"></a>First, weather data doesn’t quite respect the translation invariance assumption. While the data does feature daily cycles, data from a morning follows different properties than data from an evening or from the middle of the night. Weather data is only translation-invariant for a very specific timescale.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015341"></a>Second, order in our data matters—a lot. The recent past is far more informative for predicting the next day’s temperature than data from five days ago. A 1D convnet is not able to leverage this fact. In particular, our max pooling and global average pooling layers are largely destroying order information. <a class="calibre11" id="marker-1015347"></a><a class="calibre11" id="marker-1015350"></a></p>
+    </li>
+  </ul>
+
+  <h3 class="fm-head1" id="heading_id_9"><a id="pgfId-1015356"></a>10.2.5 A first recurrent baseline</h3>
+
+  <p class="body"><a id="pgfId-1015373"></a><a id="marker-1015367"></a><a id="marker-1015369"></a>Neither the fully connected approach nor the convolutional approach did well, but that doesn’t mean machine learning isn’t applicable to this problem. The densely connected approach first flattened the timeseries, which removed the notion of time from the input data. The convolutional approach treated every segment of the data in the same way, even applying pooling, which destroyed order information. Let’s instead look at the data as what it is: a sequence, where causality and order matter.</p>
+
+  <p class="body"><a id="pgfId-1015378"></a>There’s a family of neural network architectures designed specifically for this use case: recurrent neural networks. Among them, the Long Short Term Memory (LSTM) layer has <a id="marker-1015380"></a>long been very popular. We’ll see in a minute how these models work, but let’s start by giving the LSTM layer a try.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015441"></a>Listing 10.12 A simple LSTM-based model</p>
+  <pre class="programlisting"><a id="pgfId-1030753"></a>inputs = keras.Input(shape=(sequence_length, raw_data.shape[-<span class="fm-codeblue">1</span>]))
+<a id="pgfId-1030754"></a>x = layers.LSTM(<span class="fm-codeblue">16</span>)(inputs)
+<a id="pgfId-1030755"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>)(x)
+<a id="pgfId-1030756"></a>model = keras.Model(inputs, outputs)
+<a id="pgfId-1030757"></a>  
+<a id="pgfId-1030758"></a>callbacks = [
+<a id="pgfId-1030759"></a>    keras.callbacks.ModelCheckpoint(<span class="fm-codegreen">"jena_lstm.keras"</span>,
+<a id="pgfId-1030760"></a>                                    save_best_only=<code class="fm-codegreen">True</code>)
+<a id="pgfId-1030761"></a>]
+<a id="pgfId-1030762"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>, loss=<span class="fm-codegreen">"mse"</span>, metrics=[<span class="fm-codegreen">"mae"</span>])
+<a id="pgfId-1030763"></a>history = model.fit(train_dataset,
+<a id="pgfId-1030764"></a>                    epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1030765"></a>                    validation_data=val_dataset,
+<a id="pgfId-1030766"></a>                    callbacks=callbacks)
+<a id="pgfId-1030768"></a>model = keras.models.load_model(<span class="fm-codegreen">"jena_lstm.keras"</span>) 
+<a id="pgfId-1015568"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test MAE: {model.evaluate(test_dataset)[1]:.2f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1015574"></a>Figure 10.5 shows the results. Much better! We achieve a validation MAE as low as 2.36 degrees and a test MAE of 2.55 degrees. The LSTM-based model can finally beat the common-sense baseline (albeit just by a bit, for now), demonstrating the value of machine learning on this task.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-05.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035705"></a>Figure 10.5 Training and validation MAE on the Jena temperature-forecasting task with an LSTM-based model (note that we omit epoch 1 on this graph, because the high training MAE (7.75) at epoch 1 would distort the scale)</p>
+
+  <p class="body"><a id="pgfId-1015590"></a>But why did the LSTM model perform markedly better than the densely connected one or the convnet? And how can we further refine the model? To answer this, let’s take a closer look at recurrent neural networks. <a id="marker-1015606"></a><a id="marker-1015609"></a><a id="marker-1015613"></a><a id="marker-1015615"></a></p>
+
+  <h2 class="fm-head" id="heading_id_10"><a id="pgfId-1015621"></a>10.3 Understanding recurrent neural networks</h2>
+
+  <p class="body"><a id="pgfId-1015656"></a><a id="marker-1015634"></a><a id="marker-1015636"></a><a id="marker-1015638"></a><a id="marker-1015640"></a>A major characteristic of all neural networks you’ve seen so far, such as densely connected networks and convnets, is that they have no memory. Each input shown to them is processed independently, with no state kept between inputs. With such networks, in order to process a sequence or a temporal series of data points, you have to show the entire sequence to the network at once: turn it into a single data point. For instance, this is what we did in the densely connected network example: we flattened our five days of data into a single large vector and processed it in one go. Such networks are <a id="marker-1015645"></a>called <i class="fm-italics">feedforward networks</i>.</p>
+
+  <p class="body"><a id="pgfId-1015665"></a>In contrast, as you’re reading the present sentence, you’re processing it word by word—or rather, eye saccade by eye saccade—while keeping memories of what came before; this gives you a fluid representation of the meaning conveyed by this sentence. Biological intelligence processes information incrementally while maintaining an internal model of what it’s processing, built from past information and constantly updated as new information comes in.</p>
+
+  <p class="body"><a id="pgfId-1015697"></a>A <i class="fm-italics">recurrent neural network</i> (RNN) adopts the same principle, albeit in an extremely simplified version: it processes sequences by iterating through the sequence elements and maintaining a <i class="fm-italics">state</i> that contains information relative to what it has seen so far. In effect, an RNN is a type of neural network that has an internal <i class="fm-italics">loop</i> (see figure 10.6).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-06.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035747"></a>Figure 10.6 A recurrent network: a network with a loop</p>
+
+  <p class="body"><a id="pgfId-1015716"></a>The state of the RNN is reset between processing two different, independent sequences (such as two samples in a batch), so you still consider one sequence to be a single data point: a single input to the network. What changes is that this data point is no longer processed in a single step; rather, the network internally loops over sequence elements.</p>
+
+  <p class="body"><a id="pgfId-1015812"></a>To make these notions of <i class="fm-italics">loop</i> and <i class="fm-italics">state</i> clear, let’s implement the forward pass of a toy RNN. This RNN takes as input a sequence of vectors, which we’ll encode as a rank-2 tensor of size <code class="fm-code-in-text">(timesteps,</code> <code class="fm-code-in-text">input_features)</code>. It loops over timesteps, and at each timestep, it considers its current state at <code class="fm-code-in-text">t</code> and the input at <code class="fm-code-in-text">t</code> (of shape <code class="fm-code-in-text">(input_features,)</code>, and combines them to obtain the output at <code class="fm-code-in-text">t</code>. We’ll then set the state for the next step to be this previous output. For the first timestep, the previous output isn’t defined; hence, there is no current state. So we’ll initialize the state as an all-zero vector called the <i class="fm-italics">initial</i> state of the network.</p>
+
+  <p class="body"><a id="pgfId-1015821"></a>In pseudocode, this is the RNN.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015878"></a>Listing 10.13 Pseudocode RNN</p>
+  <pre class="programlisting"><a id="pgfId-1015827"></a>state_t = <span class="fm-codeblue">0</span>                         <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1015923"></a><b class="fm-codebrown">for</b> input_t <b class="fm-codebrown">in</b> input_sequence:      <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1030830"></a>    output_t = f(input_t, state_t)
+<a id="pgfId-1015941"></a>    state_t = output_t              <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033494"></a><span class="fm-combinumeral">❶</span> The state at t</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033515"></a><span class="fm-combinumeral">❷</span> Iterates over sequence elements</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033532"></a><span class="fm-combinumeral">❸</span> The previous output becomes the state for the next iteration.</p>
+
+  <p class="body"><a id="pgfId-1016031"></a>You can even flesh out the function <code class="fm-code-in-text">f</code>: the transformation of the input and state into an output will be parameterized by two matrices, <code class="fm-code-in-text">W</code> and <code class="fm-code-in-text">U</code>, and a bias vector. It’s similar to the transformation operated by a densely connected layer in a feedforward network.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016091"></a>Listing 10.14 More-detailed pseudocode for the RNN</p>
+  <pre class="programlisting"><a id="pgfId-1030845"></a>state_t = <span class="fm-codeblue">0</span> 
+<a id="pgfId-1030846"></a><b class="fm-codebrown">for</b> input_t <b class="fm-codebrown">in</b> input_sequence:
+<a id="pgfId-1030847"></a>    output_t = activation(dot(W, input_t) + dot(U, state_t) + b)
+<a id="pgfId-1016142"></a>    state_t = output_t</pre>
+
+  <p class="body"><a id="pgfId-1016148"></a>To make these notions absolutely unambiguous, let’s write a naive NumPy implementation of the forward pass of the simple RNN.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016205"></a>Listing 10.15 NumPy implementation of a simple RNN</p>
+  <pre class="programlisting"><a id="pgfId-1030906"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np
+<a id="pgfId-1016244"></a>timesteps = <span class="fm-codeblue">100</span>                                                       <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1016256"></a>input_features = <span class="fm-codeblue">32</span>                                                   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1016268"></a>output_features = <span class="fm-codeblue">64</span>                                                  <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1016280"></a>inputs = np.random.random((timesteps, input_features))                <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1016292"></a>state_t = np.zeros((output_features,))                                <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1016304"></a>W = np.random.random((output_features, input_features))               <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1016316"></a>U = np.random.random((output_features, output_features))              <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1016328"></a>b = np.random.random((output_features,))                              <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1016340"></a>successive_outputs = []
+<a id="pgfId-1016346"></a><b class="fm-codebrown">for</b> input_t <b class="fm-codebrown">in</b> inputs:                                                <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1016358"></a>    output_t = np.tanh(np.dot(W, input_t) + np.dot(U, state_t) + b)   <span class="fm-combinumeral">❽</span>
+<a id="pgfId-1016370"></a>    successive_outputs.append(output_t)                               <span class="fm-combinumeral">❾</span>
+<a id="pgfId-1016382"></a>    state_t = output_t                                                <span class="fm-combinumeral">❿</span>
+<a id="pgfId-1016394"></a>final_output_sequence = np.stack(successive_outputs, axis=<span class="fm-codeblue">0</span>)          <span class="fm-combinumeral">⓫</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032649"></a><span class="fm-combinumeral">❶</span> Number of timesteps in the input sequence</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032669"></a><span class="fm-combinumeral">❷</span> Dimensionality of the input feature space</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032686"></a><span class="fm-combinumeral">❸</span> Dimensionality of the output feature space</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032703"></a><span class="fm-combinumeral">❹</span> Input data: random noise for the sake of the example</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032720"></a><span class="fm-combinumeral">❺</span> Initial state: an all-zero vector</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032737"></a><span class="fm-combinumeral">❻</span> Creates random weight matrices</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032754"></a><span class="fm-combinumeral">❼</span> input_t is a vector of shape (input_features,).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032771"></a><span class="fm-combinumeral">❽</span> Combines the input with the current state (the previous output) to obtain the current output. We use tanh to add non-linearity (we could use any other activation function).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032788"></a><span class="fm-combinumeral">❾</span> Stores this output in a list</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032805"></a><span class="fm-combinumeral">❿</span> Updates the state of the network for the next timestep</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032822"></a><span class="fm-combinumeral">⓫</span> The final output is a rank-2 tensor of shape (timesteps, output_features).</p>
+
+  <p class="body"><a id="pgfId-1016586"></a>That’s easy enough. In summary, an RNN is a <code class="fm-code-in-text">for</code> loop that reuses quantities computed during the previous iteration of the loop, nothing more. Of course, there are many different RNNs fitting this definition that you could build—this example is one of the simplest RNN formulations. RNNs are characterized by their step function, such as the following function in this case (see figure 10.7).</p>
+  <pre class="programlisting"><a id="pgfId-1016601"></a>output_t = np.tanh(np.dot(W, input_t) + np.dot(U, state_t) + b)</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-07.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035793"></a>Figure 10.7 A simple RNN, unrolled over time</p>
+
+  <p class="fm-callout"><a id="pgfId-1016625"></a><span class="fm-callout-head">Note</span> In this example, the final output is a rank-2 tensor of shape <code class="fm-code-in-text1">(timesteps,</code> <code class="fm-code-in-text1">output_features)</code>, where each timestep is the output of the loop at time <code class="fm-code-in-text1">t</code>. Each timestep <code class="fm-code-in-text1">t</code> in the output tensor contains information about timesteps <code class="fm-code-in-text1">0</code> to <code class="fm-code-in-text1">t</code> in the input sequence—about the entire past. For this reason, in many cases, you don’t need this full sequence of outputs; you just need the last output (<code class="fm-code-in-text1">output_t</code> at the end of the loop), because it already contains information about the entire sequence.</p>
+
+  <h3 class="fm-head1" id="heading_id_11"><a id="pgfId-1016714"></a>10.3.1 A recurrent layer in Keras</h3>
+
+  <p class="body"><a id="pgfId-1016747"></a><a id="marker-1016725"></a><a id="marker-1016727"></a><a id="marker-1016729"></a><a id="marker-1016731"></a>The process we just naively implemented in NumPy corresponds to an actual Keras <a id="marker-1016736"></a>layer—the <code class="fm-code-in-text">SimpleRNN</code> layer.</p>
+
+  <p class="body"><a id="pgfId-1016822"></a>There is one minor difference: <code class="fm-code-in-text">SimpleRNN</code> processes batches of sequences, like all other Keras layers, not a single sequence as in the NumPy example. This means it takes inputs of shape <code class="fm-code-in-text">(batch_size,</code> <code class="fm-code-in-text">timesteps,</code> <code class="fm-code-in-text">input_features)</code>, rather than <code class="fm-code-in-text">(timesteps,</code> <code class="fm-code-in-text">input_features)</code>. When specifying the <code class="fm-code-in-text">shape</code> argument of the initial <code class="fm-code-in-text">Input()</code>, note that you can set the <code class="fm-code-in-text">timesteps</code> entry to <code class="fm-code-in-text">None</code>, which enables your network to process sequences of arbitrary length.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016882"></a>Listing 10.16 An RNN layer that can process sequences of any length</p>
+  <pre class="programlisting"><a id="pgfId-1030975"></a>num_features = <span class="fm-codeblue">14</span> 
+<a id="pgfId-1030976"></a>inputs = keras.Input(shape=(<code class="fm-codegreen">None</code>, num_features))
+<a id="pgfId-1016927"></a>outputs = layers.SimpleRNN(<span class="fm-codeblue">16</span>)(inputs)</pre>
+
+  <p class="body"><a id="pgfId-1016933"></a>This is especially useful if your model is meant to process sequences of variable length. However, if all of your sequences have the same length, I recommend specifying a complete input shape, since it enables <code class="fm-code-in-text">model.summary()</code> to display <a id="marker-1016944"></a>output length information, which is always nice, and it can unlock some performance optimizations (see the “Note on RNN runtime performance” sidebar a little later in this chapter).</p>
+
+  <p class="body"><a id="pgfId-1017020"></a>All recurrent layers in Keras (<code class="fm-code-in-text">SimpleRNN</code>, <code class="fm-code-in-text">LSTM</code>, and <code class="fm-code-in-text">GRU</code>) can be run in two different modes: they can return either full sequences of successive outputs for each timestep (a rank-3 tensor of shape <code class="fm-code-in-text">(batch_size,</code> <code class="fm-code-in-text">timesteps,</code> <code class="fm-code-in-text">output_features)</code>) or return only the last output for each input sequence (a rank-2 tensor of shape <code class="fm-code-in-text">(batch_ size,</code> <code class="fm-code-in-text">output_features)</code>). These two modes are controlled by the <code class="fm-code-in-text">return_sequences</code> constructor argument. Let’s look at an example that uses <code class="fm-code-in-text">SimpleRNN</code> and returns only the output at the last timestep.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017080"></a>Listing 10.17 An RNN layer that returns only its last output step</p>
+  <pre class="programlisting"><a id="pgfId-1031685"></a>&gt;&gt;&gt; num_features = <span class="fm-codeblue">14</span> 
+<a id="pgfId-1031686"></a>&gt;&gt;&gt; steps = <span class="fm-codeblue">120</span> 
+<a id="pgfId-1031687"></a>&gt;&gt;&gt; inputs = keras.Input(shape=(steps, num_features))
+<a id="pgfId-1017131"></a>&gt;&gt;&gt; outputs = layers.SimpleRNN(<span class="fm-codeblue">16</span>, return_sequences=<code class="fm-codegreen">False</code>)(inputs)   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1017143"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(outputs.shape)
+<a id="pgfId-1017149"></a>(None, 16)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032601"></a><span class="fm-combinumeral">❶</span> Note that return_sequences=False is the default.</p>
+
+  <p class="body"><a id="pgfId-1017175"></a>The following example returns the full state sequence.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017232"></a>Listing 10.18 An RNN layer that returns its full output sequence</p>
+  <pre class="programlisting"><a id="pgfId-1031754"></a>&gt;&gt;&gt; num_features = <span class="fm-codeblue">14</span> 
+<a id="pgfId-1031755"></a>&gt;&gt;&gt; steps = <span class="fm-codeblue">120</span> 
+<a id="pgfId-1031756"></a>&gt;&gt;&gt; inputs = keras.Input(shape=(steps, num_features))
+<a id="pgfId-1031757"></a>&gt;&gt;&gt; outputs = layers.SimpleRNN(<span class="fm-codeblue">16</span>, return_sequences=<code class="fm-codegreen">True</code>)(inputs)
+<a id="pgfId-1017295"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(outputs.shape)
+<a id="pgfId-1017301"></a>(120, 16)</pre>
+
+  <p class="body"><a id="pgfId-1017307"></a>It’s sometimes useful to stack several recurrent layers one after the other in order to increase the representational power of a network. In such a setup, you have to get all of the intermediate layers to return a full sequence of outputs.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017364"></a>Listing 10.19 Stacking RNN layers</p>
+  <pre class="programlisting"><a id="pgfId-1031031"></a>inputs = keras.Input(shape=(steps, num_features))
+<a id="pgfId-1031032"></a>x = layers.SimpleRNN(<span class="fm-codeblue">16</span>, return_sequences=<code class="fm-codegreen">True</code>)(inputs)
+<a id="pgfId-1031033"></a>x = layers.SimpleRNN(<span class="fm-codeblue">16</span>, return_sequences=<code class="fm-codegreen">True</code>)(x)
+<a id="pgfId-1017415"></a>outputs = layers.SimpleRNN(<span class="fm-codeblue">16</span>)(x)</pre>
+
+  <p class="body"><a id="pgfId-1017457"></a>In practice, you’ll rarely work with the <code class="fm-code-in-text">SimpleRNN</code> layer. It’s generally too simplistic to be of real use. In particular, <code class="fm-code-in-text">SimpleRNN</code> has a major issue: although it should theoretically be able to retain at time <code class="fm-code-in-text">t</code> information about inputs seen many timesteps before, such long-term dependencies prove impossible to learn in practice. This is due to the <i class="fm-italics">vanishing gradient problem</i>, an effect <a id="marker-1017462"></a>that is similar to what is observed with non-recurrent networks (feedforward networks) that are many layers deep: as you keep adding layers to a network, the network eventually becomes untrainable. The theoretical reasons for this effect were studied by Hochreiter, Schmidhuber, and Bengio in the early 1990s.<a id="Id-1017469"></a><a href="../Text/10.htm#pgfId-1017469"><sup class="footnotenumber">3</sup></a></p>
+
+  <p class="body"><a id="pgfId-1017523"></a>Thankfully, <code class="fm-code-in-text">SimpleRNN</code> isn’t the only recurrent layer available in Keras. There are two <a id="marker-1017502"></a>others, <code class="fm-code-in-text">LSTM</code> and <code class="fm-code-in-text">GRU</code>, which were <a id="marker-1017528"></a>designed to address these issues.</p>
+
+  <p class="body"><a id="pgfId-1017538"></a>Let’s consider the <code class="fm-code-in-text">LSTM</code> layer. The underlying Long Short-Term Memory (LSTM) algorithm was developed by Hochreiter and Schmidhuber in 1997;<a id="Id-1017550"></a><a href="../Text/10.htm#pgfId-1017550"><sup class="footnotenumber">4</sup></a> it was the culmination of their research on the vanishing gradient problem.</p>
+
+  <p class="body"><a id="pgfId-1017591"></a>This layer is a variant of the <code class="fm-code-in-text">SimpleRNN</code> layer you already know about; it adds a way to carry information across many timesteps. Imagine a conveyor belt running parallel to the sequence you’re processing. Information from the sequence can jump onto the conveyor belt at any point, be transported to a later timestep, and jump off, intact, when you need it. This is essentially what LSTM does: it saves information for later, thus preventing older signals from gradually vanishing during processing. This should remind you of <i class="fm-italics">residual connections</i>, which you <a id="marker-1017596"></a>learned about in chapter 9: it’s pretty much the same idea.</p>
+
+  <p class="body"><a id="pgfId-1017672"></a>To understand this process in detail, let’s start from the <code class="fm-code-in-text">SimpleRNN</code> cell (see figure 10.8). Because you’ll have a lot of weight matrices, index the <code class="fm-code-in-text">W</code> and <code class="fm-code-in-text">U</code> matrices in the cell, with the letter <code class="fm-code-in-text">o</code> (<code class="fm-code-in-text">Wo</code> and <code class="fm-code-in-text">Uo</code>) for <i class="fm-italics">output</i>.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-08.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035835"></a>Figure 10.8 The starting point of an <code class="fm-code-in-text">LSTM</code> layer: a <code class="fm-code-in-text">SimpleRNN</code></p>
+
+  <p class="body"><a id="pgfId-1017737"></a>Let’s add to this picture an additional data flow that carries information across timesteps. Call its values at different timesteps <code class="fm-code-in-text">c_t</code>, where C stands for <i class="fm-italics">carry</i>. This information will have the following impact on the cell: it will be combined with the input connection and the recurrent connection (via a dense transformation: a dot product with a weight matrix followed by a bias add and the application of an activation function), and it will affect the state being sent to the next timestep (via an activation function and a multiplication operation). Conceptually, the carry dataflow is a way to modulate the next output and the next state (see figure 10.9). Simple so far.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-09.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035877"></a>Figure 10.9 Going from a SimpleRNN to an LSTM: adding a carry track</p>
+
+  <p class="body"><a id="pgfId-1017756"></a>Now the subtlety—the way the next value of the carry dataflow is computed. It involves three distinct transformations. All three have the form of a <code class="fm-code-in-text">SimpleRNN</code> cell:</p>
+  <pre class="programlisting"><a id="pgfId-1017785"></a>y = activation(dot(state_t, U) + dot(input_t, W) + b)</pre>
+
+  <p class="body"><a id="pgfId-1017825"></a>But all three transformations have their own weight matrices, which we’ll index with the letters <code class="fm-code-in-text">i</code>, <code class="fm-code-in-text">f</code>, and <code class="fm-code-in-text">k</code>. Here’s what we have so far (it may seem a bit arbitrary, but bear with me).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017885"></a>Listing 10.20 Pseudocode details of the LSTM architecture (1/2)</p>
+  <pre class="programlisting"><a id="pgfId-1031052"></a>output_t = activation(dot(state_t, Uo) + dot(input_t, Wo) + dot(c_t, Vo) + bo)
+<a id="pgfId-1031053"></a>i_t = activation(dot(state_t, Ui) + dot(input_t, Wi) + bi)
+<a id="pgfId-1031054"></a>f_t = activation(dot(state_t, Uf) + dot(input_t, Wf) + bf)
+<a id="pgfId-1017936"></a>k_t = activation(dot(state_t, Uk) + dot(input_t, Wk) + bk)</pre>
+
+  <p class="body"><a id="pgfId-1017978"></a>We obtain the new carry state (the next <code class="fm-code-in-text">c_t</code>) by combining <code class="fm-code-in-text">i_t</code>, <code class="fm-code-in-text">f_t</code>, and <code class="fm-code-in-text">k_t</code>.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018038"></a>Listing 10.21 Pseudocode details of the LSTM architecture (2/2)</p>
+  <pre class="programlisting"><a id="pgfId-1017987"></a>c_t+1 = i_t * k_t + c_t * f_t</pre>
+
+  <p class="body"><a id="pgfId-1018077"></a>Add this as shown in figure 10.10, and that’s it. Not so complicated—merely a tad complex.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-10.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035919"></a>Figure 10.10 Anatomy of an <code class="fm-code-in-text">LSTM</code></p>
+
+  <p class="body"><a id="pgfId-1018179"></a>If you want to get philosophical, you can interpret what each of these operations is meant to do. For instance, you can say that multiplying <code class="fm-code-in-text">c_t</code> and <code class="fm-code-in-text">f_t</code> is a way to deliberately forget irrelevant information in the carry dataflow. Meanwhile, <code class="fm-code-in-text">i_t</code> and <code class="fm-code-in-text">k_t</code> provide information about the present, updating the carry track with new information. But at the end of the day, these interpretations don’t mean much, because what these operations <i class="fm-italics">actually</i> do is determined by the contents of the weights parameterizing them; and the weights are learned in an end-to-end fashion, starting over with each training round, making it impossible to credit this or that operation with a specific purpose. The specification of an RNN cell (as just described) determines your hypothesis space—the space in which you’ll search for a good model configuration during training—but it doesn’t determine what the cell does; that is up to the cell weights. The same cell with different weights can be doing very different things. So the combination of operations making up an RNN cell is better interpreted as a set of <i class="fm-italics">constraints</i> on your search, not as a <i class="fm-italics">design</i> in an engineering sense.</p>
+
+  <p class="body"><a id="pgfId-1018188"></a>Arguably, the choice of such constraints—the question of how to implement RNN cells—is better left to optimization algorithms (like genetic algorithms or reinforcement-learning processes) than to human engineers. In the future, that’s how we’ll build our models. In summary: you don’t need to understand anything about the specific architecture of an LSTM cell; as a human, it shouldn’t be your job to understand it. Just keep in mind what the LSTM cell is meant to do: allow past information to be reinjected at a later time, thus fighting the vanishing-gradient problem. <a id="marker-1018190"></a><a id="marker-1018193"></a><a id="marker-1018195"></a><a id="marker-1018197"></a><a id="marker-1018201"></a><a id="marker-1018203"></a></p>
+
+  <h2 class="fm-head" id="heading_id_12"><a id="pgfId-1018209"></a>10.4 Advanced use of recurrent neural networks</h2>
+
+  <p class="body"><a id="pgfId-1018219"></a>So far you’ve learned</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018225"></a>What RNNs are and how they work</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018239"></a>What LSTM is, and why it works better on long sequences than a naive RNN</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018249"></a>How to use Keras RNN layers to process sequence data</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1018259"></a>Next, we’ll review a number of more advanced features of RNNs, which can help you get the most out of your deep learning sequence models. By the end of the section, you’ll know most of what there is to know about using recurrent networks with Keras.</p>
+
+  <p class="body"><a id="pgfId-1018265"></a>We’ll cover the following:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018271"></a><i class="fm-italics1">Recurrent dropout</i>—This is <a class="calibre11" id="marker-1018288"></a>a variant of dropout, used to fight overfitting in recurrent layers.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018298"></a><i class="fm-italics1">Stacking recurrent layers</i>—This increases <a class="calibre11" id="marker-1018311"></a>the representational power of the model (at the cost of higher computational loads).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018321"></a><i class="fm-italics1">Bidirectional recurrent layers</i>—These present <a class="calibre11" id="marker-1018334"></a>the same information to a recurrent network in different ways, increasing accuracy and mitigating forgetting issues.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1018344"></a>We’ll use these techniques to refine our temperature-forecasting RNN.</p>
+
+  <h3 class="fm-head1" id="heading_id_13"><a id="pgfId-1018350"></a>10.4.1 Using recurrent dropout to fight overfitting</h3>
+
+  <p class="body"><a id="pgfId-1018371"></a><a id="marker-1018361"></a><a id="marker-1018363"></a><a id="marker-1018365"></a><a id="marker-1018367"></a>Let’s go back to the LSTM-based model we used in section 10.2.5—our first model able to beat the common-sense baseline. If you look at the training and validation curves (figure 10.5), it’s evident that the model is quickly overfitting, despite only having very few units: the training and validation losses start to diverge considerably after a few epochs. You’re already familiar with a classic technique for fighting this phenomenon: dropout, which randomly zeros out input units of a layer in order to break happenstance correlations in the training data that the layer is exposed to. But how to correctly apply dropout in recurrent networks isn’t a trivial question.</p>
+
+  <p class="body"><a id="pgfId-1018407"></a>It has long been known that applying dropout before a recurrent layer hinders learning rather than helping with regularization. In 2016, Yarin Gal, as part of his PhD thesis on Bayesian deep learning,<a id="Id-1018379"></a><a href="../Text/10.htm#pgfId-1018379"><sup class="footnotenumber">5</sup></a> determined the proper way to use dropout with a recurrent network: the same dropout mask (the same pattern of dropped units) should be applied at every timestep, instead of using a dropout mask that varies randomly from timestep to timestep. What’s more, in order to regularize the representations formed by the recurrent gates of layers such as <code class="fm-code-in-text">GRU</code> and <code class="fm-code-in-text">LSTM</code>, a temporally constant dropout mask should be applied to the inner recurrent activations of the layer (a recurrent dropout mask). Using the same dropout mask at every timestep allows the network to properly propagate its learning error through time; a temporally random dropout mask would disrupt this error signal and be harmful to the learning process.</p>
+
+  <p class="body"><a id="pgfId-1018442"></a>Yarin Gal did his research using Keras and helped build this mechanism directly into Keras recurrent layers. Every recurrent layer in Keras has two dropout-related arguments: <code class="fm-code-in-text">dropout</code>, a float specifying the dropout rate for input units of the layer, and <code class="fm-code-in-text">recurrent_dropout</code>, specifying the dropout rate of the recurrent units. Let’s add recurrent dropout to the <code class="fm-code-in-text">LSTM</code> layer of our first LSTM example and see how doing so impacts overfitting.</p>
+
+  <p class="body"><a id="pgfId-1018451"></a>Thanks to dropout, we won’t need to rely as much on network size for regularization, so we’ll use an LSTM layer with twice as many units, which should, hopefully, be more expressive (without dropout, this network would have started overfitting right away—try it). Because networks being regularized with dropout always take much longer to fully converge, we’ll train the model for five times as many epochs.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018508"></a>Listing 10.22 Training and evaluating a dropout-regularized LSTM</p>
+  <pre class="programlisting"><a id="pgfId-1031094"></a>inputs = keras.Input(shape=(sequence_length, raw_data.shape[-<span class="fm-codeblue">1</span>]))
+<a id="pgfId-1031095"></a>x = layers.LSTM(<span class="fm-codeblue">32</span>, recurrent_dropout=<span class="fm-codeblue">0.25</span>)(inputs)
+<a id="pgfId-1018553"></a>x = layers.Dropout(<span class="fm-codeblue">0.5</span>)(x)                             <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1031117"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>)(x)
+<a id="pgfId-1031118"></a>model = keras.Model(inputs, outputs)
+<a id="pgfId-1031119"></a>  
+<a id="pgfId-1031120"></a>callbacks = [
+<a id="pgfId-1031121"></a>    keras.callbacks.ModelCheckpoint(<span class="fm-codegreen">"jena_lstm_dropout.keras"</span>,
+<a id="pgfId-1031122"></a>                                    save_best_only=<code class="fm-codegreen">True</code>)
+<a id="pgfId-1031123"></a>]
+<a id="pgfId-1031124"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>, loss=<span class="fm-codegreen">"mse"</span>, metrics=[<span class="fm-codegreen">"mae"</span>])
+<a id="pgfId-1031125"></a>history = model.fit(train_dataset,
+<a id="pgfId-1031126"></a>                    epochs=<span class="fm-codeblue">50</span>,
+<a id="pgfId-1031127"></a>                    validation_data=val_dataset,
+<a id="pgfId-1018630"></a>                    callbacks=callbacks)   </pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032516"></a><span class="fm-combinumeral">❶</span> To regularize the Dense layer, we also add a Dropout layer after the LSTM.</p>
+
+  <p class="body"><a id="pgfId-1018656"></a>Figure 10.11 shows the results. Success! We’re no longer overfitting during the first 20 epochs. We achieve a validation MAE as low as 2.27 degrees (7% improvement over the no-learning baseline) and a test MAE of 2.45 degrees (6.5% improvement over the baseline). Not too bad.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1018672"></a>RNN runtime performance</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1025175"></a>Recurrent models with very few parameters, like the ones in this chapter, tend to be significantly faster on a multicore CPU than on GPU, because they only involve small matrix multiplications, and the chain of multiplications is not well parallelizable due to the presence <a id="marker-1034589"></a>of a <code class="fm-code-in-text1">for</code> loop. But larger RNNs can greatly benefit from a GPU runtime.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1018744"></a>When using a Keras <code class="fm-code-in-text1">LSTM</code> or <code class="fm-code-in-text1">GRU</code> layer on GPU with default keyword arguments, your layer will be leveraging a cuDNN kernel, a highly <a id="marker-1034621"></a>optimized, low-level, NVIDIA-provided implementation of the underlying algorithm (I mentioned these in the previous chapter). As usual, cuDNN kernels are a mixed blessing: they’re fast, but inflexible—if you try to do anything not supported by the default kernel, you will suffer a dramatic slowdown, which more or less forces you to stick to what NVIDIA happens to provide. For instance, recurrent dropout isn’t supported by the LSTM and GRU cuDNN kernels, so adding it to your layers forces the runtime to fall back to the regular TensorFlow implementation, which is generally two to five times slower on GPU (even though its computational cost is the same).</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1018815"></a>As a way to speed up your RNN layer when you can’t use cuDNN, you can try <i class="fm-italics">unrolling</i> it. Unrolling a <code class="fm-code-in-text1">for</code> loop consists of removing the loop and simply inlining its content <i class="fm-italics">N</i> times. In the case of the <code class="fm-code-in-text1">for</code> loop of an RNN, unrolling can help TensorFlow optimize the underlying computation graph. However, it will also considerably increase the memory consumption of your RNN—as such, it’s only viable for relatively small sequences (around 100 steps or fewer). Also, note that you can only do this if the number of timesteps in the data is known in advance by the model (that is to say, if you pass a <code class="fm-code-in-text1">shape</code> without any <code class="fm-code-in-text1">None</code> entries to your initial <code class="fm-code-in-text1">Input()</code>). It works like this:</p>
+    <pre class="programlisting"><a id="pgfId-1018824"></a>inputs = keras.Input(shape=(sequence_length, num_features))       <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1018848"></a>x = layers.LSTM(<span class="fm-codeblue">32</span>, recurrent_dropout=<span class="fm-codeblue">0.2</span>, unroll=<code class="fm-codegreen">True</code>)(inputs)   <span class="fm-combinumeral">❷</span></pre>
+
+    <p class="fm-code-annotation"><a id="pgfId-1032426"></a><span class="fm-combinumeral">❶</span> sequence_length cannot be None.</p>
+
+    <p class="fm-code-annotation"><a id="pgfId-1032427"></a><span class="fm-combinumeral">❷</span> Pass unroll=True to enable unrolling.</p>
+  </div>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-11.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035964"></a>Figure 10.11 Training and validation loss on the Jena temperature-forecasting task with a dropout-regularized LSTM</p>
+
+  <h3 class="fm-head1" id="heading_id_14"><a id="pgfId-1018904"></a>10.4.2 Stacking recurrent layers</h3>
+
+  <p class="body"><a id="pgfId-1018923"></a><a id="marker-1025146"></a><a id="marker-1025147"></a><a id="marker-1025148"></a>Because you’re no longer overfitting but seem to have hit a performance bottleneck, you should consider increasing the capacity and expressive power of the network. Recall the description of the universal machine learning workflow: it’s generally a good idea to increase the capacity of your model until overfitting becomes the primary obstacle (assuming you’re already taking basic steps to mitigate overfitting, such as using dropout). As long as you aren’t overfitting too badly, you’re likely under capacity.</p>
+
+  <p class="body"><a id="pgfId-1018928"></a>Increasing network capacity is typically done by increasing the number of units in the layers or adding more layers. Recurrent layer stacking is a classic way to build more-powerful recurrent networks: for instance, not too long ago the Google Translate algorithm was powered by a stack of seven large LSTM layers—that’s huge.</p>
+
+  <p class="body"><a id="pgfId-1018934"></a>To stack recurrent layers on top of each other in Keras, all intermediate layers should return their full sequence of outputs (a rank-3 tensor) rather than their output at the last timestep. As you’ve already learned, this is done by specifying <code class="fm-code-in-text">return_sequences=True</code>.</p>
+
+  <p class="body"><a id="pgfId-1018949"></a>In the following example, we’ll try a stack of two dropout-regularized recurrent layers. For a change, we’ll use Gated Recurrent Unit (GRU) layers instead <a id="marker-1031195"></a>of LSTM. GRU is very similar to LSTM—you can think of it as a slightly simpler, streamlined version of the LSTM architecture. It was introduced in 2014 by Cho et al. when recurrent networks were just starting to gain interest anew in the then-tiny research community.<a id="Id-1018958"></a><a href="../Text/10.htm#pgfId-1018958"><sup class="footnotenumber">6</sup></a></p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019023"></a>Listing 10.23 Training and evaluating a dropout-regularized, stacked GRU model</p>
+  <pre class="programlisting"><a id="pgfId-1031236"></a>inputs = keras.Input(shape=(sequence_length, raw_data.shape[-<span class="fm-codeblue">1</span>]))
+<a id="pgfId-1031237"></a>x = layers.GRU(<span class="fm-codeblue">32</span>, recurrent_dropout=<span class="fm-codeblue">0.5</span>, return_sequences=<code class="fm-codegreen">True</code>)(inputs)
+<a id="pgfId-1031238"></a>x = layers.GRU(<span class="fm-codeblue">32</span>, recurrent_dropout=<span class="fm-codeblue">0.5</span>)(x)
+<a id="pgfId-1031239"></a>x = layers.Dropout(<span class="fm-codeblue">0.5</span>)(x)
+<a id="pgfId-1031240"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>)(x)
+<a id="pgfId-1031241"></a>model = keras.Model(inputs, outputs)
+<a id="pgfId-1031242"></a>  
+<a id="pgfId-1031243"></a>callbacks = [
+<a id="pgfId-1031244"></a>    keras.callbacks.ModelCheckpoint(<span class="fm-codegreen">"jena_stacked_gru_dropout.keras"</span>,
+<a id="pgfId-1031245"></a>                                    save_best_only=<code class="fm-codegreen">True</code>)
+<a id="pgfId-1031246"></a>]
+<a id="pgfId-1031247"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>, loss=<span class="fm-codegreen">"mse"</span>, metrics=[<span class="fm-codegreen">"mae"</span>])
+<a id="pgfId-1031248"></a>history = model.fit(train_dataset,
+<a id="pgfId-1031249"></a>                    epochs=<span class="fm-codeblue">50</span>,
+<a id="pgfId-1031250"></a>                    validation_data=val_dataset,
+<a id="pgfId-1031251"></a>                    callbacks=callbacks)
+<a id="pgfId-1031252"></a>model = keras.models.load_model(<span class="fm-codegreen">"jena_stacked_gru_dropout.keras"</span>)
+<a id="pgfId-1019157"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test MAE: {model.evaluate(test_dataset)[1]:.2f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1019163"></a>Figure 10.12 shows the results. We achieve a test MAE of 2.39 degrees (an 8.8% improvement over the baseline). You can see that the added layer does improve the results a bit, though not dramatically. You may be seeing diminishing returns from increasing network capacity at this point. <a id="marker-1031222"></a><a id="marker-1031223"></a><a id="marker-1031224"></a></p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-12.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1036006"></a>Figure 10.12 Training and validation loss on the Jena temperature-forecasting task with a stacked GRU network</p>
+
+  <h3 class="fm-head1" id="heading_id_15"><a id="pgfId-1019186"></a>10.4.3 Using bidirectional RNNs</h3>
+
+  <p class="body"><a id="pgfId-1019225"></a><a id="marker-1024782"></a><a id="marker-1024783"></a><a id="marker-1024784"></a>The last technique we’ll look at in this section is the <i class="fm-italics">bidirectional RNN</i>. A bidirectional RNN is a common RNN variant that can offer greater performance than a regular RNN on certain tasks. It’s frequently used in natural language processing—you could call it the Swiss Army knife of deep learning for natural language processing.</p>
+
+  <p class="body"><a id="pgfId-1019234"></a>RNNs are notably order-dependent: they process the timesteps of their input sequences in order, and shuffling or reversing the timesteps can completely change the representations the RNN extracts from the sequence. This is precisely the reason they perform well on problems where order is meaningful, such as the temperature-forecasting problem. A bidirectional RNN exploits the order sensitivity of RNNs: it uses two regular RNNs, such as the GRU and LSTM layers you’re already familiar with, each of which processes the input sequence in one direction (chronologically and antichronologically), and then merges their representations. By processing a sequence both ways, a bidirectional RNN can catch patterns that may be overlooked by a unidirectional RNN.</p>
+
+  <p class="body"><a id="pgfId-1019240"></a>Remarkably, the fact that the RNN layers in this section have processed sequences in chronological order (with older timesteps first) may have been an arbitrary decision. At least, it’s a decision we’ve made no attempt to question so far. Could the RNNs have performed well enough if they processed input sequences in antichronological order, for instance (with newer timesteps first)? Let’s try this and see what happens. All you need to do is write a variant of the data generator where the input sequences are reverted along the time dimension (replace the last line with <code class="fm-code-in-text">yield</code> <code class="fm-code-in-text">samples[:,</code> <code class="fm-code-in-text">::-1,</code> <code class="fm-code-in-text">:],</code> <code class="fm-code-in-text">targets</code>). Training the same LSTM-based model that you used in the first experiment in this section, you get the results shown in figure 10.13.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-13.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1036113"></a>Figure 10.13 Training and validation loss on the Jena temperature-forecasting task with an LSTM trained on reversed sequences</p>
+
+  <p class="body"><a id="pgfId-1019265"></a>The reversed-order LSTM strongly underperforms even the common-sense baseline, indicating that in this case, chronological processing is important to the success of the approach. This makes perfect sense: the underlying LSTM layer will typically be better at remembering the recent past than the distant past, and naturally the more recent weather data points are more predictive than older data points for the problem (that’s what makes the common-sense baseline fairly strong). Thus the chronological version of the layer is bound to outperform the reversed-order version.</p>
+
+  <p class="body"><a id="pgfId-1019285"></a>However, this isn’t true for many other problems, including natural language: intuitively, the importance of a word in understanding a sentence isn’t usually dependent on its position in the sentence. On text data, reversed-order processing works just as well as chronological processing—you can read text backwards just fine (try it!). Although word order does matter in understanding language, <i class="fm-italics">which order</i> you use isn’t crucial.</p>
+
+  <p class="body"><a id="pgfId-1019326"></a>Importantly, an RNN trained on reversed sequences will learn different representations than one trained on the original sequences, much as you would have different mental models if time flowed backward in the real world—if you lived a life where you died on your first day and were born on your last day. In machine learning, representations that are <i class="fm-italics">different</i> yet <i class="fm-italics">useful</i> are always worth exploiting, and the more they differ, the better: they offer a new angle from which to look at your data, capturing aspects of the data that were missed by other approaches, and thus they can help boost performance on a task. This is the intuition behind <i class="fm-italics">ensembling</i>, a concept we’ll explore in chapter 13.</p>
+
+  <p class="body"><a id="pgfId-1019335"></a>A bidirectional RNN exploits this idea to improve on the performance of chronological-order RNNs. It looks at its input sequence both ways (see figure 10.14), obtaining potentially richer representations and capturing patterns that may have been missed by the chronological-order version alone.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/10-14.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1036160"></a>Figure 10.14 How a bidirectional RNN layer works</p>
+
+  <p class="body"><a id="pgfId-1019388"></a>To instantiate a bidirectional RNN in Keras, you use <a id="marker-1019367"></a>the <code class="fm-code-in-text">Bidirectional</code> layer, which takes as its first argument a recurrent layer instance. <code class="fm-code-in-text">Bidirectional</code> creates a second, separate instance of this recurrent layer and uses one instance for processing the input sequences in chronological order and the other instance for processing the input sequences in reversed order. You can try it on our temperature-forecasting task.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019448"></a>Listing 10.24 Training and evaluating a bidirectional LSTM</p>
+  <pre class="programlisting"><a id="pgfId-1031267"></a>inputs = keras.Input(shape=(sequence_length, raw_data.shape[-<span class="fm-codeblue">1</span>]))
+<a id="pgfId-1031268"></a>x = layers.Bidirectional(layers.LSTM(<span class="fm-codeblue">16</span>))(inputs)
+<a id="pgfId-1031269"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>)(x)
+<a id="pgfId-1031270"></a>model = keras.Model(inputs, outputs) 
+<a id="pgfId-1031272"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>, loss=<span class="fm-codegreen">"mse"</span>, metrics=[<span class="fm-codegreen">"mae"</span>])
+<a id="pgfId-1031273"></a>history = model.fit(train_dataset,
+<a id="pgfId-1031274"></a>                    epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1019528"></a>                    validation_data=val_dataset)</pre>
+
+  <p class="body"><a id="pgfId-1019534"></a>You’ll find that it doesn’t perform as well as the plain <code class="fm-code-in-text">LSTM</code> layer. It’s easy to understand why: all the predictive capacity must come from the chronological half of the network, because the antichronological half is known to be severely underperforming on this task (again, because the recent past matters much more than the distant past, in this case). At the same time, the presence of the antichronological half doubles the network’s capacity and causes it to start overfitting much earlier.</p>
+
+  <p class="body"><a id="pgfId-1019549"></a>However, bidirectional RNNs are a great fit for text data, or any other kind of data where order matters, yet where <i class="fm-italics">which order</i> you use doesn’t matter. In fact, for a while in 2016, bidirectional LSTMs were considered the state of the art on many natural language processing tasks (before the rise of the Transformer architecture, which you will learn about in the next chapter). <a id="marker-1019560"></a><a id="marker-1019563"></a><a id="marker-1019565"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_16"><a id="pgfId-1019571"></a>10.4.4 Going even further</h3>
+
+  <p class="body"><a id="pgfId-1019581"></a>There are many other things you could try in order to improve performance on the temperature-forecasting problem:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019587"></a>Adjust the number of units in each recurrent layer in the stacked setup, as well as the amount of dropout. The current choices are largely arbitrary and thus probably suboptimal.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019601"></a>Adjust the learning rate used by the <code class="fm-code-in-text">RMSprop</code> optimizer, or try a different optimizer.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019640"></a>Try using a stack of <code class="fm-code-in-text">Dense</code> layers as the regressor on top of the recurrent layer, instead of a single <code class="fm-code-in-text">Dense</code> layer.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019649"></a>Improve the input to the model: try using longer or shorter sequences or a different sampling rate, or start doing feature engineering.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1019659"></a>As always, deep learning is more an art than a science. We can provide guidelines that suggest what is likely to work or not work on a given problem, but, ultimately, every dataset is unique; you’ll have to evaluate different strategies empirically. There is currently no theory that will tell you in advance precisely what you should do to optimally solve a problem. You must iterate.</p>
+
+  <p class="body"><a id="pgfId-1019665"></a>In my experience, improving on the no-learning baseline by about 10% is likely the best you can do with this dataset. This isn’t so great, but these results make sense: while near-future weather is highly predictable if you have access to data from a wide grid of different locations, it’s not very predictable if you only have measurements from a single location. The evolution of the weather where you are depends on current weather patterns in surrounding locations.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1019671"></a>Markets and machine learning</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1019697"></a>Some readers are bound to want to take the techniques I’ve introduced here and try them on the problem of forecasting the future price of securities on the stock market (or currency exchange rates, and so on). However, markets have very different statistical characteristics than natural phenomena such as weather patterns. When it comes to markets, past performance is <i class="fm-italics">not</i> a good predictor of future returns—looking in the rear-view mirror is a bad way to drive. Machine learning, on the other hand, is applicable to datasets where the past <i class="fm-italics">is</i> a good predictor of the future, like weather, electricity consumption, or foot traffic at a store.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1019706"></a>Always remember that all trading is fundamentally <i class="fm-italics">information arbitrage</i>: gaining an <a id="marker-1023485"></a>advantage by leveraging data or insights that other market participants are missing. Trying to use well-known machine learning techniques and publicly available data to beat the markets is effectively a dead end, since you won’t have any information advantage compared to everyone else. You’re likely to waste your time and resources with nothing to show for it.</p>
+  </div>
+
+  <h2 class="fm-head" id="heading_id_17"><a id="pgfId-1019727"></a>Summary</h2>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019737"></a>As you first learned in chapter 5, when approaching a new problem, it’s good to first establish common-sense baselines for your metric of choice. If you don’t have a baseline to beat, you can’t tell whether you’re making real progress.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019751"></a>Try simple models before expensive ones, to make sure the additional expense is justified. Sometimes a simple model will turn out to be your best option.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019791"></a>When you have data where ordering matters, and in particular for timeseries data, <i class="fm-italics1">recurrent networks</i> are a great fit and easily outperform models that first flatten the temporal data. The two essential RNN layers available in Keras are the <code class="fm-code-in-text">LSTM</code> layer and the <code class="fm-code-in-text">GRU</code> layer.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019800"></a>To use dropout with recurrent networks, you should use a time-constant dropout mask and recurrent dropout mask. These are built into Keras recurrent layers, so all you have to do is use the <code class="fm-code-in-text">recurrent_dropout</code> arguments of recurrent layers.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019819"></a>Stacked RNNs provide more representational power than a single RNN layer. They’re also much more expensive and thus not always worth it. Although they offer clear gains on complex problems (such as machine translation), they may not always be relevant to smaller, simpler problems.</p>
+    </li>
+  </ul>
+  <hr class="calibre15"/>
+
+  <p class="fm-footnote"><a href="../Text/10.htm#Id-1012011"><sup class="footnotenumber1">1</sup></a> <a id="pgfId-1012011"></a>Adam Erickson and Olaf Kolle, <span class="fm-hyperlink"><a class="url" href="https://www.bgc-jena.mpg.de/wetter">www.bgc-jena.mpg.de/wetter</a></span>.</p>
+
+  <p class="fm-footnote"><a href="../Text/10.htm#Id-1015087"><sup class="footnotenumber1">2</sup></a> <a id="pgfId-1015087"></a>Note that there isn’t a <code class="fm-code-in-text3">SeparableConv3D</code> layer, not for any theoretical reason, but simply because I haven’t implemented it.</p>
+
+  <p class="fm-footnote"><a href="../Text/10.htm#Id-1017469"><sup class="footnotenumber1">3</sup></a> <a id="pgfId-1017469"></a>See, for example, Yoshua Bengio, Patrice Simard, and Paolo Frasconi, “Learning Long-Term Dependencies with Gradient Descent Is Difficult,” <i class="fm-italics">IEEE Transactions on Neural Networks</i> 5, no. 2 (1994).</p>
+
+  <p class="fm-footnote"><a href="../Text/10.htm#Id-1017550"><sup class="footnotenumber1">4</sup></a> <a id="pgfId-1017550"></a>Sepp Hochreiter and Jürgen Schmidhuber, “Long Short-Term Memory,” <i class="fm-italics">Neural Computation</i> 9, no. 8 (1997).</p>
+
+  <p class="fm-footnote"><a href="../Text/10.htm#Id-1018379"><sup class="footnotenumber1">5</sup></a> <a id="pgfId-1018379"></a>See Yarin Gal, “Uncertainty in Deep Learning,” PhD thesis (2016), <span class="fm-hyperlink"><a class="url" href="https://mng.bz/WBq1">http://mng.bz/WBq1</a></span>.</p>
+
+  <p class="fm-footnote"><a href="../Text/10.htm#Id-1018958"><sup class="footnotenumber1">6</sup></a> <a id="pgfId-1018958"></a>See Cho et al., “On the Properties of Neural Machine Translation: Encoder-Decoder Approaches” (2014), <span class="fm-hyperlink"><a class="url" href="https://arxiv.org/abs/1409.1259">https://arxiv.org/abs/1409.1259</a></span>.</p>
+</body>
+</html>

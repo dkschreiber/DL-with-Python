@@ -1,0 +1,690 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>13</title>
+    
+  <link href="../../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+  <h1 class="tochead" id="heading_id_2"><a id="pgfId-998407"></a><a id="pgfId-1064293"></a>13 Best practices for the real world</h1>
+
+  <p class="co-summary-head"><a id="pgfId-1011754"></a>This chapter covers</p>
+
+  <ul class="calibre10">
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011760"></a>Hyperparameter tuning</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011774"></a>Model ensembling</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011784"></a>Mixed-precision training</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011794"></a>Training Keras models on multiple GPUs or on a TPU</li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1011804"></a>You’ve come far since the beginning of this book. You can now train image classification models, image segmentation models, models for classification or regression on vector data, timeseries forecasting models, text-classification models, sequence-to-sequence models, and even generative models for text and images. You’ve got all the bases covered.</p>
+
+  <p class="body"><a id="pgfId-1011810"></a>However, your models so far have all been trained at a small scale—on small datasets, with a single GPU—and they generally haven’t reached the best achievable performance on each dataset we looked at. This book is, after all, an introductory book. If you are to go out in the real world and achieve state-of-the-art results on brand new problems, there’s still a bit of a chasm that you’ll need to cross.</p>
+
+  <p class="body"><a id="pgfId-1011816"></a>This penultimate chapter is about bridging that gap and giving you the best practices you’ll need as you go from machine learning student to fully fledged machine learning engineer. We’ll review essential techniques for systematically improving model performance: hyperparameter tuning and model ensembling. Then we’ll look at how you can speed up and scale up model training, with multi-GPU and TPU training, mixed precision, and leveraging remote computing resources in the cloud.</p>
+
+  <h2 class="fm-head" id="heading_id_3"><a id="pgfId-1011822"></a>13.1 Getting the most out of your models</h2>
+
+  <p class="body"><a id="pgfId-1011832"></a>Blindly trying out different architecture configurations works well enough if you just need something that works okay. In this section, we’ll go beyond “works okay” to “works great and wins machine learning competitions” via a set of must-know techniques for building state-of-the-art deep learning models.</p>
+
+  <h3 class="fm-head1" id="heading_id_4"><a id="pgfId-1011838"></a>13.1.1 Hyperparameter optimization</h3>
+
+  <p class="body"><a id="pgfId-1011891"></a><a id="marker-1011849"></a><a id="marker-1011851"></a>When building a deep learning model, you have to make many seemingly arbitrary decisions: How many layers should you stack? How many units or filters should go in each layer? Should you use <code class="fm-code-in-text">relu</code> as activation, or a different function? Should you use <code class="fm-code-in-text">BatchNormalization</code> after a given layer? How much dropout should you use? And so on. These architecture-level parameters are called <i class="fm-italics">hyperparameters</i> to distinguish them from the <i class="fm-italics">parameters</i> of a model, which are trained via backpropagation.</p>
+
+  <p class="body"><a id="pgfId-1011900"></a>In practice, experienced machine learning engineers and researchers build intuition over time as to what works and what doesn’t when it comes to these choices—they develop hyperparameter-tuning skills. But there are no formal rules. If you want to get to the very limit of what can be achieved on a given task, you can’t be content with such arbitrary choices. Your initial decisions are almost always suboptimal, even if you have very good intuition. You can refine your choices by tweaking them by hand and retraining the model repeatedly—that’s what machine learning engineers and researchers spend most of their time doing. But it shouldn’t be your job as a human to fiddle with hyperparameters all day—that is better left to a machine.</p>
+
+  <p class="body"><a id="pgfId-1011906"></a>Thus you need to explore the space of possible decisions automatically, systematically, in a principled way. You need to search the architecture space and find the best-performing architectures empirically. That’s what the field of automatic hyperparameter optimization is about: it’s an entire field of research, and an important one.</p>
+
+  <p class="body"><a id="pgfId-1011912"></a>The process of optimizing hyperparameters typically looks like this:</p>
+
+  <ol class="calibre14">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011918"></a>Choose a set of hyperparameters (automatically).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011932"></a>Build the corresponding model.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011942"></a>Fit it to your training data, and measure performance on the validation data.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011952"></a>Choose the next set of hyperparameters to try (automatically).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011962"></a>Repeat.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011972"></a>Eventually, measure performance on your test data.</p>
+    </li>
+  </ol>
+
+  <p class="body"><a id="pgfId-1011982"></a>The key to this process is the algorithm that analyzes the relationship between validation performance and various hyperparameter values to choose the next set of hyperparameters to evaluate. Many different techniques are possible: Bayesian optimization, genetic algorithms, simple random search, and so on.</p>
+
+  <p class="body"><a id="pgfId-1011988"></a>Training the weights of a model is relatively easy: you compute a loss function on a mini-batch of data and then use backpropagation to move the weights in the right direction. Updating hyperparameters, on the other hand, presents unique challenges. Consider these points:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011994"></a>The hyperparameter space is typically made up of discrete decisions and thus isn’t continuous or differentiable. Hence, you typically can’t do gradient descent in hyperparameter space. Instead, you must rely on gradient-free optimization techniques, which naturally are far less efficient than gradient descent.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012008"></a>Computing the feedback signal of this optimization process (does this set of hyperparameters lead to a high-performing model on this task?) can be extremely expensive: it requires creating and training a new model from scratch on your dataset.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012018"></a>The feedback signal may be noisy: if a training run performs 0.2% better, is that because of a better model configuration, or because you got lucky with the initial weight values?</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1012028"></a>Thankfully, there’s a tool that makes hyperparameter tuning simpler: KerasTuner. Let’s check it out.</p>
+
+  <p class="fm-head2"><a id="pgfId-1012034"></a>Using KerasTuner</p>
+
+  <p class="body"><a id="pgfId-1012053"></a><a id="marker-1012045"></a><a id="marker-1012047"></a><a id="marker-1012049"></a>Let’s start by installing KerasTuner:</p>
+  <pre class="programlisting"><a id="pgfId-1012058"></a>!pip install keras-tuner -q</pre>
+
+  <p class="body"><a id="pgfId-1012094"></a>KerasTuner lets you replace hard-coded hyperparameter values, such as <code class="fm-code-in-text">units=32</code>, with a range of possible choices, such as <code class="fm-code-in-text">Int(name="units",</code> <code class="fm-code-in-text">min_value=16,</code> <code class="fm-code-in-text">max_value=64,</code> <code class="fm-code-in-text">step=16)</code>. This set of choices in a given model is called the <i class="fm-italics">search space</i> of the <a id="marker-1095400"></a>hyperparameter tuning process.</p>
+
+  <p class="body"><a id="pgfId-1012109"></a>To specify a search space, define a model-building function (see the next listing). It takes an <code class="fm-code-in-text">hp</code> argument, from which you can sample hyperparameter ranges, and it returns a compiled Keras model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012175"></a>Listing 13.1 A KerasTuner model-building function</p>
+  <pre class="programlisting"><a id="pgfId-1012409"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1092529"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1092530"></a>  
+<a id="pgfId-1092531"></a><b class="fm-codebrown">def</b> build_model(hp):
+<a id="pgfId-1092532"></a>    units = hp.Int(name=<span class="fm-codegreen">"units"</span>, min_value=<span class="fm-codeblue">16</span>, max_value=<span class="fm-codeblue">64</span>, step=<span class="fm-codeblue">16</span>)    <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092533"></a>    model = keras.Sequential([
+<a id="pgfId-1092534"></a>        layers.Dense(units, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1092535"></a>        layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1092536"></a>    ])
+<a id="pgfId-1092537"></a>    optimizer = hp.Choice(name=<span class="fm-codegreen">"optimizer"</span>, values=[<span class="fm-codegreen">"rmsprop"</span>, <span class="fm-codegreen">"adam"</span>])  <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1092538"></a>    model.compile(
+<a id="pgfId-1092539"></a>        optimizer=optimizer,
+<a id="pgfId-1092540"></a>        loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1092541"></a>        metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1092542"></a>    <b class="fm-codebrown">return</b> model                                                         <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098520"></a><span class="fm-combinumeral">❶</span> Sample hyperparameter values from the hp object. After sampling, these values (such as the "units" variable here) are just regular Python constants.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098541"></a><span class="fm-combinumeral">❷</span> Different kinds of hyperparameters are available: Int, Float, Boolean, Choice.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098558"></a><span class="fm-combinumeral">❸</span> The function returns a compiled model.</p>
+
+  <p class="body"><a id="pgfId-1012496"></a>If you want to adopt a more modular and configurable approach to model-building, you can also subclass <a id="marker-1012469"></a>the <code class="fm-code-in-text">HyperModel</code> class and <a id="marker-1012485"></a>define a <code class="fm-code-in-text">build</code> method, as follows.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012556"></a>Listing 13.2 A KerasTuner <code class="fm-code-in-text">HyperModel</code></p>
+  <pre class="programlisting"><a id="pgfId-1012797"></a><b class="fm-codebrown">import</b> kerastuner <b class="fm-codebrown">as</b> kt
+<a id="pgfId-1092543"></a>  
+<a id="pgfId-1092544"></a><b class="fm-codebrown">class</b> SimpleMLP(kt.HyperModel):
+<a id="pgfId-1092545"></a>    <b class="fm-codebrown">def</b> __init__(self, num_classes):                                 <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092546"></a>        self.num_classes = num_classes
+<a id="pgfId-1092547"></a>  
+<a id="pgfId-1092548"></a>    <b class="fm-codebrown">def</b> build(self, hp):                                             <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1092549"></a>        units = hp.Int(name=<span class="fm-codegreen">"units"</span>, min_value=<span class="fm-codeblue">16</span>, max_value=<span class="fm-codeblue">64</span>, step=<span class="fm-codeblue">16</span>)
+<a id="pgfId-1092550"></a>        model = keras.Sequential([
+<a id="pgfId-1092551"></a>            layers.Dense(units, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1092552"></a>            layers.Dense(self.num_classes, activation=<span class="fm-codegreen">"softmax"</span>)     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092553"></a>        ])
+<a id="pgfId-1092554"></a>        optimizer = hp.Choice(name=<span class="fm-codegreen">"optimizer"</span>, values=[<span class="fm-codegreen">"rmsprop"</span>, <span class="fm-codegreen">"adam"</span>])
+<a id="pgfId-1092555"></a>        model.compile(
+<a id="pgfId-1092556"></a>            optimizer=optimizer,
+<a id="pgfId-1092557"></a>            loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1092558"></a>            metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1092559"></a>        <b class="fm-codebrown">return</b> model
+<a id="pgfId-1092560"></a>  
+<a id="pgfId-1092561"></a>hypermodel = SimpleMLP(num_classes=<span class="fm-codeblue">10</span>)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098327"></a><span class="fm-combinumeral">❶</span> Thanks to the object-oriented approach, we can configure model constants as constructor arguments (instead of hardcoding them in the model-building function).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098348"></a><span class="fm-combinumeral">❷</span> The build() method is identical to our prior build_model() standalone function.</p>
+
+  <p class="body"><a id="pgfId-1012842"></a>The next step is to define a “tuner.” Schematically, you can think of a tuner as a <code class="fm-code-in-text">for</code> loop that <a id="marker-1012853"></a>will repeatedly</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012863"></a>Pick a set of hyperparameter values</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012877"></a>Call the model-building function with these values to create a model</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012887"></a>Train the model and record its metrics</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1012952"></a>KerasTuner has <a id="marker-1012899"></a>several <a id="marker-1012905"></a>built-in tuners <a id="marker-1012911"></a>available—<code class="fm-code-in-text">RandomSearch</code>, <code class="fm-code-in-text">BayesianOptimization</code>, and <code class="fm-code-in-text">Hyperband</code>. Let’s try <code class="fm-code-in-text">BayesianOptimization</code>, a tuner that attempts to make smart predictions for which new hyperparameter values are likely to perform best given the outcomes of previous choices:</p>
+  <pre class="programlisting"><a id="pgfId-1013061"></a>tuner = kt.BayesianOptimization(
+<a id="pgfId-1092528"></a>    build_model,                   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092562"></a>    objective=<span class="fm-codegreen">"val_accuracy"</span>,      <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1092563"></a>    max_trials=<span class="fm-codeblue">100</span>,                <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1092564"></a>    executions_per_trial=<span class="fm-codeblue">2</span>,        <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1092565"></a>    directory=<span class="fm-codegreen">"mnist_kt_test"</span>,     <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1092566"></a>    overwrite=<code class="fm-codegreen">True</code>,                <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1092567"></a>)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097974"></a><span class="fm-combinumeral">❶</span> Specify the model-building function (or hypermodel instance).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097998"></a><span class="fm-combinumeral">❷</span> Specify the metric that the tuner will seek to optimize. Always specify validation metrics, since the goal of the search process is to find models that generalize!</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098015"></a><span class="fm-combinumeral">❸</span> Maximum number of different model configurations (“trials”) to try before ending the search.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098032"></a><span class="fm-combinumeral">❹</span> To reduce metrics variance, you can train the same model multiple times and average the results. executions_per_trial is how many training rounds (executions) to run for each model configuration (trial).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098049"></a><span class="fm-combinumeral">❺</span> Where to store search logs</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1098066"></a><span class="fm-combinumeral">❻</span> Whether to overwrite data in directory to start a new search. Set this to True if you’ve modified the model-building function, or to False to resume a previously started search with the same model-building function.</p>
+
+  <p class="body"><a id="pgfId-1013183"></a>You can display an overview of the search <a id="marker-1013172"></a>space via <code class="fm-code-in-text">search_space_summary()</code>:</p>
+  <pre class="programlisting"><a id="pgfId-1013362"></a>&gt;&gt;&gt; tuner.search_space_summary()
+<a id="pgfId-1092568"></a>Search space summary
+<a id="pgfId-1092569"></a>Default search space size: 2 
+<a id="pgfId-1092570"></a>units (Int)
+<a id="pgfId-1092571"></a>{"default": None,
+<a id="pgfId-1092572"></a> "conditions": [],
+<a id="pgfId-1092573"></a> "min_value": 128,
+<a id="pgfId-1092574"></a> "max_value": 1024,
+<a id="pgfId-1092575"></a> "step": 128,
+<a id="pgfId-1092576"></a> "sampling": None}
+<a id="pgfId-1092577"></a>optimizer (Choice)
+<a id="pgfId-1092578"></a>{"default": "rmsprop",
+<a id="pgfId-1092579"></a> "conditions": [],
+<a id="pgfId-1092580"></a> "values": ["rmsprop", "adam"],
+<a id="pgfId-1092581"></a> "ordered": False}</pre>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1013371"></a>Objective maximization and minimization</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1013381"></a>For built-in metrics (like accuracy, in our case), the <i class="fm-italics">direction</i> of the metric (accuracy should be maximized, but a loss should be minimized) is inferred by KerasTuner. However, for a custom metric, you should specify it yourself, like this:</p>
+    <pre class="programlisting"><a id="pgfId-1013440"></a>objective = kt.Objective(
+<a id="pgfId-1092582"></a>    name=<span class="fm-codegreen">"val_accuracy"</span>,         <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092583"></a>    direction=<span class="fm-codegreen">"max"</span>)             <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1092584"></a>tuner = kt.BayesianOptimization(
+<a id="pgfId-1092585"></a>    build_model,
+<a id="pgfId-1092586"></a>    objective=objective,
+<a id="pgfId-1092587"></a>    ...
+<a id="pgfId-1092588"></a>)</pre>
+
+    <p class="fm-code-annotation"><a id="pgfId-1097864"></a><span class="fm-combinumeral">❶</span> The metric’s name, as found in epoch logs</p>
+
+    <p class="fm-code-annotation"><a id="pgfId-1097881"></a><span class="fm-combinumeral">❷</span> The metric’s desired direction: "min" or "max"</p>
+  </div>
+
+  <p class="body"><a id="pgfId-1013485"></a>Finally, let’s launch the search. Don’t forget to pass validation data, and make sure not to use your test set as validation data—otherwise you’d quickly start overfitting to your test data, and you wouldn’t be able to trust your test metrics anymore:</p>
+  <pre class="programlisting"><a id="pgfId-1013731"></a>(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+<a id="pgfId-1092589"></a>x_train = x_train.reshape((-<span class="fm-codeblue">1</span>, <span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>)).astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1092590"></a>x_test = x_test.reshape((-<span class="fm-codeblue">1</span>, <span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>)).astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1092591"></a>x_train_full = x_train[:]                                               <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092592"></a>y_train_full = y_train[:]                                               <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092593"></a>num_val_samples = <span class="fm-codeblue">10000</span>                                                 <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1092594"></a>x_train, x_val = x_train[:-num_val_samples], x_train[-num_val_samples:] <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1092595"></a>y_train, y_val = y_train[:-num_val_samples], y_train[-num_val_samples:] <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1092596"></a>callbacks = [
+<a id="pgfId-1092597"></a>    keras.callbacks.EarlyStopping(monitor=<span class="fm-codegreen">"val_loss"</span>, patience=<span class="fm-codeblue">5</span>),      <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1092598"></a>]
+<a id="pgfId-1092599"></a>tuner.search(                                                           <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1092600"></a>    x_train, y_train,
+<a id="pgfId-1092601"></a>    batch_size=<span class="fm-codeblue">128</span>, 
+<a id="pgfId-1092602"></a>    epochs=<span class="fm-codeblue">100</span>,                                                         <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1092603"></a>    validation_data=(x_val, y_val),
+<a id="pgfId-1092604"></a>    callbacks=callbacks,
+<a id="pgfId-1092605"></a>    verbose=<span class="fm-codeblue">2</span>,
+<a id="pgfId-1092606"></a>)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097401"></a><span class="fm-combinumeral">❶</span> Reserve these for later.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097422"></a><span class="fm-combinumeral">❷</span> Set these aside as a validation set.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097442"></a><span class="fm-combinumeral">❸</span> Use a large number of epochs (you don’t know in advance how many epochs each model will need), and use an EarlyStopping callback to stop training when you start overfitting.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097459"></a><span class="fm-combinumeral">❹</span> This takes the same arguments as fit() (it simply passes them down to fit() for each new model).</p>
+
+  <p class="body"><a id="pgfId-1013808"></a>The preceding example will run in just a few minutes, since we’re only looking at a few possible choices and we’re training on MNIST. However, with a typical search space and dataset, you’ll often find yourself letting the hyperparameter search run overnight or even over several days. If your search process crashes, you can always restart it—just specify <code class="fm-code-in-text">overwrite=False</code> in the tuner so that it can resume from the trial logs stored on disk.</p>
+
+  <p class="body"><a id="pgfId-1013823"></a>Once the search is complete, you can query the best hyperparameter configurations, which you can use to create high-performing models that you can then retrain.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1013880"></a>Listing 13.3 Querying the best hyperparameter configurations</p>
+  <pre class="programlisting"><a id="pgfId-1013925"></a>top_n = <span class="fm-codeblue">4</span> 
+<a id="pgfId-1092607"></a>best_hps = tuner.get_best_hyperparameters(top_n)   <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097348"></a><span class="fm-combinumeral">❶</span> Returns a list of HyperParameter objects, which you can pass to the model-building function</p>
+
+  <p class="body"><a id="pgfId-1013954"></a>Usually, when retraining these models, you may want to include the validation data as part of the training data, since you won’t be making any further hyperparameter changes, and thus you will no longer be evaluating performance on the validation data. In our example, we’d train these final models on the totality of the original MNIST training data, without reserving a validation set.</p>
+
+  <p class="body"><a id="pgfId-1013976"></a>Before we can train on the full training data, though, there’s one last parameter we need to settle: the optimal number of epochs to train for. Typically, you’ll want to train the new models for longer than you did during the search: using an aggressive <code class="fm-code-in-text">patience</code> value in the <code class="fm-code-in-text">EarlyStopping</code> callback saves <a id="marker-1013981"></a>time during the search, but it may lead to under-fit models. Just use the validation set to find the best epoch:</p>
+  <pre class="programlisting"><a id="pgfId-1014109"></a><b class="fm-codebrown">def</b> get_best_epoch(hp):
+<a id="pgfId-1092608"></a>    model = build_model(hp)
+<a id="pgfId-1092609"></a>    callbacks=[
+<a id="pgfId-1092610"></a>        keras.callbacks.EarlyStopping(
+<a id="pgfId-1092611"></a>            monitor=<span class="fm-codegreen">"val_loss"</span>, mode=<span class="fm-codegreen">"min"</span>, patience=<span class="fm-codeblue">10</span>)     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092612"></a>    ]
+<a id="pgfId-1092613"></a>    history = model.fit(
+<a id="pgfId-1092614"></a>        x_train, y_train,
+<a id="pgfId-1092615"></a>        validation_data=(x_val, y_val),
+<a id="pgfId-1092616"></a>        epochs=<span class="fm-codeblue">100</span>,
+<a id="pgfId-1092617"></a>        batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1092618"></a>        callbacks=callbacks)
+<a id="pgfId-1092619"></a>    val_loss_per_epoch = history.history[<span class="fm-codegreen">"val_loss"</span>]
+<a id="pgfId-1092620"></a>    best_epoch = val_loss_per_epoch.index(min(val_loss_per_epoch)) + <span class="fm-codeblue">1</span> 
+<a id="pgfId-1092621"></a>    <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Best epoch: {best_epoch}"</span>)
+<a id="pgfId-1092622"></a>    <b class="fm-codebrown">return</b> best_epoch</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097293"></a><span class="fm-combinumeral">❶</span> Note the very high patience value.</p>
+
+  <p class="body"><a id="pgfId-1014138"></a>Finally, train on the full dataset for just a bit longer than this epoch count, since you’re training on more data; 20% more in this case:</p>
+  <pre class="programlisting"><a id="pgfId-1014202"></a><b class="fm-codebrown">def</b> get_best_trained_model(hp):
+<a id="pgfId-1092623"></a>    best_epoch = get_best_epoch(hp)
+<a id="pgfId-1092624"></a>    model.fit(
+<a id="pgfId-1092625"></a>        x_train_full, y_train_full,
+<a id="pgfId-1092626"></a>        batch_size=<span class="fm-codeblue">128</span>, epochs=int(best_epoch * <span class="fm-codeblue">1.2</span>))
+<a id="pgfId-1092627"></a>    <b class="fm-codebrown">return</b> model
+<a id="pgfId-1092628"></a>  
+<a id="pgfId-1092629"></a>best_models = []
+<a id="pgfId-1092630"></a><b class="fm-codebrown">for</b> hp <b class="fm-codebrown">in</b> best_hps:
+<a id="pgfId-1092631"></a>    model = get_best_trained_model(hp)
+<a id="pgfId-1092632"></a>    model.evaluate(x_test, y_test)
+<a id="pgfId-1092633"></a>    best_models.append(model)</pre>
+
+  <p class="body"><a id="pgfId-1014211"></a>Note that if you’re not worried about slightly underperforming, there’s a shortcut you can take: just use the tuner to reload the top-performing models with the best weights saved during the hyperparameter search, without retraining new models from scratch:</p>
+  <pre class="programlisting"><a id="pgfId-1014217"></a>best_models = tuner.get_best_models(top_n)</pre>
+
+  <p class="fm-callout"><a id="pgfId-1014227"></a><span class="fm-callout-head">Note</span> One important issue to think about when doing automatic hyperparameter optimization at scale is validation-set overfitting. Because you’re updating hyperparameters based on a signal that is computed using your validation data, you’re effectively training them on the validation data, and thus they will quickly overfit to the validation data. Always keep this in mind. <a id="marker-1014239"></a><a id="marker-1014242"></a><a id="marker-1014244"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1014250"></a>The art of crafting the right search space</p>
+
+  <p class="body"><a id="pgfId-1014267"></a><a id="marker-1014261"></a><a id="marker-1014263"></a>Overall, hyperparameter optimization is a powerful technique that is an absolute requirement for getting to state-of-the-art models on any task or to win machine learning competitions. Think about it: once upon a time, people handcrafted the features that went into shallow machine learning models. That was very much suboptimal. Now, deep learning automates the task of hierarchical feature engineering—features are learned using a feedback signal, not hand-tuned, and that’s the way it should be. In the same way, you shouldn’t handcraft your model architectures; you should optimize them in a principled way.</p>
+
+  <p class="body"><a id="pgfId-1014272"></a>However, doing hyperparameter tuning is not a replacement for being familiar with model architecture best practices. Search spaces grow combinatorially with the number of choices, so it would be far too expensive to turn everything into a hyperparameter and let the tuner sort it out. You need to be smart about designing the right search space. Hyperparameter tuning is automation, not magic: you use it to automate experiments that you would otherwise have run by hand, but you still need to handpick experiment configurations that have the potential to yield good metrics.</p>
+
+  <p class="body"><a id="pgfId-1014278"></a>The good news is that by leveraging hyperparameter tuning, the configuration decisions you have to make graduate from micro-decisions (what number of units do I pick for this layer?) to higher-level architecture decisions (should I use residual connections throughout this model?). And while micro-decisions are specific to a certain model and a certain dataset, higher-level decisions generalize better across different tasks and datasets. For instance, pretty much every image classification problem can be solved via the same sort of search-space template.</p>
+
+  <p class="body"><a id="pgfId-1014316"></a>Following this logic, KerasTuner attempts to provide <i class="fm-italics">premade search spaces</i> that are relevant to broad categories of problems, such as image classification. Just add data, run the search, and get a pretty good model. You can try the hypermodels <code class="fm-code-in-text">kt.applications.HyperXception</code> and <code class="fm-code-in-text">kt.applications.HyperResNet</code>, which are effectively tunable versions of Keras Applications models. <a id="marker-1014327"></a><a id="marker-1014330"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1014336"></a>The future of hyperparameter tuning: Automated machine learning</p>
+
+  <p class="body"><a id="pgfId-1014359"></a><a id="marker-1014347"></a><a id="marker-1014351"></a><a id="marker-1014353"></a><a id="marker-1014355"></a>Currently, most of your job as a deep learning engineer consists of munging data with Python scripts and then tuning the architecture and hyperparameters of a deep network at length to get a working model, or even to get a state-of-the-art model, if you are that ambitious. Needless to say, that isn’t an optimal setup. But automation can help, and it won’t stop merely at hyperparameter tuning.</p>
+
+  <p class="body"><a id="pgfId-1014392"></a>Searching over a set of possible learning rates or possible layer sizes is just the first step. We can also be far more ambitious and attempt to generate the <i class="fm-italics">model architecture</i> itself from <a id="marker-1014375"></a>scratch, with as few constraints as possible, such as via reinforcement learning or genetic algorithms. In the future, entire end-to-end machine learning pipelines will be automatically generated, rather than be handcrafted by engineer-artisans. This is called automated machine <a id="marker-1014381"></a>learning, or <i class="fm-italics">AutoML</i>. You can already leverage libraries like AutoKeras (<span class="fm-hyperlink"><a class="url" href="https://github.com/keras-team/autokeras">https://github.com/keras-team/autokeras</a></span>) to solve basic machine learning problems with very little involvement on your part.</p>
+
+  <p class="body"><a id="pgfId-1016921"></a>Today, AutoML is still in its early days, and it doesn’t scale to large problems. But when AutoML becomes mature enough for widespread adoption, the jobs of machine learning engineers won’t disappear—rather, engineers will move up the value-creation chain. They will begin to put much more effort into data curation, crafting complex loss functions that truly reflect business goals, as well as understanding how their models impact the digital ecosystems in which they’re deployed (such as the users who consume the model’s predictions and generate the model’s training data). These are problems that only the largest companies can afford to consider at present.</p>
+
+  <p class="body"><a id="pgfId-1016927"></a>Always look at the big picture, focus on understanding the fundamentals, and keep in mind that the highly specialized tedium will eventually be automated away. See it as a gift—greater productivity for your workflows—and not as a threat to your own relevance. It shouldn’t be your job to tune knobs endlessly. <a id="marker-1016929"></a><a id="marker-1016932"></a><a id="marker-1016934"></a><a id="marker-1016936"></a><a id="marker-1016938"></a><a id="marker-1016940"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_5"><a id="pgfId-1016946"></a>13.1.2 ensembling</h3>
+
+  <p class="body"><a id="pgfId-1016969"></a><a id="marker-1016957"></a><a id="marker-1016959"></a>Another powerful technique for obtaining the best possible results on a task is <i class="fm-italics">model ensembling</i>. Ensembling consists of pooling together the predictions of a set of different models to produce better predictions. If you look at machine learning competitions, in particular on Kaggle, you’ll see that the winners use very large ensembles of models that inevitably beat any single model, no matter how good.</p>
+
+  <p class="body"><a id="pgfId-1016978"></a>Ensembling relies on the assumption that different well-performing models trained independently are likely to be good for <i class="fm-italics">different reasons</i>: each model looks at slightly different aspects of the data to make its predictions, getting part of the “truth” but not all of it. You may be familiar with the ancient parable of the blind men and the elephant: a group of blind men come across an elephant for the first time and try to understand what the elephant is by touching it. Each man touches a different part of the elephant’s body—just one part, such as the trunk or a leg. Then the men describe to each other what an elephant is: “It’s like a snake,” “Like a pillar or a tree,” and so on. The blind men are essentially machine learning models trying to understand the manifold of the training data, each from their own perspective, using their own assumptions (provided by the unique architecture of the model and the unique random weight initialization). Each of them gets part of the truth of the data, but not the whole truth. By pooling their perspectives together, you can get a far more accurate description of the data. The elephant is a combination of parts: not any single blind man gets it quite right, but, interviewed together, they can tell a fairly accurate story.</p>
+
+  <p class="body"><a id="pgfId-1016993"></a>Let’s use classification as an example. The easiest way to pool the predictions of a set of classifiers (to <i class="fm-italics">ensemble the classifiers</i>) is to average their predictions at inference time:</p>
+  <pre class="programlisting"><a id="pgfId-1017058"></a>preds_a = model_a.predict(x_val)                              <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092634"></a>preds_b = model_b.predict(x_val)                              <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092635"></a>preds_c = model_c.predict(x_val)                              <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092636"></a>preds_d = model_d.predict(x_val)
+<a id="pgfId-1092637"></a>final_preds = <span class="fm-codeblue">0.25</span> * (preds_a + preds_b + preds_c + preds_d)  <span class="fm-combinumeral">❷</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097009"></a><span class="fm-combinumeral">❶</span> Use four different models to compute initial predictions.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1097037"></a><span class="fm-combinumeral">❷</span> This new prediction array should be more accurate than any of the initial ones.</p>
+
+  <p class="body"><a id="pgfId-1017103"></a>However, this will work only if the classifiers are more or less equally good. If one of them is significantly worse than the others, the final predictions may not be as good as the best classifier of the group.</p>
+
+  <p class="body"><a id="pgfId-1017109"></a>A smarter way to ensemble classifiers is to do a weighted average, where the weights are learned on the validation data—typically, the better classifiers are given a higher weight, and the worse classifiers are given a lower weight. To search for a good set of ensembling weights, you can use random search or a simple optimization algorithm, such as the Nelder-Mead algorithm:</p>
+  <pre class="programlisting"><a id="pgfId-1017165"></a>preds_a = model_a.predict(x_val)
+<a id="pgfId-1092638"></a>preds_b = model_b.predict(x_val)
+<a id="pgfId-1092639"></a>preds_c = model_c.predict(x_val)
+<a id="pgfId-1092640"></a>preds_d = model_d.predict(x_val)
+<a id="pgfId-1092641"></a>final_preds = <span class="fm-codeblue">0.5</span> * preds_a + <span class="fm-codeblue">0.25</span> * preds_b + <span class="fm-codeblue">0.1</span> * preds_c + <span class="fm-codeblue">0.15</span> * preds_d <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1096942"></a><span class="fm-combinumeral">❶</span> These weights (0.5, 0.25, 0.1, 0.15) are assumed to be learned empirically.</p>
+
+  <p class="body"><a id="pgfId-1017191"></a>There are many possible variants: you can do an average of an exponential of the predictions, for instance. In general, a simple weighted average with weights optimized on the validation data provides a very strong baseline.</p>
+
+  <p class="body"><a id="pgfId-1017213"></a>The key to making ensembling work is the <i class="fm-italics">diversity</i> of the set of classifiers. Diversity is strength. If all the blind men only touched the elephant’s trunk, they would agree that elephants are like snakes, and they would forever stay ignorant of the truth of the elephant. Diversity is what makes ensembling work. In machine learning terms, if all of your models are biased in the same way, your ensemble will retain this same bias. If your models are <i class="fm-italics">biased in different ways</i>, the biases will cancel each other out, and the ensemble will be more robust and more accurate.</p>
+
+  <p class="body"><a id="pgfId-1017238"></a>For this reason, you should ensemble models that are <i class="fm-italics">as good as possible</i> while being <i class="fm-italics">as different as possible</i>. This typically means using very different architectures or even different brands of machine learning approaches. One thing that is largely not worth doing is ensembling the same network trained several times independently, from different random initializations. If the only difference between your models is their random initialization and the order in which they were exposed to the training data, then your ensemble will be low-diversity and will provide only a tiny improvement over any single model.</p>
+
+  <p class="body"><a id="pgfId-1017247"></a>One thing I have found to work well in practice—but that doesn’t generalize to every problem domain—is using an ensemble of tree-based methods (such as random forests or gradient-boosted trees) and deep neural networks. In 2014, Andrey Kolev and I took fourth place in the Higgs Boson decay detection challenge on Kaggle (<span class="fm-hyperlink"><a class="url" href="https://www.kaggle.com/c/higgs-boson">www.kaggle.com/c/higgs-boson</a></span>) using an ensemble of various tree models and deep neural networks. Remarkably, one of the models in the ensemble originated from a different method than the others (it was a regularized greedy forest), and it had a significantly worse score than the others. Unsurprisingly, it was assigned a small weight in the ensemble. But to our surprise, it turned out to improve the overall ensemble by a large factor, because it was so different from every other model: it provided information that the other models didn’t have access to. That’s precisely the point of ensembling. It’s not so much about how good your best model is; it’s about the diversity of your set of candidate models. <a id="marker-1094588"></a><a id="marker-1094589"></a></p>
+
+  <h2 class="fm-head" id="heading_id_6"><a id="pgfId-1017258"></a>13.2 Scaling-up model training</h2>
+
+  <p class="body"><a id="pgfId-1017275"></a><a id="marker-1017269"></a><a id="marker-1017271"></a>Recall the “loop of progress” concept we introduced in chapter 7: the quality of your ideas is a function of how many refinement cycles they’ve been through (see figure 13.1). And the speed at which you can iterate on an idea is a function of how fast you can set up an experiment, how fast you can run that experiment, and finally, how well you can analyze the resulting data.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/13-01.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1099293"></a>Figure 13.1 The loop of progress</p>
+
+  <p class="body"><a id="pgfId-1017290"></a>As you develop your expertise with the Keras API, how fast you can code up your deep learning experiments will cease to be the bottleneck of this progress cycle. The next bottleneck will become the speed at which you can train your models. Fast training infrastructure means that you can get your results back in 10–15 minutes, and hence, that you can go through dozens of iterations every day. Faster training directly improves the <i class="fm-italics">quality</i> of your deep learning solutions.</p>
+
+  <p class="body"><a id="pgfId-1017319"></a>In this section, you’ll learn about three ways you can train your models faster:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017325"></a>Mixed-precision training, which you can use even with a single GPU</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017339"></a>Training on multiple GPUs</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017349"></a>Training on TPUs</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1017359"></a>Let’s go.</p>
+
+  <h3 class="fm-head1" id="heading_id_7"><a id="pgfId-1017365"></a>13.2.1 Speeding up training on GPU with mixed precision</h3>
+
+  <p class="body"><a id="pgfId-1017390"></a><a id="marker-1017376"></a><a id="marker-1017378"></a><a id="marker-1017380"></a>What if I told you there’s a simple technique you can use to speed up the training of almost any model by up to 3X, basically for free? It seems too good to but true, and yet, such a trick does exist. That’s <i class="fm-italics">mixed-precision training</i>. To understand how it works, we first need to take a look at the notion of “precision” in computer science.</p>
+
+  <p class="fm-head2"><a id="pgfId-1017399"></a>Understanding floating-point precision</p>
+
+  <p class="body"><a id="pgfId-1017464"></a><a id="marker-1017410"></a><a id="marker-1017412"></a><a id="marker-1017414"></a>Precision is to numbers what resolution is to images. Because computers can only process ones and zeros, any number seen by a computer has to be encoded as a binary string. For instance, you may be familiar with <code class="fm-code-in-text">uint8</code> integers, which are integers encoded on eight bits: <code class="fm-code-in-text">00000000</code> represents <code class="fm-code-in-text">0</code> in <code class="fm-code-in-text">uint8</code>, and <code class="fm-code-in-text">11111111</code> represents 255. To represent integers beyond 255, you’d need to add more bits—eight isn’t enough. Most integers are stored on 32 bits, with which you can represent signed integers ranging from –2147483648 to 2147483647.</p>
+
+  <p class="body"><a id="pgfId-1017473"></a>Floating-point numbers are the same. In mathematics, real numbers form a continuous axis: there’s an infinite number of points in between any two numbers. You can always zoom in on the axis of reals. In computer science, this isn’t true: there’s a finite number of intermediate points between 3 and 4, for instance. How many? Well, it depends on the <i class="fm-italics">precision</i> you’re working with—the number of bits you’re using to store a number. You can only zoom up to a certain resolution.</p>
+
+  <p class="body"><a id="pgfId-1017488"></a>There are three of levels of precision you’d typically use:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017494"></a>Half precision, or <code class="fm-code-in-text">float16</code>, where numbers are stored on 16 bits</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017517"></a>Single precision, or <code class="fm-code-in-text">float32</code>, where numbers are stored on 32 bits</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017536"></a>Double precision, or <code class="fm-code-in-text">float64</code>, where numbers are stored on 64 bits</p>
+    </li>
+  </ul>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1017555"></a>A note on floating-point encoding</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1017581"></a>A counterintuitive fact about floating-point numbers is that representable numbers are not uniformly distributed. Larger numbers have lower precision: there are the same number of representable values between <code class="fm-code-in-text1">2</code> <code class="fm-code-in-text1">**</code> <code class="fm-code-in-text1">N</code> and <code class="fm-code-in-text1">2</code> <code class="fm-code-in-text1">**</code> <code class="fm-code-in-text1">(N</code> <code class="fm-code-in-text1">+</code> <code class="fm-code-in-text1">1)</code> as there are between 1 and 2, for any <i class="fm-italics">N</i>.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1017590"></a>That’s because floating-point numbers are encoded in three parts—the sign, the significant value (called the "mantissa"), and the exponent, in the form</p>
+    <pre class="programlisting"><a id="pgfId-1017596"></a>{sign} * (2 ** ({exponent} - 127)) * 1.{mantissa}</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1017606"></a>For example, here’s how you would encode the closest <code class="fm-code-in-text1">float32</code> value approximating Pi:</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1099334"></a> </p>
+
+    <p class="fm-figure"><img alt="" class="calibre13" src="../Images/13-01-UN01.png"/></p>
+
+    <p class="fm-figure-caption"><a id="pgfId-1099342"></a>The number Pi encoded in single precision via a sign bit, an integer exponent, and an integer mantissa</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1099095"></a>For this reason, the numerical error incurred when converting a number to its floating-point representation can vary wildly depending on the exact value considered, and the error tends to get larger for numbers with a large absolute value.</p>
+  </div>
+
+  <p class="body"><a id="pgfId-1017687"></a>The way to think about the resolution of floating-point numbers is in terms of the smallest distance between two arbitrary numbers that you’ll be able to safely process. In single precision, that’s around 1e-7. In double precision, that’s around 1e-16. And in half precision, it’s only 1e-3.</p>
+
+  <p class="body"><a id="pgfId-1017709"></a>Every model you’ve seen in this book so far used single-precision numbers: it stored its state as <code class="fm-code-in-text">float32</code> weight variables and ran its computations on <code class="fm-code-in-text">float32</code> inputs. That’s enough precision to run the forward and backwards pass of a model without losing any information—particularly when it comes to small gradient updates (recall that the typical learning rate is 1e-3, and it’s pretty common to see weight updates on the order of 1e-6).</p>
+
+  <p class="body"><a id="pgfId-1017734"></a>You could also use <code class="fm-code-in-text">float64</code>, though that would be wasteful—operations like matrix multiplication or addition are much more expensive in double precision, so you’d be doing twice as much work for no clear benefits. But you could not do the same with <code class="fm-code-in-text">float16</code> weights and computation; the gradient descent process wouldn’t run smoothly, since you couldn’t represent small gradient updates of around 1e-5 or 1e-6.</p>
+
+  <p class="body"><a id="pgfId-1017743"></a>You can, however, use a hybrid approach: that’s what mixed precision is about. The idea is to leverage 16-bit computations in places where precision isn’t an issue, and to work with 32-bit values in other places to maintain numerical stability. Modern GPUs and TPUs feature specialized hardware that can run 16-bit operations much faster and use less memory than equivalent 32-bits operations. By using these lower-precision operations whenever possible, you can speed up training on those devices by a significant factor. Meanwhile, by maintaining the precision-sensitive parts of the model in single precision, you can get these benefits without meaningfully impacting model quality.</p>
+
+  <p class="body"><a id="pgfId-1017749"></a>And those benefits are considerable: on modern NVIDIA GPUs, mixed precision can speed up training by up to 3X. It’s also beneficial when training on a TPU (a subject we’ll get to in a bit), where it can speed up training by up to 60%.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1017755"></a>Beware of dtype defaults</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1017781"></a>Single precision is the default floating-point type throughout Keras and TensorFlow: any tensor or variable you create will be in <code class="fm-code-in-text1">float32</code> unless you specify otherwise. For NumPy arrays, however, the default is <code class="fm-code-in-text1">float64</code>!</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1017790"></a>Converting a default NumPy array to a TensorFlow tensor will result in a <code class="fm-code-in-text1">float64</code> tensor, which may not be what you want:</p>
+    <pre class="programlisting"><a id="pgfId-1099131"></a>&gt;&gt;&gt; <b class="fm-codebrown">import</b> tensorflow <b class="fm-codebrown">as</b> tf
+<a id="pgfId-1099132"></a>&gt;&gt;&gt; <b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np
+<a id="pgfId-1099133"></a>&gt;&gt;&gt; np_array = np.zeros((<span class="fm-codeblue">2</span>, <span class="fm-codeblue">2</span>))
+<a id="pgfId-1099134"></a>&gt;&gt;&gt; tf_tensor = tf.convert_to_tensor(np_array)
+<a id="pgfId-1099135"></a>&gt;&gt;&gt; tf_tensor.dtype
+<a id="pgfId-1099136"></a>tf.float64</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1099137"></a>Remember to be explicit about data types when converting NumPy arrays:</p>
+    <pre class="programlisting"><a id="pgfId-1099138"></a>&gt;&gt;&gt; np_array = np.zeros((<span class="fm-codeblue">2</span>, <span class="fm-codeblue">2</span>))
+<a id="pgfId-1099139"></a>&gt;&gt;&gt; tf_tensor = tf.convert_to_tensor(np_array, dtype=<span class="fm-codegreen">"float32"</span>)  <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1099140"></a>&gt;&gt;&gt; tf_tensor.dtype
+<a id="pgfId-1099141"></a>tf.float32</pre>
+
+    <p class="fm-code-annotation"><a id="pgfId-1099142"></a><span class="fm-combinumeral">❶</span> Specify the dtype explicitly.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1099144"></a>Note that when you call the Keras <code class="fm-code-in-text1">fit()</code> method with <a id="marker-1099143"></a>NumPy data, it will do this conversion for you. <a id="marker-1099145"></a><a id="marker-1099146"></a><a id="marker-1099147"></a></p>
+  </div>
+
+  <p class="fm-head2"><a id="pgfId-1017985"></a>Mixed-precision training in practice</p>
+
+  <p class="body"><a id="pgfId-1018002"></a><a id="marker-1017996"></a><a id="marker-1017998"></a>When training on a GPU, you can turn on mixed precision like this:</p>
+  <pre class="programlisting"><a id="pgfId-1018035"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras
+<a id="pgfId-1092652"></a>keras.mixed_precision.set_global_policy(<span class="fm-codegreen">"mixed_float16"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1018060"></a>Typically, most of the forward pass of the model will be done in <code class="fm-code-in-text">float16</code> (with the exception of numerically unstable operations like softmax), while the weights of the model will be stored and updated in <code class="fm-code-in-text">float32</code>.</p>
+
+  <p class="body"><a id="pgfId-1018178"></a>Keras layers have <a id="marker-1094731"></a>a <code class="fm-code-in-text">variable_dtype</code> and a <code class="fm-code-in-text">compute_dtype</code> attribute. By default, both of <a id="marker-1094733"></a>these are set to <code class="fm-code-in-text">float32</code>. When you turn on mixed precision, the <code class="fm-code-in-text">compute_dtype</code> of most layers switches to <code class="fm-code-in-text">float16</code>, and those layers will cast their inputs to <code class="fm-code-in-text">float16</code> and will perform their computations in <code class="fm-code-in-text">float16</code> (using half-precision copies of the weights). However, since their <code class="fm-code-in-text">variable_dtype</code> is still <code class="fm-code-in-text">float32</code>, their weights will be able to receive accurate <code class="fm-code-in-text">float32</code> updates from the optimizer, as opposed to half-precision updates.</p>
+
+  <p class="body"><a id="pgfId-1018203"></a>Note that some operations may be numerically unstable in <code class="fm-code-in-text">float16</code> (in particular, softmax and crossentropy). If you need to opt out of mixed precision for a specific layer, just pass the argument <code class="fm-code-in-text">dtype="float32"</code> to the constructor of this layer. <a id="marker-1018208"></a><a id="marker-1018211"></a><a id="marker-1018213"></a><a id="marker-1018215"></a><a id="marker-1018217"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_8"><a id="pgfId-1018223"></a>13.2.2 Multi-GPU training</h3>
+
+  <p class="body"><a id="pgfId-1018248"></a><a id="marker-1018234"></a><a id="marker-1018236"></a><a id="marker-1018238"></a>While GPUs are getting more powerful every year, deep learning models are getting increasingly larger, requiring ever more computational resources. Training on a single GPU puts a hard bound on how fast you can move. The solution? You could simply add more GPUs and start doing <i class="fm-italics">multi-GPU distributed training</i>.</p>
+
+  <p class="body"><a id="pgfId-1018286"></a>There are two ways to distribute computation across <a id="marker-1018259"></a>multiple <a id="marker-1018265"></a>devices: <i class="fm-italics">data parallelism</i> and <i class="fm-italics">model parallelism</i>.</p>
+
+  <p class="body"><a id="pgfId-1018295"></a>With data parallelism, a single model is replicated on multiple devices or multiple machines. Each of the model replicas processes different batches of data, and then they merge their results.</p>
+
+  <p class="body"><a id="pgfId-1018301"></a>With model parallelism, different parts of a single model run on different devices, processing a single batch of data together at the same time. This works best with models that have a naturally parallel architecture, such as models that feature multiple branches.</p>
+
+  <p class="body"><a id="pgfId-1018307"></a>In practice, model parallelism is only used for models that are too large to fit on any single device: it isn’t used as a way to speed up training of regular models, but as a way to train larger models. We won’t cover model parallelism in these pages; instead we’ll focus on what you’ll be using most of the time: data parallelism. Let’s take a look at how it works.</p>
+
+  <p class="fm-head2"><a id="pgfId-1018313"></a>Getting your hands on two or more GPUs</p>
+
+  <p class="body"><a id="pgfId-1018330"></a><a id="marker-1018324"></a><a id="marker-1018326"></a>First, you need to get access to several GPUs. As of now, Google Colab only lets you use a single GPU, so you will need to do one of two things:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018335"></a>Acquire 2–4 GPUs, mount them on a single machine (it will require a beefy power supply), and install CUDA drivers, cuDNN, etc. For most people, this isn’t the best option.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018349"></a>Rent a multi-GPU Virtual Machine (VM) on Google Cloud, Azure, or AWS. You’ll be able to use VM images with preinstalled drivers and software, and you’ll have very little setup overhead. This is likely the best option for anyone who isn’t training models 24/7.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1018359"></a>We won’t cover the details of how to spin up multi-GPU cloud VMs, because such instructions would be relatively short-lived, and this information is readily available online.</p>
+
+  <p class="body"><a id="pgfId-1021865"></a>And if you don’t want to deal with the overhead of managing your own VM instances, you can use TensorFlow Cloud (<span class="fm-hyperlink"><a class="url" href="https://github.com/tensorflow/cloud">https://github.com/tensorflow/cloud</a></span>), a package that my team and I have recently released—it enables you to start training on multiple GPUs by just adding one line of code at the start of a Colab notebook. If you’re looking for a seamless transition from debugging your model in Colab to training it as fast as possible on as many GPUs as you want, check it out. <a id="marker-1021884"></a><a id="marker-1021887"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1021893"></a>Single-host, multi-device synchronous training</p>
+
+  <p class="body"><a id="pgfId-1021916"></a><a id="marker-1021904"></a><a id="marker-1021906"></a>Once you’re able to <code class="fm-code-in-text">import</code> <code class="fm-code-in-text">tensorflow</code> on a <a id="marker-1021921"></a>machine with multiple GPUs, you’re seconds away from training a distributed model. It works like this:</p>
+  <pre class="programlisting"><a id="pgfId-1022011"></a>strategy = tf.distribute.MirroredStrategy()                   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1092653"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Number of devices: {strategy.num_replicas_in_sync}"</span>) 
+<a id="pgfId-1092654"></a><b class="fm-codebrown">with</b> strategy.scope():                                        <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1092655"></a>    model = get_compiled_model()                              <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1092656"></a>model.fit(                                                    <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1092657"></a>    train_dataset,
+<a id="pgfId-1092658"></a>    epochs=<span class="fm-codeblue">100</span>,
+<a id="pgfId-1092659"></a>    validation_data=val_dataset,
+<a id="pgfId-1092660"></a>    callbacks=callbacks)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1096540"></a><span class="fm-combinumeral">❶</span> Create a “distribution strategy” object. MirroredStrategy should be your go-to solution.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1096568"></a><span class="fm-combinumeral">❷</span> Use it to open a “strategy scope.”</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1096585"></a><span class="fm-combinumeral">❸</span> Everything that creates variables should be under the strategy scope. In general, this is only model construction and compile().</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1096602"></a><span class="fm-combinumeral">❹</span> Train the model on all available devices.</p>
+
+  <p class="body"><a id="pgfId-1022088"></a>These few lines implement the most common training setup: <i class="fm-italics">single-host, multi-device synchronous training</i>, also known in TensorFlow as the “mirrored distribution strategy.” “Single host” means that the different GPUs considered are all on a single machine (as opposed to a cluster of many machines, each with its own GPU, communicating over a network). “Synchronous training” means that the state of the per-GPU model replicas stays the same at all times—there are variants of distributed training where this isn’t the case.</p>
+
+  <p class="body"><a id="pgfId-1022119"></a>When you open a <code class="fm-code-in-text">MirroredStrategy</code> scope and build your model within it, the <code class="fm-code-in-text">MirroredStrategy</code> object will <a id="marker-1022124"></a>create one model copy (replica) on each available GPU. Then, each step of training unfolds in the following way (see figure 13.2):</p>
+
+  <ol class="calibre14">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022134"></a>A batch of data (called <i class="fm-italics1">global batch</i>) is drawn from the dataset.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022157"></a>It gets split into four different sub-batches (called <i class="fm-italics1">local batches</i>). For instance, if the global batch has 512 samples, each of the four local batches will have 128 samples. Because you want local batches to be large enough to keep the GPU busy, the global batch size typically needs to be very large.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022176"></a>Each of the four replicas processes one local batch, independently, on its own device: they run a forward pass, and then a backward pass. Each replica outputs a “weight delta” describing by how much to update each weight variable in the model, given the gradient of the previous weights with respect to the loss of the model on the local batch.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022186"></a>The weight deltas originating from local gradients are efficiently merged across the four replicas to obtain a global delta, which is applied to all replicas. Because this is done at the end of every step, the replicas always stay in sync: their weights are always equal.</p>
+    </li>
+  </ol>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/13-02.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1099404"></a>Figure 13.2 One step of <code class="fm-code-in-text">MirroredStrategy</code> training: each model replica computes local weight updates, which are then merged and used to update the state of all replicas.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1022215"></a><code class="fm-code-in-text2">tf.data</code> performance tips</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1022308"></a>When doing distributed training, always provide your data as a <code class="fm-code-in-text1">tf.data.Dataset</code> object to <a id="marker-1093287"></a>guarantee best performance. (Passing your data as NumPy arrays also works, since those get converted to <code class="fm-code-in-text1">Dataset</code> objects by <code class="fm-code-in-text1">fit()</code>). You should also make sure you leverage data prefetching: before passing the dataset to <code class="fm-code-in-text1">fit()</code>, call <code class="fm-code-in-text1">dataset.prefetch(buffer_size)</code>. If you aren’t sure what buffer size to pick, try the <code class="fm-code-in-text1">dataset.prefetch(tf.data.AUTOTUNE)</code> option, which will pick a buffer size for you.</p>
+  </div>
+
+  <p class="body"><a id="pgfId-1022317"></a>In an ideal world, training on <i class="fm-italics">N</i> GPUs would result in a speedup of factor <i class="fm-italics">N</i>. In practice, however, distribution introduces some overhead—in particular, merging the weight deltas originating from different devices takes some time. The effective speedup you get is a function of the number of GPUs used:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022323"></a>With two GPUs, the speedup stays close to 2x.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022337"></a>With four, the speedup is around 3.8x.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022347"></a>With eight, it’s around 7.3x.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1022357"></a>This assumes that you’re using a large enough global batch size to keep each GPU utilized at full capacity. If your batch size is too small, the local batch size won’t be enough to keep your GPUs busy. <a id="marker-1022359"></a><a id="marker-1022362"></a><a id="marker-1022364"></a><a id="marker-1022366"></a><a id="marker-1022368"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_9"><a id="pgfId-1022374"></a>13.2.3 TPU training</h3>
+
+  <p class="body"><a id="pgfId-1022393"></a><a id="marker-1022385"></a><a id="marker-1022387"></a><a id="marker-1022389"></a>Beyond just GPUs, there is a trend in the deep learning world toward moving workflows to increasingly specialized hardware designed specifically for deep learning workflows (such single-purpose chips are known as ASICs, application-specific integrated circuits). Various companies big and small are working on new chips, but today the most prominent effort along these lines is Google’s Tensor Processing <a id="marker-1022394"></a>Unit (TPU), which is available on Google Cloud and via Google Colab.</p>
+
+  <p class="body"><a id="pgfId-1022404"></a>Training on a TPU does involve jumping through some hoops, but it’s worth the extra work: TPUs are really, really fast. Training on a TPU V2 will typically be 15x faster than training an NVIDIA P100 GPU. For most models, TPU training ends up being 3x more cost-effective than GPU training on average.</p>
+
+  <p class="fm-head2"><a id="pgfId-1022410"></a>Using a TPU via Google Colab</p>
+
+  <p class="body"><a id="pgfId-1022429"></a><a id="marker-1022421"></a><a id="marker-1022423"></a><a id="marker-1022425"></a>You can actually use an 8-core TPU for free in Colab. In the Colab menu, under the Runtime tab, in the Change Runtime Type option, you’ll notice that you have access to a TPU runtime in addition to the GPU runtime.</p>
+
+  <p class="body"><a id="pgfId-1022434"></a>When you’re using the GPU runtime, your models have direct access to the GPU without you needing to do anything special. This isn’t true for the TPU runtime; there’s an extra step you need to take before you can start building a model: you need to connect to the TPU cluster.</p>
+
+  <p class="body"><a id="pgfId-1022440"></a>It works like this:</p>
+  <pre class="programlisting"><a id="pgfId-1096020"></a><b class="fm-codebrown">import</b> tensorflow <b class="fm-codebrown">as</b> tf
+<a id="pgfId-1096021"></a>tpu = tf.distribute.cluster_resolver.TPUClusterResolver.connect()
+<a id="pgfId-1096006"></a><b class="fm-codebrown">print</b>(<span class="fm-codegreen">"Device:"</span>, tpu.master())</pre>
+
+  <p class="body"><a id="pgfId-1022493"></a>You don’t have to worry too much about what this does—it’s just a little incantation that connects your notebook runtime to the device. Open Sesame.</p>
+
+  <p class="body"><a id="pgfId-1022532"></a>Much like in the case of multi-GPU training, using the TPU requires you to open a distribution strategy scope—in this <a id="marker-1022501"></a>case, a <code class="fm-code-in-text">TPUStrategy</code> scope. <code class="fm-code-in-text">TPUStrategy</code> follows the same distribution template as <code class="fm-code-in-text">MirroredStrategy</code>—the model is replicated once per TPU core, and the replicas are kept in sync.</p>
+
+  <p class="body"><a id="pgfId-1022541"></a>Here’s a simple example.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1022598"></a>Listing 13.4 Building a model in a <code class="fm-code-in-text">TPUStrategy</code> scope</p>
+  <pre class="programlisting"><a id="pgfId-1022814"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1092665"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1092666"></a>  
+<a id="pgfId-1092667"></a>strategy = tf.distribute.TPUStrategy(tpu) 
+<a id="pgfId-1092668"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Number of replicas: {strategy.num_replicas_in_sync}"</span>)
+<a id="pgfId-1092669"></a>  
+<a id="pgfId-1092670"></a><b class="fm-codebrown">def</b> build_model(input_size):
+<a id="pgfId-1092671"></a>    inputs = keras.Input((input_size, input_size, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1092672"></a>    x = keras.applications.resnet.preprocess_input(inputs)
+<a id="pgfId-1092673"></a>    x = keras.applications.resnet.ResNet50(
+<a id="pgfId-1092674"></a>        weights=<code class="fm-codegreen">None</code>, include_top=<code class="fm-codegreen">False</code>, pooling=<span class="fm-codegreen">"max"</span>)(x)
+<a id="pgfId-1092675"></a>    outputs = layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)(x)
+<a id="pgfId-1092676"></a>    model = keras.Model(inputs, outputs)
+<a id="pgfId-1092677"></a>    model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1092678"></a>                  loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1092679"></a>                  metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1092680"></a>    <b class="fm-codebrown">return</b> model
+<a id="pgfId-1092681"></a>  
+<a id="pgfId-1092682"></a><b class="fm-codebrown">with</b> strategy.scope():
+<a id="pgfId-1092683"></a>    model = build_model(input_size=<span class="fm-codeblue">32</span>)</pre>
+
+  <p class="body"><a id="pgfId-1022823"></a>We’re almost ready to start training. But there’s something a bit curious about TPUs in Colab: it’s a two-VM setup, meaning that the VM that hosts your notebook runtime isn’t the same VM that the TPU lives in. Because of this, you won’t be able to train from files stored on the local disk (that is to say, on the disk linked to the VM that hosts the notebook). The TPU runtime can’t read from there. You have two options for data loading:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022829"></a>Train from data that lives in the memory of the VM (not on disk). If your data is in a NumPy array, this is what you’re already doing.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022843"></a>Store the data in a Google Cloud Storage (GCS) bucket, and create a dataset that reads the data directly from the bucket, without downloading locally. The TPU runtime can read data from GCS. This is your only option for datasets that are too large to live entirely in memory.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1022853"></a>In our case, let’s train from NumPy arrays in memory—the CIFAR10 dataset:</p>
+  <pre class="programlisting"><a id="pgfId-1022879"></a>(x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+<a id="pgfId-1092684"></a>model.fit(x_train, y_train, batch_size=<span class="fm-codeblue">1024</span>)                              <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1096445"></a><span class="fm-combinumeral">❶</span> Note that TPU training, much like multi-GPU training, requires large batch sizes to make sure the device stays well-utilized.</p>
+
+  <p class="body"><a id="pgfId-1022908"></a>You’ll notice that the first epoch takes a while to start—that’s because your model is getting compiled to something that the TPU can execute. Once that step is done, the training itself is blazing fast.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1022914"></a>Beware of I/O bottlenecks</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1022924"></a>Because TPUs can process batches of data extremely quickly, the speed at which you can read data from GCS can easily become a bottleneck.</p>
+
+    <ul class="calibre10">
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1022930"></a>If your dataset is small enough, you should keep it in the memory of the VM. You can do so by calling <code class="fm-code-in-text1">dataset.cache()</code> on your <a id="marker-1093318"></a>dataset. That way, the data will only be read from GCS once.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1022959"></a>If your dataset is too large to fit in memory, make sure to store it as TFRecord files—an efficient binary storage format that can be loaded very quickly. On keras.io, you’ll find a code example demonstrating how to format your data as TFRecord files (<span class="fm-hyperlink"><a class="url" href="https://keras.io/examples/keras_recipes/creating_tfrecords/">https://keras.io/examples/keras_recipes/creating_tfrecords/</a></span>). <a id="marker-1093320"></a><a id="marker-1093321"></a><a id="marker-1093322"></a></p>
+      </li>
+    </ul>
+  </div>
+
+  <p class="fm-head2"><a id="pgfId-1024516"></a>Leveraging step fusing to improve TPU utilization</p>
+
+  <p class="body"><a id="pgfId-1024535"></a><a id="marker-1024527"></a><a id="marker-1024529"></a><a id="marker-1024531"></a>Because a TPU has a lot of compute power available, you need to train with very large batches to keep the TPU cores busy. For small models, the batch size required can get extraordinarily large—upwards of 10,000 samples per batch. When working with enormous batches, you should make sure to increase your optimizer learning rate accordingly; you’re going to be making fewer updates to your weights, but each update will be more accurate (since the gradients are computed using more data points), so you should move the weights by a greater magnitude with each update.</p>
+
+  <p class="body"><a id="pgfId-1024582"></a>There is, however, a simple trick you can leverage to keep reasonably sized batches while maintaining full TPU utilization: <i class="fm-italics">step fusing</i>. The idea is to run multiple steps of training during each TPU execution step. Basically, do more work in between two round trips from the VM memory to the TPU. To do this, simply specify <a id="marker-1024551"></a>the <code class="fm-code-in-text">steps_</code> <code class="fm-code-in-text">per_execution</code> argument in <code class="fm-code-in-text">compile()</code>—for instance, <code class="fm-code-in-text">steps_per_execution=8</code> to run eight steps of training during each TPU execution. For small models that are underutilizing the TPU, this can result in a dramatic speedup. <a id="marker-1024587"></a><a id="marker-1024590"></a><a id="marker-1024592"></a><a id="marker-1024594"></a><a id="marker-1024596"></a><a id="marker-1024598"></a><a id="marker-1024600"></a><a id="marker-1024602"></a></p>
+
+  <h2 class="fm-head" id="heading_id_10"><a id="pgfId-1024608"></a>Summary</h2>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024618"></a>You can leverage hyperparameter tuning and KerasTuner to automate the tedium out of finding the best model configuration. But be mindful of validation-set overfitting!</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024632"></a>An ensemble of diverse models can often significantly improve the quality of your predictions.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024642"></a>You can speed up model training on GPU by turning on mixed precision—you’ll generally get a nice speed boost at virtually no cost.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024652"></a>To further scale your workflows, you can use the <code class="fm-code-in-text">tf.distribute.MirroredStrategy</code> API to train models on multiple GPUs.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1024691"></a>You can even train on Google’s TPUs (available on Colab) by using the <code class="fm-code-in-text">TPUStrategy</code> API. If your model is small, make sure to leverage step fusing (via the <code class="fm-code-in-text">compile(...,</code> <code class="fm-code-in-text">steps_per_execution=N)</code> argument) in order to fully utilize the TPU cores.</p>
+    </li>
+  </ul>
+</body>
+</html>

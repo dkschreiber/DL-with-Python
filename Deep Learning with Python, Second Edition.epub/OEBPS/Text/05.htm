@@ -1,0 +1,876 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>5</title>
+    
+  <link href="../../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+  <h1 class="tochead" id="heading_id_2"><a id="pgfId-998407"></a><a id="pgfId-1018907"></a>5 Fundamentals of machine learning</h1>
+
+  <p class="co-summary-head"><a id="pgfId-1011754"></a>This chapter covers</p>
+
+  <ul class="calibre10">
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011760"></a>Understanding the tension between generalization and optimization, the fundamental issue in machine learning</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011774"></a>Evaluation methods for machine learning models</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011784"></a>Best practices to improve model fitting</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011794"></a>Best practices to achieve better generalization</li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1011804"></a>After the three practical examples in chapter 4, you should be starting to feel familiar with how to approach classification and regression problems using neural networks, and you’ve witnessed the central problem of machine learning: overfitting. This chapter will formalize some of your new intuition about machine learning into a solid conceptual framework, highlighting the importance of accurate model evaluation and the balance between training and generalization.</p>
+
+  <h2 class="fm-head" id="heading_id_3"><a id="pgfId-1011810"></a>5.1 Generalization: The goal of machine learning</h2>
+
+  <p class="body"><a id="pgfId-1011830"></a><a id="marker-1011821"></a>In the three examples presented in chapter 4—predicting movie reviews, topic classification, and house-price regression—we split the data into a training set, a validation set, and a test set. The reason not to evaluate the models on the same data they were trained on quickly became evident: after just a few epochs, performance on never-before-seen data started diverging from performance on the training data, which always improves as training progresses. The models started to <i class="fm-italics">overfit</i>. Overfitting happens in every machine learning problem.</p>
+
+  <p class="body"><a id="pgfId-1011897"></a>The fundamental issue in machine learning is the tension between optimization and generalization. <i class="fm-italics">Optimization</i> refers to <a id="marker-1011850"></a>the process of adjusting a model to get the best performance possible on the training data (the <i class="fm-italics">learning</i> in <i class="fm-italics">machine learning</i>), whereas <i class="fm-italics">generalization</i> refers to <a id="marker-1011886"></a>how well the trained model performs on data it has never seen before. The goal of the game is to get good generalization, of course, but you don’t control generalization; you can only fit the model to its training data. If you do that <i class="fm-italics">too well</i>, overfitting kicks in and generalization suffers.</p>
+
+  <p class="body"><a id="pgfId-1011906"></a>But what causes overfitting? How can we achieve good generalization?</p>
+
+  <h3 class="fm-head1" id="heading_id_4"><a id="pgfId-1011912"></a>5.1.1 Underfitting and overfitting</h3>
+
+  <p class="body"><a id="pgfId-1011933"></a><a id="marker-1021884"></a><a id="marker-1021885"></a><a id="marker-1021886"></a><a id="marker-1021887"></a>For the models you saw in the previous chapter, performance on the held-out validation data started improving as training went on and then inevitably peaked after a while. This pattern (illustrated in figure 5.1) is universal. You’ll see it with any model type and any dataset.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-01.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028632"></a>Figure 5.1 Canonical overfitting behavior</p>
+
+  <p class="body"><a id="pgfId-1011948"></a>At the beginning of training, optimization and generalization are correlated: the lower the loss on training data, the lower the loss on test data. While this is happening, your model is said to be <i class="fm-italics">underfit</i>: there is still progress to be made; the network hasn’t yet modeled all relevant patterns in the training data. But after a certain number of iterations on the training data, generalization stops improving, validation metrics stall and then begin to degrade: the model is starting to overfit. That is, it’s beginning to learn patterns that are specific to the training data but that are misleading or irrelevant when it comes to new data.</p>
+
+  <p class="body"><a id="pgfId-1011977"></a>Overfitting is particularly likely to occur when your data is noisy, if it involves uncertainty, or if it includes rare features. Let’s look at concrete examples.</p>
+
+  <p class="fm-head2"><a id="pgfId-1011983"></a>Noisy training data</p>
+
+  <p class="body"><a id="pgfId-1012004"></a><a id="marker-1011994"></a><a id="marker-1011996"></a><a id="marker-1011998"></a><a id="marker-1012000"></a>In real-world datasets, it’s fairly common for some inputs to be invalid. Perhaps a MNIST digit could be an all-black image, for instance, or something like figure 5.2.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-02.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028674"></a>Figure 5.2 Some pretty weird MNIST training samples</p>
+
+  <p class="body"><a id="pgfId-1012019"></a>What are these? I don’t know either. But they’re all part of the MNIST training set. What’s even worse, however, is having perfectly valid inputs that end up mislabeled, like those in figure 5.3.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-03.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028716"></a>Figure 5.3 Mislabeled MNIST training samples</p>
+
+  <p class="body"><a id="pgfId-1012049"></a>If a model goes out of its way to incorporate such outliers, its generalization performance will degrade, as shown in figure 5.4. For instance, a 4 that looks very close to the mislabeled 4 in figure 5.3 may end up getting classified as a 9. <a id="marker-1012065"></a><a id="marker-1012068"></a><a id="marker-1012070"></a><a id="marker-1012072"></a></p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-04.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028758"></a>Figure 5.4 Dealing with outliers: robust fit vs. overfitting</p>
+
+  <p class="fm-head2"><a id="pgfId-1012088"></a>Ambiguous features</p>
+
+  <p class="body"><a id="pgfId-1012121"></a><a id="marker-1012113"></a><a id="marker-1012115"></a><a id="marker-1012117"></a>Not all data noise comes from inaccuracies—even perfectly clean and neatly labeled data can be noisy when the problem involves uncertainty and ambiguity. In classification tasks, it is often the case that some regions of the input feature space are associated with multiple classes at the same time. Let’s say you’re developing a model that takes an image of a banana and predicts whether the banana is unripe, ripe, or rotten. These categories have no objective boundaries, so the same picture might be classified as either unripe or ripe by different human labelers. Similarly, many problems involve randomness. You could use atmospheric pressure data to predict whether it will rain tomorrow, but the exact same measurements may be followed sometimes by rain and sometimes by a clear sky, with some probability.</p>
+
+  <p class="body"><a id="pgfId-1012136"></a>A model could overfit to such probabilistic data by being too confident about ambiguous regions of the feature space, like in figure 5.5. A more robust fit would ignore individual data points and look at the bigger picture. <a id="marker-1012152"></a><a id="marker-1012155"></a><a id="marker-1012157"></a></p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-05.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028800"></a>Figure 5.5 Robust fit vs. overfitting giving an ambiguous area of the feature space</p>
+
+  <p class="fm-head2"><a id="pgfId-1012163"></a>Rare features and spurious correlations</p>
+
+  <p class="body"><a id="pgfId-1012182"></a><a id="marker-1012174"></a><a id="marker-1012176"></a><a id="marker-1012178"></a>If you’ve only ever seen two orange tabby cats in your life, and they both happened to be terribly antisocial, you might infer that orange tabby cats are generally likely to be antisocial. That’s overfitting: if you had been exposed to a wider variety of cats, including more orange ones, you’d have learned that cat color is not well correlated with character.</p>
+
+  <p class="body"><a id="pgfId-1012187"></a>Likewise, machine learning models trained on datasets that include rare feature values are highly susceptible to overfitting. In a sentiment classification task, if the word “cherimoya” (a fruit native to the Andes) only appears in one text in the training data, and this text happens to be negative in sentiment, a poorly regularized model might put a very high weight on this word and always classify new texts that mention cherimoyas as negative, whereas, objectively, there’s nothing negative about the cherimoya.<a id="Id-1012190"></a><a href="../Text/05.htm#pgfId-1012190"><sup class="footnotenumber">1</sup></a></p>
+
+  <p class="body"><a id="pgfId-1012203"></a>Importantly, a feature value doesn’t need to occur only a couple of times to lead to spurious correlations. Consider a word that occurs in 100 samples in your training data and that’s associated with a positive sentiment 54% of the time and with a negative sentiment 46% of the time. That difference may well be a complete statistical fluke, yet your model is likely to learn to leverage that feature for its classification task. This is one of the most common sources of overfitting.</p>
+
+  <p class="body"><a id="pgfId-1012209"></a>Here’s a striking example. Take MNIST. Create a new training set by concatenating 784 white noise dimensions to the existing 784 dimensions of the data, so half of the data is now noise. For comparison, also create an equivalent dataset by concatenating 784 all-zeros dimensions. Our concatenation of meaningless features does not at all affect the information content of the data: we’re only adding something. Human classification accuracy wouldn’t be affected by these transformations at all.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012266"></a>Listing 5.1 Adding white noise channels or all-zeros channels to MNIST</p>
+  <pre class="programlisting"><a id="pgfId-1024505"></a><b class="fm-codebrown">from</b> tensorflow.keras.datasets <b class="fm-codebrown">import</b> mnist 
+<a id="pgfId-1024506"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np
+<a id="pgfId-1024507"></a>  
+<a id="pgfId-1024508"></a>(train_images, train_labels), _ = mnist.load_data()
+<a id="pgfId-1024509"></a>train_images = train_images.reshape((<span class="fm-codeblue">60000</span>, <span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>))
+<a id="pgfId-1024510"></a>train_images = train_images.astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1024511"></a>  
+<a id="pgfId-1024512"></a>train_images_with_noise_channels = np.concatenate(
+<a id="pgfId-1024513"></a>    [train_images, np.random.random((len(train_images), <span class="fm-codeblue">784</span>))], axis=<span class="fm-codeblue">1</span>)
+<a id="pgfId-1024514"></a>  
+<a id="pgfId-1024515"></a>train_images_with_zeros_channels = np.concatenate(
+<a id="pgfId-1012362"></a>    [train_images, np.zeros((len(train_images), <span class="fm-codeblue">784</span>))], axis=<span class="fm-codeblue">1</span>)</pre>
+
+  <p class="body"><a id="pgfId-1012368"></a>Now, let’s train the model from chapter 2 on both of these training sets.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012425"></a>Listing 5.2 Training the same model on MNIST data with noise channels or all-zero channels</p>
+  <pre class="programlisting"><a id="pgfId-1024528"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1024529"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1024530"></a>  
+<a id="pgfId-1024531"></a><b class="fm-codebrown">def</b> get_model():
+<a id="pgfId-1024532"></a>    model = keras.Sequential([
+<a id="pgfId-1024533"></a>        layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024534"></a>        layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1024535"></a>    ])
+<a id="pgfId-1024536"></a>    model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1024537"></a>                  loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1024538"></a>                  metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024539"></a>    <b class="fm-codebrown">return</b> model
+<a id="pgfId-1024540"></a>  
+<a id="pgfId-1024541"></a>model = get_model()
+<a id="pgfId-1024542"></a>history_noise = model.fit(
+<a id="pgfId-1024543"></a>    train_images_with_noise_channels, train_labels,
+<a id="pgfId-1024544"></a>    epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1024545"></a>    batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1024546"></a>    validation_split=<span class="fm-codeblue">0.2</span>)
+<a id="pgfId-1024547"></a>  
+<a id="pgfId-1024548"></a>model = get_model()
+<a id="pgfId-1024549"></a>history_zeros = model.fit(
+<a id="pgfId-1024550"></a>    train_images_with_zeros_channels, train_labels,
+<a id="pgfId-1024551"></a>    epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1024552"></a>    batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1012605"></a>    validation_split=<span class="fm-codeblue">0.2</span>)</pre>
+
+  <p class="body"><a id="pgfId-1012611"></a>Let’s compare how the validation accuracy of each model evolves over time.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012668"></a>Listing 5.3 Plotting a validation accuracy comparison</p>
+  <pre class="programlisting"><a id="pgfId-1024567"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1024568"></a>val_acc_noise = history_noise.history[<span class="fm-codegreen">"val_accuracy"</span>]
+<a id="pgfId-1024569"></a>val_acc_zeros = history_zeros.history[<span class="fm-codegreen">"val_accuracy"</span>]
+<a id="pgfId-1024570"></a>epochs = range(<span class="fm-codeblue">1</span>, <span class="fm-codeblue">11</span>)
+<a id="pgfId-1024571"></a>plt.plot(epochs, val_acc_noise, <span class="fm-codegreen">"b-"</span>,
+<a id="pgfId-1024572"></a>         label=<span class="fm-codegreen">"Validation accuracy with noise channels"</span>)
+<a id="pgfId-1024573"></a>plt.plot(epochs, val_acc_zeros, <span class="fm-codegreen">"b--"</span>,
+<a id="pgfId-1024574"></a>         label=<span class="fm-codegreen">"Validation accuracy with zeros channels"</span>)
+<a id="pgfId-1024575"></a>plt.title(<span class="fm-codegreen">"Effect of noise channels on validation accuracy"</span>)
+<a id="pgfId-1024576"></a>plt.xlabel(<span class="fm-codegreen">"Epochs"</span>)
+<a id="pgfId-1024577"></a>plt.ylabel(<span class="fm-codegreen">"Accuracy"</span>)
+<a id="pgfId-1012767"></a>plt.legend()</pre>
+
+  <p class="body"><a id="pgfId-1012773"></a>Despite the data holding the same information in both cases, the validation accuracy of the model trained with noise channels ends up about one percentage point lower (see figure 5.6)—purely through the influence of spurious correlations. The more noise channels you add, the further accuracy will degrade.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-06.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028842"></a>Figure 5.6 Effect of noise channels on validation accuracy</p>
+
+  <p class="body"><a id="pgfId-1012816"></a>Noisy features inevitably lead to overfitting. As such, in cases where you aren’t sure whether the features you have are informative or distracting, it’s common to <a id="marker-1012805"></a>do <i class="fm-italics">feature selection</i> before training. Restricting the IMDB data to the top 10,000 most common words was a crude form of feature selection, for instance. The typical way to do feature selection is to compute some usefulness score for each feature available—a measure of how informative the feature is with respect to the task, such as the mutual information between the feature and the labels—and only keep features that are above some threshold. Doing this would filter out the white noise channels in the preceding example. <a id="marker-1012821"></a><a id="marker-1012824"></a><a id="marker-1012826"></a><a id="marker-1012828"></a><a id="marker-1012830"></a><a id="marker-1012832"></a><a id="marker-1012834"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_5"><a id="pgfId-1012840"></a>5.1.2 The nature of generalization in deep learning</h3>
+
+  <p class="body"><a id="pgfId-1012857"></a><a id="marker-1012851"></a><a id="marker-1012853"></a>A remarkable fact about deep learning models is that they can be trained to fit anything, as long as they have enough representational power.</p>
+
+  <p class="body"><a id="pgfId-1012862"></a>Don’t believe me? Try shuffling the MNIST labels and train a model on that. Even though there is no relationship whatsoever between the inputs and the shuffled labels, the training loss goes down just fine, even with a relatively small model. Naturally, the validation loss does not improve at all over time, since there is no possibility of generalization in this setting.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012919"></a>Listing 5.4 Fitting an MNIST model with randomly shuffled labels</p>
+  <pre class="programlisting"><a id="pgfId-1024596"></a>(train_images, train_labels), _ = mnist.load_data()
+<a id="pgfId-1024597"></a>train_images = train_images.reshape((<span class="fm-codeblue">60000</span>, <span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>))
+<a id="pgfId-1024598"></a>train_images = train_images.astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1024599"></a>  
+<a id="pgfId-1024600"></a>random_train_labels = train_labels[:]
+<a id="pgfId-1024601"></a>np.random.shuffle(random_train_labels)
+<a id="pgfId-1024602"></a>  
+<a id="pgfId-1024603"></a>model = keras.Sequential([
+<a id="pgfId-1024604"></a>    layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024605"></a>    layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1024606"></a>])
+<a id="pgfId-1024607"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1024608"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1024609"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024610"></a>model.fit(train_images, random_train_labels,
+<a id="pgfId-1024611"></a>          epochs=<span class="fm-codeblue">100</span>,
+<a id="pgfId-1024612"></a>          batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1013052"></a>          validation_split=<span class="fm-codeblue">0.2</span>)</pre>
+
+  <p class="body"><a id="pgfId-1013058"></a>In fact, you don’t even need to do this with MNIST data—you could just generate white noise inputs and random labels. You could fit a model on that, too, as long as it has enough parameters. It would just end up memorizing specific inputs, much like a Python dictionary.</p>
+
+  <p class="body"><a id="pgfId-1013064"></a>If this is the case, then how come deep learning models generalize at all? Shouldn’t they just learn an ad hoc mapping between training inputs and targets, like a fancy <code class="fm-code-in-text">dict</code>? What expectation can we have that this mapping will work for new inputs?</p>
+
+  <p class="body"><a id="pgfId-1013079"></a>As it turns out, the nature of generalization in deep learning has rather little to do with deep learning models themselves, and much to do with the structure of information in the real world. Let’s take a look at what’s really going on here.</p>
+
+  <p class="fm-head2"><a id="pgfId-1013085"></a>The manifold hypothesis</p>
+
+  <p class="body"><a id="pgfId-1013118"></a><a id="marker-1013096"></a><a id="marker-1013098"></a>The input to an MNIST classifier (before preprocessing) is a 28 × 28 array of integers between 0 and 255. The total number of possible input values is thus 256 to the power of 784—much greater than the number of atoms in the universe. However, very few of these inputs would look like valid MNIST samples: actual handwritten digits only occupy a tiny <i class="fm-italics">subspace</i> of the parent space of all possible 28 × 28 <code class="fm-code-in-text">uint8</code> arrays. What’s more, this subspace isn’t just a set of points sprinkled at random in the parent space: it is highly structured.</p>
+
+  <p class="body"><a id="pgfId-1013143"></a>First, the subspace of valid handwritten digits is <i class="fm-italics">continuous</i>: if you take a sample and modify it a little, it will still be recognizable as the same handwritten digit. Further, all samples in the valid subspace are <i class="fm-italics">connected</i> by smooth paths that run through the subspace. This means that if you take two random MNIST digits A and B, there exists a sequence of “intermediate” images that morph A into B, such that two consecutive digits are very close to each other (see figure 5.7). Perhaps there will be a few ambiguous shapes close to the boundary between two classes, but even these shapes would still look very digit-like.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-07.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028897"></a>Figure 5.7 Different MNIST digits gradually morphing into one another, showing that the space of handwritten digits forms a “manifold.” This image was generated using code from chapter 12.</p>
+
+  <p class="body"><a id="pgfId-1013192"></a>In technical terms, you would say that handwritten digits form a <i class="fm-italics">manifold</i> within the space of possible 28 × 28 <code class="fm-code-in-text">uint8</code> arrays. That’s a big word, but the concept is pretty intuitive. A “manifold” is a lower-dimensional subspace of some parent space that is locally similar to a linear (Euclidian) space. For instance, a smooth curve in the plane is a 1D manifold within a 2D space, because for every point of the curve, you can draw a tangent (the curve can be approximated by a line at every point). A smooth surface within a 3D space is a 2D manifold. And so on.</p>
+
+  <p class="body"><a id="pgfId-1013201"></a>More generally, the <i class="fm-italics">manifold hypothesis</i> posits that all natural data lies on a low-dimensional manifold within the high-dimensional space where it is encoded. That’s a pretty strong statement about the structure of information in the universe. As far as we know, it’s accurate, and it’s the reason why deep learning works. It’s true for MNIST digits, but also for human faces, tree morphology, the sounds of the human voice, and even natural language.</p>
+
+  <p class="body"><a id="pgfId-1013216"></a>The manifold hypothesis implies that</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013222"></a>Machine learning models only have to fit relatively simple, low-dimensional, highly structured subspaces within their potential input space (latent manifolds).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013236"></a>Within one of these manifolds, it’s always possible to <i class="fm-italics1">interpolate</i> between two inputs, that is to say, morph one into another via a continuous path along which all points fall on the manifold.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1013255"></a>The ability to interpolate between samples is the key to understanding generalization in deep learning. <a id="marker-1013257"></a><a id="marker-1013260"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1013266"></a>Interpolation as a source of generalization</p>
+
+  <p class="body"><a id="pgfId-1013299"></a><a id="marker-1013277"></a><a id="marker-1013279"></a>If you work with data points that can be interpolated, you can start making sense of points you’ve never seen before by relating them to other points that lie close on the manifold. In other words, you can make sense of the <i class="fm-italics">totality</i> of the space using only a <i class="fm-italics">sample</i> of the space. You can use interpolation to fill in the blanks.</p>
+
+  <p class="body"><a id="pgfId-1013308"></a>Note that interpolation on the latent manifold is different from linear interpolation in the parent space, as illustrated in figure 5.8. For instance, the average of pixels between two MNIST digits is usually not a valid digit.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-08.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028942"></a>Figure 5.8 Difference between linear interpolation and interpolation on the latent manifold. Every point on the latent manifold of digits is a valid digit, but the average of two digits usually isn’t.</p>
+
+  <p class="body"><a id="pgfId-1013354"></a>Crucially, while deep learning achieves generalization via interpolation on a learned approximation of the data manifold, it would be a mistake to assume that interpolation is <i class="fm-italics">all</i> there is to generalization. It’s the tip of the iceberg. Interpolation can only help you make sense of things that are very close to what you’ve seen before: it enables <i class="fm-italics">local generalization</i>. But remarkably, humans deal <a id="marker-1013359"></a>with extreme novelty all the time, and they do just fine. You don’t need to be trained in advance on countless examples of every situation you’ll ever have to encounter. Every single one of your days is different from any day you’ve experienced before, and different from any day experienced by anyone since the dawn of humanity. You can switch between spending a week in NYC, a week in Shanghai, and a week in Bangalore without requiring thousands of lifetimes of learning and rehearsal for each city.</p>
+
+  <p class="body"><a id="pgfId-1013391"></a>Humans are capable of <i class="fm-italics">extreme generalization</i>, which is <a id="marker-1013380"></a>enabled by cognitive mechanisms other than interpolation: abstraction, symbolic models of the world, reasoning, logic, common sense, innate priors about the world—what we generally call <i class="fm-italics">reason</i>, as opposed to intuition and pattern recognition. The latter are largely interpolative in nature, but the former isn’t. Both are essential to intelligence. We’ll talk more about this in chapter 14. <a id="marker-1013396"></a><a id="marker-1013399"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1013405"></a>Why deep learning works</p>
+
+  <p class="body"><a id="pgfId-1013415"></a><a id="marker-1013416"></a>Remember the crumpled paper ball metaphor from chapter 2? A sheet of paper represents a 2D manifold within 3D space (see figure 5.9). A deep learning model is a tool for uncrumpling paper balls, that is, for disentangling latent manifolds.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-09.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1028987"></a>Figure 5.9 Uncrumpling a complicated manifold of data</p>
+
+  <p class="body"><a id="pgfId-1013434"></a>A deep learning model is basically a very high-dimensional curve—a curve that is smooth and continuous (with additional constraints on its structure, originating from model architecture priors), since it needs to be differentiable. And that curve is fitted to data points via gradient descent, smoothly and incrementally. By its very nature, deep learning is about taking a big, complex curve—a manifold—and incrementally adjusting its parameters until it fits some training data points.</p>
+
+  <p class="body"><a id="pgfId-1013463"></a>The curve involves enough parameters that it could fit anything—indeed, if you let your model train for long enough, it will effectively end up purely memorizing its training data and won’t generalize at all. However, the data you’re fitting to isn’t made of isolated points sparsely distributed across the underlying space. Your data forms a highly structured, low-dimensional manifold within the input space—that’s the manifold hypothesis. And because fitting your model curve to this data happens gradually and smoothly over time as gradient descent progresses, there will be an intermediate point during training at which the model roughly approximates the natural manifold of the data, as you can see in figure 5.10.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-10.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029029"></a>Figure 5.10 Going from a random model to an overfit model, and achieving a robust fit as an intermediate state</p>
+
+  <p class="body"><a id="pgfId-1013479"></a>Moving along the curve learned by the model at that point will come close to moving along the actual latent manifold of the data—as such, the model will be capable of making sense of never-before-seen inputs via interpolation between training inputs.</p>
+
+  <p class="body"><a id="pgfId-1013499"></a>Besides the trivial fact that they have sufficient representational power, there are a few properties of deep learning models that make them particularly well-suited to learning latent manifolds:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013505"></a>Deep learning models implement a smooth, continuous mapping from their inputs to their outputs. It has to be smooth and continuous because it must be differentiable, by necessity (you couldn’t do gradient descent otherwise). This smoothness helps approximate latent manifolds, which follow the same properties.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013519"></a>Deep learning models tend to be structured in a way that mirrors the “shape” of the information in their training data (via architecture priors). This is particularly the case for image-processing models (discussed in chapters 8 and 9) and sequence-processing models (chapter 10). More generally, deep neural networks structure their learned representations in a hierarchical and modular way, which echoes the way natural data is organized. <a class="calibre11" id="marker-1013525"></a></p>
+    </li>
+  </ul>
+
+  <p class="fm-head2"><a id="pgfId-1013532"></a>Training data is paramount</p>
+
+  <p class="body"><a id="pgfId-1013549"></a><a id="marker-1013543"></a><a id="marker-1013545"></a>While deep learning is indeed well suited to manifold learning, the power to generalize is more a consequence of the natural structure of your data than a consequence of any property of your model. You’ll only be able to generalize if your data forms a manifold where points can be interpolated. The more informative and the less noisy your features are, the better you will be able to generalize, since your input space will be simpler and better structured. Data curation and feature engineering are essential to generalization.</p>
+
+  <p class="body"><a id="pgfId-1013554"></a>Further, because deep learning is curve fitting, for a model to perform well <i class="fm-italics">it needs to be trained on a dense sampling of its input space</i>. A “dense sampling” in this context means that the training data should densely cover the entirety of the input data manifold (see figure 5.11). This is especially true near decision boundaries. With a sufficiently dense sampling, it becomes possible to make sense of new inputs by interpolating between past training inputs without having to use common sense, abstract reasoning, or external knowledge about the world—all things that machine learning models have no access to.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-11.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029078"></a>Figure 5.11 A dense sampling of the input space is necessary in order to learn a model capable of accurate generalization.</p>
+
+  <p class="body"><a id="pgfId-1013579"></a>As such, you should always keep in mind that the best way to improve a deep learning model is to train it on more data or better data (of course, adding overly noisy or inaccurate data will harm generalization). A denser coverage of the input data manifold will yield a model that generalizes better. You should never expect a deep learning model to perform anything more than crude interpolation between its training samples, and thus you should do everything you can to make interpolation as easy as possible. The only thing you will find in a deep learning model is what you put into it: the priors encoded in its architecture and the data it was trained on.</p>
+
+  <p class="body"><a id="pgfId-1013612"></a>When getting more data isn’t possible, the next best solution is to modulate the quantity of information that your model is allowed to store, or to add constraints on the smoothness of the model curve. If a network can only afford to memorize a small number of patterns, or very regular patterns, the optimization process will force it to focus on the most prominent patterns, which have a better chance of generalizing well. The process of fighting overfitting this way is <a id="marker-1013601"></a>called <i class="fm-italics">regularization</i>. We’ll review regularization techniques in depth in section 5.4.4.</p>
+
+  <p class="body"><a id="pgfId-1013621"></a>Before you can start tweaking your model to help it generalize better, you’ll need a way to assess how your model is currently doing. In the following section, you’ll learn how you can monitor generalization during model development: model evaluation. <a id="marker-1013623"></a><a id="marker-1013626"></a><a id="marker-1013628"></a><a id="marker-1013630"></a><a id="marker-1013634"></a></p>
+
+  <h2 class="fm-head" id="heading_id_6"><a id="pgfId-1013640"></a>5.2 Evaluating machine learning models</h2>
+
+  <p class="body"><a id="pgfId-1013657"></a><a id="marker-1013651"></a><a id="marker-1013653"></a>You can only control what you can observe. Since your goal is to develop models that can successfully generalize to new data, it’s essential to be able to reliably measure the generalization power of your model. In this section, I’ll formally introduce the different ways you can evaluate machine learning models. You’ve already seen most of them in action in the previous chapter.</p>
+
+  <h3 class="fm-head1" id="heading_id_7"><a id="pgfId-1013662"></a>5.2.1 Training, validation, and test sets</h3>
+
+  <p class="body"><a id="pgfId-1013679"></a><a id="marker-1013673"></a><a id="marker-1013675"></a>Evaluating a model always boils down to splitting the available data into three sets: training, validation, and test. You train on the training data and evaluate your model on the validation data. Once your model is ready for prime time, you test it one final time on the test data, which is meant to be as similar as possible to production data. Then you can deploy the model in production.</p>
+
+  <p class="body"><a id="pgfId-1013684"></a>You may ask, why not have two sets: a training set and a test set? You’d train on the training data and evaluate on the test data. Much simpler!</p>
+
+  <p class="body"><a id="pgfId-1013732"></a>The reason is that developing a model always involves tuning its configuration: for example, choosing the number of layers or the size of the layers (called the <i class="fm-italics">hyperparameters</i> of the model, to distinguish them from the <i class="fm-italics">parameters</i>, which are the network’s weights). You do this tuning by using as a feedback signal the performance of the model on the validation data. In essence, this tuning is a form of <i class="fm-italics">learning</i>: a search <a id="marker-1013721"></a>for a good configuration in some parameter space. As a result, tuning the configuration of the model based on its performance on the validation set can quickly result in <i class="fm-italics">overfitting to the validation set</i>, even though your model is never directly trained on it.</p>
+
+  <p class="body"><a id="pgfId-1013741"></a>Central to this phenomenon is the notion of <i class="fm-italics">information leaks</i>. Every time <a id="marker-1013752"></a>you tune a hyperparameter of your model based on the model’s performance on the validation set, some information about the validation data leaks into the model. If you do this only once, for one parameter, then very few bits of information will leak, and your validation set will remain reliable for evaluating the model. But if you repeat this many times—running one experiment, evaluating on the validation set, and modifying your model as a result—then you’ll leak an increasingly significant amount of information about the validation set into the model.</p>
+
+  <p class="body"><a id="pgfId-1013762"></a>At the end of the day, you’ll end up with a model that performs artificially well on the validation data, because that’s what you optimized it for. You care about performance on completely new data, not on the validation data, so you need to use a completely different, never-before-seen dataset to evaluate the model: the test dataset. Your model shouldn’t have had access to <i class="fm-italics">any</i> information about the test set, even indirectly. If anything about the model has been tuned based on test set performance, then your measure of generalization will be flawed.</p>
+
+  <p class="body"><a id="pgfId-1013777"></a>Splitting your data into training, validation, and test sets may seem straightforward, but there are a few advanced ways to do it that can come in handy when little data is available. Let’s review three classic evaluation recipes: simple holdout validation, K-fold validation, and iterated K-fold validation with shuffling. We’ll also talk about the use of common-sense baselines to check that your training is going somewhere.</p>
+
+  <p class="fm-head2"><a id="pgfId-1013783"></a>Simple holdout validation</p>
+
+  <p class="body"><a id="pgfId-1013808"></a><a id="marker-1013794"></a><a id="marker-1013796"></a><a id="marker-1013798"></a>Set apart some fraction of your data as your test set. Train on the remaining data, and evaluate on the test set. As you saw in the previous sections, in order to prevent information leaks, you shouldn’t tune your model based on the test set, and therefore you should <i class="fm-italics">also</i> reserve a validation set.</p>
+
+  <p class="body"><a id="pgfId-1013817"></a>Schematically, holdout validation looks like figure 5.12. Listing 5.5 shows a simple implementation.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-12.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029120"></a>Figure 5.12 Simple holdout validation split</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1013898"></a>Listing 5.5 Holdout validation (note that labels are omitted for simplicity)</p>
+  <pre class="programlisting"><a id="pgfId-1024631"></a>num_validation_samples = <span class="fm-codeblue">10000</span> 
+<a id="pgfId-1013937"></a>np.random.shuffle(data)                                   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1013949"></a>validation_data = data[:num_validation_samples]           <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1013961"></a>training_data = data[num_validation_samples:]             <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1013973"></a>model = get_model()                                       <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1013985"></a>model.fit(training_data, ...)                             <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1013997"></a>validation_score = model.evaluate(validation_data, ...)   <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1014014"></a> 
+<a id="pgfId-1014009"></a>...                                                       <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1014031"></a> 
+<a id="pgfId-1014026"></a>model = get_model()                                       <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1014043"></a>model.fit(np.concatenate([training_data,                  <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1014055"></a>                          validation_data]), ...)         <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1014067"></a>test_score = model.evaluate(test_data, ...)               <span class="fm-combinumeral">❻</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1027337"></a><span class="fm-combinumeral">❶</span> Shuffling the data is usually appropriate.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1027358"></a><span class="fm-combinumeral">❷</span> Defines the validation set</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1027375"></a><span class="fm-combinumeral">❸</span> Defines the training set</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1027392"></a><span class="fm-combinumeral">❹</span> Trains a model on the training data, and evaluates it on the validation data</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1027409"></a><span class="fm-combinumeral">❺</span> At this point you can tune your model, retrain it, evaluate it, tune it again.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1027426"></a><span class="fm-combinumeral">❻</span> Once you’ve tuned your hyperparameters, it’s common to train your final model from scratch on all non-test data available.</p>
+
+  <p class="body"><a id="pgfId-1014179"></a>This is the simplest evaluation protocol, and it suffers from one flaw: if little data is available, then your validation and test sets may contain too few samples to be statistically representative of the data at hand. This is easy to recognize: if different random shuffling rounds of the data before splitting end up yielding very different measures of model performance, then you’re having this issue. K-fold validation and iterated K-fold validation are two ways to address this, as discussed next. <a id="marker-1014181"></a><a id="marker-1014184"></a><a id="marker-1014186"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1014192"></a>K-fold validation</p>
+
+  <p class="body"><a id="pgfId-1014247"></a><a id="marker-1014203"></a><a id="marker-1014205"></a><a id="marker-1014207"></a>With this approach, you split your data into <code class="fm-code-in-text">K</code> partitions of equal size. For each partition <code class="fm-code-in-text">i</code>, train a model on the remaining <code class="fm-code-in-text">K - 1</code> partitions, and evaluate it on partition <code class="fm-code-in-text">i</code>. Your final score is then the averages of the K scores obtained. This method is helpful when the performance of your model shows significant variance based on your train-test split. Like holdout validation, this method doesn’t exempt you from using a distinct validation set for model calibration.</p>
+
+  <p class="body"><a id="pgfId-1014256"></a>Schematically, K-fold cross-validation looks like figure 5.13. Listing 5.6 shows a simple implementation.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-13.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029162"></a>Figure 5.13 K-fold cross-validation with K=3</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014337"></a>Listing 5.6 K-fold cross-validation (note that labels are omitted for simplicity)</p>
+  <pre class="programlisting"><a id="pgfId-1024709"></a>k = <span class="fm-codeblue">3</span> 
+<a id="pgfId-1024724"></a>num_validation_samples = len(data) // k
+<a id="pgfId-1024710"></a>np.random.shuffle(data)
+<a id="pgfId-1024711"></a>validation_scores = [] 
+<a id="pgfId-1024712"></a><b class="fm-codebrown">for</b> fold <b class="fm-codebrown">in</b> range(k):
+<a id="pgfId-1014400"></a>    validation_data = data[num_validation_samples * fold:        <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014412"></a>                           num_validation_samples * (fold + <span class="fm-codeblue">1</span>)]  <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014424"></a>    training_data = np.concatenate(                              <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014436"></a>        data[:num_validation_samples * fold],                    <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014448"></a>        data[num_validation_samples * (fold + <span class="fm-codeblue">1</span>):])              <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014460"></a>    model = get_model()                                          <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1014472"></a>    model.fit(training_data, ...)
+<a id="pgfId-1014478"></a>    validation_score = model.evaluate(validation_data, ...)
+<a id="pgfId-1014484"></a>    validation_scores.append(validation_score)
+<a id="pgfId-1014490"></a>validation_score = np.average(validation_scores)                 <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1014502"></a>model = get_model()                                              <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1014514"></a>model.fit(data, ...)                                             <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1014526"></a>test_score = model.evaluate(test_data, ...)                      <span class="fm-combinumeral">❺</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026918"></a><span class="fm-combinumeral">❶</span> Selects the validation-data partition</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026939"></a><span class="fm-combinumeral">❷</span> Uses the remainder of the data as training data. Note that the + operator represents list concatenation, not summation.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026959"></a><span class="fm-combinumeral">❸</span> Creates a brand-new instance of the model (untrained)</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026976"></a><span class="fm-combinumeral">❹</span> Validation score: average of the validation scores of the k folds</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026993"></a><span class="fm-combinumeral">❺</span> Trains the final model on all non-test data available <a id="marker-1026998"></a><a id="marker-1026999"></a><a id="marker-1027000"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1014638"></a>Iterated K-fold validation with shuffling</p>
+
+  <p class="body"><a id="pgfId-1014685"></a><a id="marker-1014649"></a><a id="marker-1014651"></a><a id="marker-1014653"></a><a id="marker-1014655"></a>This one is for situations in which you have relatively little data available and you need to evaluate your model as precisely as possible. I’ve found it to be extremely helpful in Kaggle competitions. It consists of applying K-fold validation multiple times, shuffling the data every time before splitting it <code class="fm-code-in-text">K</code> ways. The final score is the average of the scores obtained at each run of K-fold validation. Note that you end up training and evaluating <code class="fm-code-in-text">P * K</code> models (where <code class="fm-code-in-text">P</code> is the number of iterations you use), which can be very expensive. <a id="marker-1014690"></a><a id="marker-1014693"></a><a id="marker-1014695"></a><a id="marker-1014697"></a><a id="marker-1014699"></a><a id="marker-1014701"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_8"><a id="pgfId-1014707"></a>5.2.2 Beating a common-sense baseline</h3>
+
+  <p class="body"><a id="pgfId-1014724"></a><a id="marker-1014718"></a><a id="marker-1014720"></a>Besides the different evaluation protocols you have available, one last thing you should know about is the use of common-sense baselines.</p>
+
+  <p class="body"><a id="pgfId-1014729"></a>Training a deep learning model is a bit like pressing a button that launches a rocket in a parallel world. You can’t hear it or see it. You can’t observe the manifold learning process—it’s happening in a space with thousands of dimensions, and even if you projected it to 3D, you couldn’t interpret it. The only feedback you have is your validation metrics—like an altitude meter on your invisible rocket.</p>
+
+  <p class="body"><a id="pgfId-1014735"></a>It’s particularly important to be able to tell whether you’re getting off the ground at all. What was the altitude you started at? Your model seems to have an accuracy of 15%—is that any good? Before you start working with a dataset, you should always pick a trivial baseline that you’ll try to beat. If you cross that threshold, you’ll know you’re doing something right: your model is actually using the information in the input data to make predictions that generalize, and you can keep going. This baseline could be the performance of a random classifier, or the performance of the simplest non-machine learning technique you can imagine.</p>
+
+  <p class="body"><a id="pgfId-1014741"></a>For instance, in the MNIST digit-classification example, a simple baseline would be a validation accuracy greater than 0.1 (random classifier); in the IMDB example, it would be a validation accuracy greater than 0.5. In the Reuters example, it would be around 0.18-0.19, due to class imbalance. If you have a binary classification problem where 90% of samples belong to class A and 10% belong to class B, then a classifier that always predicts A already achieves 0.9 in validation accuracy, and you’ll need to do better than that.</p>
+
+  <p class="body"><a id="pgfId-1014747"></a>Having a common-sense baseline you can refer to is essential when you’re getting started on a problem no one has solved before. If you can’t beat a trivial solution, your model is worthless—perhaps you’re using the wrong model, or perhaps the problem you’re tackling can’t even be approached with machine learning in the first place. Time to go back to the drawing board. <a id="marker-1014749"></a><a id="marker-1014752"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_9"><a id="pgfId-1014758"></a>5.2.3 Things to keep in mind about model evaluation</h3>
+
+  <p class="body"><a id="pgfId-1014768"></a>Keep an eye out for the following when you’re choosing an evaluation protocol:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014802"></a><i class="fm-italics1">Data representativeness</i>—You want <a class="calibre11" id="marker-1014791"></a>both your training set and test set to be representative of the data at hand. For instance, if you’re trying to classify images of digits, and you’re starting from an array of samples where the samples are ordered by their class, taking the first 80% of the array as your training set and the remaining 20% as your test set will result in your training set containing only classes 0–7, whereas your test set will contain only classes 8–9. This seems like a ridiculous mistake, but it’s surprisingly common. For this reason, you usually should <i class="fm-italics1">randomly shuffle</i> your data before splitting it into training and test sets.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014845"></a><i class="fm-italics1">The arrow of time</i>—If you’re trying to <a class="calibre11" id="marker-1014824"></a>predict the future given the past (for example, tomorrow’s weather, stock movements, and so on), you should not randomly shuffle your data before splitting it, because doing so will create a <i class="fm-italics1">temporal leak</i>: your model will effectively be trained on data from the future. In such situations, you should always make sure all data in your test set is <i class="fm-italics1">posterior</i> to the data in the training set.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014854"></a><i class="fm-italics1">Redundancy in your data</i>—If some <a class="calibre11" id="marker-1014867"></a>data points in your data appear twice (fairly common with real-world data), then shuffling the data and splitting it into a training set and a validation set will result in redundancy between the training and validation sets. In effect, you’ll be testing on part of your training data, which is the worst thing you can do! Make sure your training set and validation set are disjoint.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1014877"></a>Having a reliable way to evaluate the performance of your model is how you’ll be able to monitor the tension at the heart of machine learning—between optimization and generalization, underfitting and overfitting. <a id="marker-1014879"></a><a id="marker-1014882"></a></p>
+
+  <h2 class="fm-head" id="heading_id_10"><a id="pgfId-1014888"></a>5.3 Improving model fit</h2>
+
+  <p class="body"><a id="pgfId-1014898"></a><a id="marker-1014899"></a>To achieve the perfect fit, you must first overfit. Since you don’t know in advance where the boundary lies, you must cross it to find it. Thus, your initial goal as you start working on a problem is to achieve a model that shows some generalization power and that is able to overfit. Once you have such a model, you’ll focus on refining generalization by fighting overfitting.</p>
+
+  <p class="body"><a id="pgfId-1014907"></a>There are three common problems you’ll encounter at this stage:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014913"></a>Training doesn’t get started: your training loss doesn’t go down over time.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014927"></a>Training gets started just fine, but your model doesn’t meaningfully generalize: you can’t beat the common-sense baseline you set.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014937"></a>Training and validation loss both go down over time, and you can beat your baseline, but you don’t seem to be able to overfit, which indicates you’re still underfitting.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1014947"></a>Let’s see how you can address these issues to achieve the first big milestone of a machine learning project: getting a model that has some generalization power (it can beat a trivial baseline) and that is able to overfit.</p>
+
+  <h3 class="fm-head1" id="heading_id_11"><a id="pgfId-1014953"></a>5.3.1 Tuning key gradient descent parameters</h3>
+
+  <p class="body"><a id="pgfId-1014986"></a><a id="marker-1014964"></a><a id="marker-1014966"></a>Sometimes training doesn’t get started, or it stalls too early. Your loss is stuck. This is <i class="fm-italics">always</i> something you can overcome: remember that you can fit a model to random data. Even if nothing about your problem makes sense, you should <i class="fm-italics">still</i> be able to train something—if only by memorizing the training data.</p>
+
+  <p class="body"><a id="pgfId-1014995"></a>When this happens, it’s always a problem with the configuration of the gradient descent process: your choice of optimizer, the distribution of initial values in the weights of your model, your learning rate, or your batch size. All these parameters are interdependent, and as such it is usually sufficient to tune the learning rate and the batch size while keeping the rest of the parameters constant.</p>
+
+  <p class="body"><a id="pgfId-1015001"></a>Let’s look at a concrete example: let’s train the MNIST model from chapter 2 with an inappropriately large learning rate of value 1.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015058"></a>Listing 5.7 Training an MNIST model with an incorrectly high learning rate</p>
+  <pre class="programlisting"><a id="pgfId-1024758"></a>(train_images, train_labels), _ = mnist.load_data()
+<a id="pgfId-1024759"></a>train_images = train_images.reshape((<span class="fm-codeblue">60000</span>, <span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>))
+<a id="pgfId-1024760"></a>train_images = train_images.astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1024761"></a>  
+<a id="pgfId-1024762"></a>model = keras.Sequential([
+<a id="pgfId-1024763"></a>    layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024764"></a>    layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1024765"></a>])
+<a id="pgfId-1024766"></a>model.compile(optimizer=keras.optimizers.RMSprop(<span class="fm-codeblue">1.</span>),
+<a id="pgfId-1024767"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1024768"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024769"></a>model.fit(train_images, train_labels,
+<a id="pgfId-1024770"></a>          epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1024771"></a>          batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1015174"></a>          validation_split=<span class="fm-codeblue">0.2</span>)</pre>
+
+  <p class="body"><a id="pgfId-1015180"></a>The model quickly reaches a training and validation accuracy in the 30%–40% range, but cannot get past that. Let’s try to lower the learning rate to a more reasonable value of <code class="fm-code-in-text">1e-2</code>.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015237"></a>Listing 5.8 The same model with a more appropriate learning rate</p>
+  <pre class="programlisting"><a id="pgfId-1024786"></a>model = keras.Sequential([
+<a id="pgfId-1024787"></a>    layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024788"></a>    layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1024789"></a>])
+<a id="pgfId-1024790"></a>model.compile(optimizer=keras.optimizers.RMSprop(<span class="fm-codeblue">1e-2</span>),
+<a id="pgfId-1024791"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1024792"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024793"></a>model.fit(train_images, train_labels,
+<a id="pgfId-1024794"></a>          epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1024795"></a>          batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1015330"></a>          validation_split=<span class="fm-codeblue">0.2</span>)</pre>
+
+  <p class="body"><a id="pgfId-1015336"></a>The model is now able to train.</p>
+
+  <p class="body"><a id="pgfId-1015342"></a>If you find yourself in a similar situation, try</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015348"></a>Lowering or increasing the learning rate. A learning rate that is too high may lead to updates that vastly overshoot a proper fit, like in the preceding example, and a learning rate that is too low may make training so slow that it appears to stall.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015362"></a>Increasing the batch size. A batch with more samples will lead to gradients that are more informative and less noisy (lower variance).</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1015372"></a>You will, eventually, find a configuration that gets training started. <a id="marker-1015374"></a><a id="marker-1015377"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_12"><a id="pgfId-1015383"></a>5.3.2 Leveraging better architecture priors</h3>
+
+  <p class="body"><a id="pgfId-1015393"></a><a id="marker-1015394"></a>You have a model that fits, but for some reason your validation metrics aren’t improving at all. They remain no better than what a random classifier would achieve: your model trains but doesn’t generalize. What’s going on?</p>
+
+  <p class="body"><a id="pgfId-1015402"></a>This is perhaps the worst machine learning situation you can find yourself in. It indicates that <i class="fm-italics">something is fundamentally wrong with your approach</i>, and it may not be easy to tell what. Here are some tips.</p>
+
+  <p class="body"><a id="pgfId-1015417"></a>First, it may be that the input data you’re using simply doesn’t contain sufficient information to predict your targets: the problem as formulated is not solvable. This is what happened earlier when we tried to fit an MNIST model where the labels were shuffled: the model would train just fine, but validation accuracy would stay stuck at 10%, because it was plainly impossible to generalize with such a dataset.</p>
+
+  <p class="body"><a id="pgfId-1015423"></a>It may also be that the kind of model you’re using is not suited for the problem at hand. For instance, in chapter 10, you’ll see an example of a timeseries prediction problem where a densely connected architecture isn’t able to beat a trivial baseline, whereas a more appropriate recurrent architecture does manage to generalize well. Using a model that makes the right assumptions about the problem is essential to achieve generalization: you should leverage the right architecture priors.</p>
+
+  <p class="body"><a id="pgfId-1015429"></a>In the following chapters, you’ll learn about the best architectures to use for a variety of data modalities—images, text, timeseries, and so on. In general, you should always make sure to read up on architecture best practices for the kind of task you’re attacking—chances are you’re not the first person to attempt it. <a id="marker-1015431"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_13"><a id="pgfId-1015438"></a>5.3.3 Increasing model capacity</h3>
+
+  <p class="body"><a id="pgfId-1015448"></a><a id="marker-1015449"></a>If you manage to get to a model that fits, where validation metrics are going down, and that seems to achieve at least some level of generalization power, congratulations: you’re almost there. Next, you need to get your model to start overfitting.</p>
+
+  <p class="body"><a id="pgfId-1015457"></a>Consider the following small model—a simple logistic regression—trained on MNIST pixels.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015514"></a>Listing 5.9 A simple logistic regression on MNIST</p>
+  <pre class="programlisting"><a id="pgfId-1024814"></a>model = keras.Sequential([layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)])
+<a id="pgfId-1024815"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1024816"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1024817"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024818"></a>history_small_model = model.fit(
+<a id="pgfId-1024819"></a>    train_images, train_labels,
+<a id="pgfId-1024820"></a>    epochs=<span class="fm-codeblue">20</span>,
+<a id="pgfId-1024821"></a>    batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1015595"></a>    validation_split=<span class="fm-codeblue">0.2</span>)</pre>
+
+  <p class="body"><a id="pgfId-1015601"></a>You get loss curves that look like figure 5.14:</p>
+  <pre class="programlisting"><a id="pgfId-1024838"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1024839"></a>val_loss = history_small_model.history[<span class="fm-codegreen">"val_loss"</span>]
+<a id="pgfId-1024840"></a>epochs = range(<span class="fm-codeblue">1</span>, <span class="fm-codeblue">21</span>)
+<a id="pgfId-1024841"></a>plt.plot(epochs, val_loss, <span class="fm-codegreen">"b--"</span>,
+<a id="pgfId-1024842"></a>         label=<span class="fm-codegreen">"Validation loss"</span>)
+<a id="pgfId-1024843"></a>plt.title(<span class="fm-codegreen">"Effect of insufficient model capacity on validation loss"</span>)
+<a id="pgfId-1024844"></a>plt.xlabel(<span class="fm-codegreen">"Epochs"</span>)
+<a id="pgfId-1024845"></a>plt.ylabel(<span class="fm-codegreen">"Loss"</span>)
+<a id="pgfId-1015663"></a>plt.legend()</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-14.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029217"></a>Figure 5.14 Effect of insufficient model capacity on loss curves</p>
+
+  <p class="body"><a id="pgfId-1015679"></a>Validation metrics seem to stall, or to improve very slowly, instead of peaking and reversing course. The validation loss goes to 0.26 and just stays there. You can fit, but you can’t clearly overfit, even after many iterations over the training data. You’re likely to encounter similar curves often in your career.</p>
+
+  <p class="body"><a id="pgfId-1015715"></a>Remember that it should always be possible to overfit. Much like the problem where the training loss doesn’t go down, this is an issue that can always be solved. If you can’t seem to be able to overfit, it’s likely a problem with the <i class="fm-italics">representational power</i> of your model: you’re going to need a bigger model, one with more <i class="fm-italics">capacity</i>, that is to say, one able to store more information. You can increase representational power by adding more layers, using bigger layers (layers with more parameters), or using kinds of layers that are more appropriate for the problem at hand (better architecture priors).</p>
+
+  <p class="body"><a id="pgfId-1015724"></a>Let’s try training a bigger model, one with two intermediate layers with 96 units each:</p>
+  <pre class="programlisting"><a id="pgfId-1024860"></a>model = keras.Sequential([
+<a id="pgfId-1024861"></a>    layers.Dense(<span class="fm-codeblue">96</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024862"></a>    layers.Dense(<span class="fm-codeblue">96</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024863"></a>    layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>),
+<a id="pgfId-1024864"></a>])
+<a id="pgfId-1024865"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1024866"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1024867"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024868"></a>history_large_model = model.fit(
+<a id="pgfId-1024869"></a>    train_images, train_labels,
+<a id="pgfId-1024870"></a>    epochs=<span class="fm-codeblue">20</span>,
+<a id="pgfId-1024871"></a>    batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1015810"></a>    validation_split=<span class="fm-codeblue">0.2</span>)</pre>
+
+  <p class="body"><a id="pgfId-1015816"></a>The validation curve now looks exactly like it should: the model fits fast and starts overfitting after 8 epochs (see figure 5.15). <a id="marker-1015818"></a><a id="marker-1015821"></a></p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-15.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029259"></a>Figure 5.15 Validation loss for a model with appropriate capacity</p>
+
+  <h2 class="fm-head" id="heading_id_14"><a id="pgfId-1015837"></a>5.4 Improving generalization</h2>
+
+  <p class="body"><a id="pgfId-1015868"></a><a id="marker-1015862"></a><a id="marker-1015864"></a>Once your model has shown itself to have some generalization power and to be able to overfit, it’s time to switch your focus to maximizing generalization.</p>
+
+  <h3 class="fm-head1" id="heading_id_15"><a id="pgfId-1015873"></a>5.4.1 Dataset curation</h3>
+
+  <p class="body"><a id="pgfId-1015892"></a><a id="marker-1015884"></a><a id="marker-1015886"></a><a id="marker-1015888"></a>You’ve already learned that generalization in deep learning originates from the latent structure of your data. If your data makes it possible to smoothly interpolate between samples, you will be able to train a deep learning model that generalizes. If your problem is overly noisy or fundamentally discrete, like, say, list sorting, deep learning will not help you. Deep learning is curve fitting, not magic.</p>
+
+  <p class="body"><a id="pgfId-1015897"></a>As such, it is essential that you make sure that you’re working with an appropriate dataset. Spending more effort and money on data collection almost always yields a much greater return on investment than spending the same on developing a better model.</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015924"></a>Make sure you have enough data. Remember that you <a class="calibre11" id="marker-1015913"></a>need a <i class="fm-italics1">dense sampling</i> of the input-cross-output space. More data will yield a better model. Sometimes, problems that seem impossible at first become solvable with a larger dataset.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015933"></a>Minimize labeling errors—visualize your inputs to check for anomalies, and proofread your labels.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015943"></a>Clean your data and deal with missing values (we’ll cover this in the next chapter).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015953"></a>If you have many features and you aren’t sure which ones are actually useful, do feature selection.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1015979"></a>A particularly important way to improve the generalization potential of your data is <i class="fm-italics">feature engineering</i>. For most machine learning problems, feature engineering is a key ingredient for success. Let’s take a look. <a id="marker-1015984"></a><a id="marker-1015987"></a><a id="marker-1015989"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_16"><a id="pgfId-1015995"></a>5.4.2 Feature engineering</h3>
+
+  <p class="body"><a id="pgfId-1016016"></a><a id="marker-1016006"></a><a id="marker-1016008"></a><a id="marker-1016010"></a><i class="fm-italics">Feature engineering</i> is the process of using your own knowledge about the data and about the machine learning algorithm at hand (in this case, a neural network) to make the algorithm work better by applying hardcoded (non-learned) transformations to the data before it goes into the model. In many cases, it isn’t reasonable to expect a machine learning model to be able to learn from completely arbitrary data. The data needs to be presented to the model in a way that will make the model’s job easier.</p>
+
+  <p class="body"><a id="pgfId-1016025"></a>Let’s look at an intuitive example. Suppose you’re trying to develop a model that can take as input an image of a clock and can output the time of day (see figure 5.16).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-16.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029301"></a>Figure 5.16 Feature engineering for reading the time on a clock</p>
+
+  <p class="body"><a id="pgfId-1016041"></a>If you choose to use the raw pixels of the image as input data, you have a difficult machine learning problem on your hands. You’ll need a convolutional neural network to solve it, and you’ll have to expend quite a bit of computational resources to train the network.</p>
+
+  <p class="body"><a id="pgfId-1016061"></a>But if you already understand the problem at a high level (you understand how humans read time on a clock face), you can come up with much better input features for a machine learning algorithm: for instance, it’s easy to write a five-line Python script to follow the black pixels of the clock hands and output the <code class="fm-code-in-text">(x, y)</code> coordinates of the tip of each hand. Then a simple machine learning algorithm can learn to associate these coordinates with the appropriate time of day.</p>
+
+  <p class="body"><a id="pgfId-1016092"></a>You can go even further: do a coordinate change, and express the <code class="fm-code-in-text">(x, y)</code> coordinates as polar coordinates with regard to the center of the image. Your input will become the angle <code class="fm-code-in-text">theta</code> of each clock hand. At this point, your features are making the problem so easy that no machine learning is required; a simple rounding operation and dictionary lookup are enough to recover the approximate time of day.</p>
+
+  <p class="body"><a id="pgfId-1016101"></a>That’s the essence of feature engineering: making a problem easier by expressing it in a simpler way. Make the latent manifold smoother, simpler, better organized. Doing so usually requires understanding the problem in depth.</p>
+
+  <p class="body"><a id="pgfId-1016107"></a>Before deep learning, feature engineering used to be the most important part of the machine learning workflow, because classical shallow algorithms didn’t have hypothesis spaces rich enough to learn useful features by themselves. The way you presented the data to the algorithm was absolutely critical to its success. For instance, before convolutional neural networks became successful on the MNIST digit-classification problem, solutions were typically based on hardcoded features such as the number of loops in a digit image, the height of each digit in an image, a histogram of pixel values, and so on.</p>
+
+  <p class="body"><a id="pgfId-1016113"></a>Fortunately, modern deep learning removes the need for most feature engineering, because neural networks are capable of automatically extracting useful features from raw data. Does this mean you don’t have to worry about feature engineering as long as you’re using deep neural networks? No, for two reasons:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1016119"></a>Good features still allow you to solve problems more elegantly while using fewer resources. For instance, it would be ridiculous to solve the problem of reading a clock face using a convolutional neural network.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1016133"></a>Good features let you solve a problem with far less data. The ability of deep learning models to learn features on their own relies on having lots of training data available; if you have only a few samples, the information value in their features becomes critical. <a class="calibre11" id="marker-1016139"></a><a class="calibre11" id="marker-1016142"></a><a class="calibre11" id="marker-1016144"></a></p>
+    </li>
+  </ul>
+
+  <h3 class="fm-head1" id="heading_id_17"><a id="pgfId-1016150"></a>5.4.3 Using early stopping</h3>
+
+  <p class="body"><a id="pgfId-1016175"></a><a id="marker-1025740"></a><a id="marker-1025741"></a><a id="marker-1025742"></a>In deep learning, we always use models that are vastly overparameterized: they have way more degrees of freedom than the minimum necessary to fit to the latent manifold of the data. This overparameterization is not an issue, because <i class="fm-italics">you never fully fit a deep learning model</i>. Such a fit wouldn’t generalize at all. You will always interrupt training long before you’ve reached the minimum possible training loss.</p>
+
+  <p class="body"><a id="pgfId-1016184"></a>Finding the exact point during training where you’ve reached the most generalizable fit—the exact boundary between an underfit curve and an overfit curve—is one of the most effective things you can do to improve generalization.</p>
+
+  <p class="body"><a id="pgfId-1016190"></a>In the examples in the previous chapter, we would start by training our models for longer than needed to figure out the number of epochs that yielded the best validation metrics, and then we would retrain a new model for exactly that number of epochs. This is pretty standard, but it requires you to do redundant work, which can sometimes be expensive. Naturally, you could just save your model at the end of each epoch, and once you’ve found the best epoch, reuse the closest saved model you have. In Keras, it’s typical to do this with an <code class="fm-code-in-text">EarlyStopping</code> callback, which will <a id="marker-1016201"></a>interrupt training as soon as validation metrics have stopped improving, while remembering the best known model state. You’ll learn to use callbacks in chapter 7. <a id="marker-1016207"></a><a id="marker-1016210"></a><a id="marker-1016212"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_18"><a id="pgfId-1016218"></a>5.4.4 Regularizing your model</h3>
+
+  <p class="body"><a id="pgfId-1016241"></a><a id="marker-1026129"></a><a id="marker-1026130"></a><a id="marker-1026131"></a><i class="fm-italics">Regularization techniques</i> are a set of best practices that actively impede the model’s ability to fit perfectly to the training data, with the goal of making the model perform better during validation. This is called “regularizing” the model, because it tends to make the model simpler, more “regular,” its curve smoother, more “generic”; thus it is less specific to the training set and better able to generalize by more closely approximating the latent manifold of the data.</p>
+
+  <p class="body"><a id="pgfId-1016250"></a>Keep in mind that regularizing a model is a process that should always be guided by an accurate evaluation procedure. You will only achieve generalization if you can measure it.</p>
+
+  <p class="body"><a id="pgfId-1016256"></a>Let’s review some of the most common regularization techniques and apply them in practice to improve the movie-classification model from chapter 4.</p>
+
+  <p class="fm-head2"><a id="pgfId-1016262"></a>Reducing the network’s size</p>
+
+  <p class="body"><a id="pgfId-1016295"></a><a id="marker-1016273"></a><a id="marker-1016275"></a>You’ve already learned that a model that is too small will not overfit. The simplest way to mitigate overfitting is to reduce the size of the model (the number of learnable parameters in the model, determined by the number of layers and the number of units per layer). If the model has limited memorization resources, it won’t be able to simply memorize its training data; thus, in order to minimize its loss, it will have to resort to learning compressed representations that have predictive power regarding the targets—precisely the type of representations we’re interested in. At the same time, keep in mind that you should use models that have enough parameters that they don’t underfit: your model shouldn’t be starved for memorization resources. There is a compromise to be found between <i class="fm-italics">too much capacity</i> and <i class="fm-italics">not enough capacity</i>.</p>
+
+  <p class="body"><a id="pgfId-1016304"></a>Unfortunately, there is no magical formula to determine the right number of layers or the right size for each layer. You must evaluate an array of different architectures (on your validation set, not on your test set, of course) in order to find the correct model size for your data. The general workflow for finding an appropriate model size is to start with relatively few layers and parameters, and increase the size of the layers or add new layers until you see diminishing returns with regard to validation loss.</p>
+
+  <p class="body"><a id="pgfId-1016310"></a>Let’s try this on the movie-review classification model. The following listing shows our original model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016367"></a>Listing 5.10 Original model</p>
+  <pre class="programlisting"><a id="pgfId-1024890"></a><b class="fm-codebrown">from</b> tensorflow.keras.datasets <b class="fm-codebrown">import</b> imdb
+<a id="pgfId-1024891"></a>(train_data, train_labels), _ = imdb.load_data(num_words=<span class="fm-codeblue">10000</span>)
+<a id="pgfId-1024892"></a>  
+<a id="pgfId-1024893"></a><b class="fm-codebrown">def</b> vectorize_sequences(sequences, dimension=<span class="fm-codeblue">10000</span>):
+<a id="pgfId-1024894"></a>    results = np.zeros((len(sequences), dimension))
+<a id="pgfId-1024895"></a>    <b class="fm-codebrown">for</b> i, sequence <b class="fm-codebrown">in</b> enumerate(sequences):
+<a id="pgfId-1024896"></a>        results[i, sequence] = <span class="fm-codeblue">1.</span> 
+<a id="pgfId-1024897"></a>    <b class="fm-codebrown">return</b> results
+<a id="pgfId-1024898"></a>train_data = vectorize_sequences(train_data)
+<a id="pgfId-1024899"></a>  
+<a id="pgfId-1024900"></a>model = keras.Sequential([
+<a id="pgfId-1024901"></a>    layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024902"></a>    layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024903"></a>    layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)
+<a id="pgfId-1024904"></a>])
+<a id="pgfId-1024905"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1024906"></a>              loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1024907"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024908"></a>history_original = model.fit(train_data, train_labels,
+<a id="pgfId-1016512"></a>                             epochs=<span class="fm-codeblue">20</span>, batch_size=<span class="fm-codeblue">512</span>, validation_split=<span class="fm-codeblue">0.4</span>)</pre>
+
+  <p class="body"><a id="pgfId-1016518"></a>Now let’s try to replace it with this smaller model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016575"></a>Listing 5.11 Version of the model with lower capacity</p>
+  <pre class="programlisting"><a id="pgfId-1024927"></a>model = keras.Sequential([
+<a id="pgfId-1024928"></a>    layers.Dense(<span class="fm-codeblue">4</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024929"></a>    layers.Dense(<span class="fm-codeblue">4</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024930"></a>    layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)
+<a id="pgfId-1024931"></a>])
+<a id="pgfId-1024932"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1024933"></a>              loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1024934"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024935"></a>history_smaller_model = model.fit(
+<a id="pgfId-1024936"></a>    train_data, train_labels,
+<a id="pgfId-1016668"></a>    epochs=<span class="fm-codeblue">20</span>, batch_size=<span class="fm-codeblue">512</span>, validation_split=<span class="fm-codeblue">0.4</span>)</pre>
+
+  <p class="body"><a id="pgfId-1016674"></a>Figure 5.17 shows a comparison of the validation losses of the original model and the smaller model.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-17.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029343"></a>Figure 5.17 Original model vs. smaller model on IMDB review classification</p>
+
+  <p class="body"><a id="pgfId-1016690"></a>As you can see, the smaller model starts overfitting later than the reference model (after six epochs rather than four), and its performance degrades more slowly once it starts overfitting.</p>
+
+  <p class="body"><a id="pgfId-1016710"></a>Now, let’s add to our benchmark a model that has much more capacity—far more than the problem warrants. While it is standard to work with models that are significantly overparameterized for what they’re trying to learn, there can definitely be such a thing as <i class="fm-italics">too much</i> memorization capacity. You’ll know your model is too large if it starts overfitting right away and if its validation loss curve looks choppy with high-variance (although choppy validation metrics could also be a symptom of using an unreliable validation process, such as a validation split that’s too small).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016776"></a>Listing 5.12 Version of the model with higher capacity</p>
+  <pre class="programlisting"><a id="pgfId-1024953"></a>model = keras.Sequential([
+<a id="pgfId-1024954"></a>    layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024955"></a>    layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024956"></a>    layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)
+<a id="pgfId-1024957"></a>])
+<a id="pgfId-1024958"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1024959"></a>              loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1024960"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024961"></a>history_larger_model = model.fit(
+<a id="pgfId-1024962"></a>    train_data, train_labels,
+<a id="pgfId-1016869"></a>    epochs=<span class="fm-codeblue">20</span>, batch_size=<span class="fm-codeblue">512</span>, validation_split=<span class="fm-codeblue">0.4</span>)</pre>
+
+  <p class="body"><a id="pgfId-1016875"></a>Figure 5.18 shows how the bigger model fares compared with the reference model.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-18.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029385"></a>Figure 5.18 Original model vs. much larger model on IMDB review classification</p>
+
+  <p class="body"><a id="pgfId-1016891"></a>The bigger model starts overfitting almost immediately, after just one epoch, and it overfits much more severely. Its validation loss is also noisier. It gets training loss near zero very quickly. The more capacity the model has, the more quickly it can model the training data (resulting in a low training loss), but the more susceptible it is to overfitting (resulting in a large difference between the training and validation loss). <a id="marker-1016907"></a><a id="marker-1016910"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1016916"></a>Adding weight regularization</p>
+
+  <p class="body"><a id="pgfId-1016957"></a><a id="marker-1016927"></a><a id="marker-1016929"></a><a id="marker-1016931"></a>You may be familiar with the principle of <i class="fm-italics">Occam’s razor</i>: given two <a id="marker-1016946"></a>explanations for something, the explanation most likely to be correct is the simplest one—the one that makes fewer assumptions. This idea also applies to the models learned by neural networks: given some training data and a network architecture, multiple sets of weight values (multiple <i class="fm-italics">models</i>) could explain the data. Simpler models are less likely to overfit than complex ones.</p>
+
+  <p class="body"><a id="pgfId-1017004"></a>A <i class="fm-italics">simple model</i> in this <a id="marker-1016977"></a>context is a model where the distribution of parameter values has less entropy (or a model with fewer parameters, as you saw in the previous section). Thus, a common way to mitigate overfitting is to put constraints on the complexity of a model by forcing its weights to take only small values, which makes the distribution of weight values more <i class="fm-italics">regular</i>. This is <a id="marker-1016993"></a>called <i class="fm-italics">weight regularization</i>, and it’s done by adding to the loss function of the model a cost associated with having large weights. This cost comes in two flavors:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017051"></a><i class="fm-italics1">L1 regularization</i>—The cost <a class="calibre11" id="marker-1017030"></a>added is proportional to the <i class="fm-italics1">absolute value of the weight coefficients</i> (the <i class="fm-italics1">L1</i> <i class="fm-italics1">norm</i> of the weights).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017104"></a><i class="fm-italics1">L2 regularization</i>—The cost <a class="calibre11" id="marker-1017073"></a>added is proportional to the <i class="fm-italics1">square of the value of the weight coefficients</i> (the <i class="fm-italics1">L2 norm</i> of the weights). L2 regularization is also called <i class="fm-italics1">weight decay</i> in the <a class="calibre11" id="marker-1017109"></a>context of neural networks. Don’t let the different name confuse you: weight decay is mathematically the same as L2 regularization.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1017119"></a>In Keras, weight regularization is added by passing <i class="fm-italics">weight regularizer instances</i> to layers as keyword arguments. Let’s add L2 weight regularization to our initial movie-review classification model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017185"></a>Listing 5.13 Adding L2 weight regularization to the model</p>
+  <pre class="programlisting"><a id="pgfId-1024981"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> regularizers
+<a id="pgfId-1024982"></a>model = keras.Sequential([
+<a id="pgfId-1024983"></a>    layers.Dense(<span class="fm-codeblue">16</span>,
+<a id="pgfId-1024984"></a>                 kernel_regularizer=regularizers.l2(<span class="fm-codeblue">0.002</span>),
+<a id="pgfId-1024985"></a>                 activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024986"></a>    layers.Dense(<span class="fm-codeblue">16</span>,
+<a id="pgfId-1024987"></a>                 kernel_regularizer=regularizers.l2(<span class="fm-codeblue">0.002</span>),
+<a id="pgfId-1024988"></a>                 activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1024989"></a>    layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)
+<a id="pgfId-1024990"></a>])
+<a id="pgfId-1024991"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1024992"></a>              loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1024993"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1024994"></a>history_l2_reg = model.fit(
+<a id="pgfId-1024995"></a>    train_data, train_labels,
+<a id="pgfId-1017308"></a>    epochs=<span class="fm-codeblue">20</span>, batch_size=<span class="fm-codeblue">512</span>, validation_split=<span class="fm-codeblue">0.4</span>)</pre>
+
+  <p class="body"><a id="pgfId-1017340"></a>In the preceding listing, <code class="fm-code-in-text">l2(0.002)</code> means every coefficient in the weight matrix of the layer will add <code class="fm-code-in-text">0.002 * weight_coefficient_value ** 2</code> to the total loss of the model. Note that because this penalty is <i class="fm-italics">only added at training time</i>, the loss for this model will be much higher at training than at test time.</p>
+
+  <p class="body"><a id="pgfId-1017349"></a>Figure 5.19 shows the impact of the L2 regularization penalty. As you can see, the model with L2 regularization has become much more resistant to overfitting than the reference model, even though both models have the same number of parameters.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-19.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029427"></a>Figure 5.19 Effect of L2 weight regularization on validation loss</p>
+
+  <p class="body"><a id="pgfId-1017365"></a>As an alternative to L2 regularization, you can use one of the following Keras weight regularizers.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017436"></a>Listing 5.14 Different weight regularizers available in Keras</p>
+  <pre class="programlisting"><a id="pgfId-1025020"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> regularizers
+<a id="pgfId-1017475"></a>regularizers.l1(<span class="fm-codeblue">0.001</span>)                    <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1017487"></a>regularizers.l1_l2(l1=<span class="fm-codeblue">0.001</span>, l2=<span class="fm-codeblue">0.001</span>)    <span class="fm-combinumeral">❷</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026800"></a><span class="fm-combinumeral">❶</span> L1 regularization</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026828"></a><span class="fm-combinumeral">❷</span> Simultaneous L1 and L2 regularization</p>
+
+  <p class="body"><a id="pgfId-1017535"></a>Note that weight regularization is more typically used for smaller deep learning models. Large deep learning models tend to be so overparameterized that imposing constraints on weight values hasn’t much impact on model capacity and generalization. In these cases, a different regularization technique is preferred: dropout. <a id="marker-1025057"></a><a id="marker-1025058"></a><a id="marker-1025059"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1017548"></a>Adding dropout</p>
+
+  <p class="body"><a id="pgfId-1017609"></a><a id="marker-1017559"></a><a id="marker-1017561"></a><a id="marker-1017563"></a><i class="fm-italics">Dropout</i> is one of the most effective and most commonly used regularization techniques for neural networks; it was developed by Geoff Hinton and his students at the University of Toronto. Dropout, applied to a layer, consists of randomly <i class="fm-italics">dropping out</i> (setting to zero) a number of output features of the layer during training. Let’s say a given layer would normally return a vector <code class="fm-code-in-text">[0.2, 0.5, 1.3, 0.8, 1.1]</code> for a given input sample during training. After applying dropout, this vector will have a few zero entries distributed at random: for example, <code class="fm-code-in-text">[0, 0.5, 1.3, 0, 1.1]</code>. The <i class="fm-italics">dropout rate</i> is the fraction of the features that are zeroed out; it’s usually set between 0.2 and 0.5. At test time, no units are dropped out; instead, the layer’s output values are scaled down by a factor equal to the dropout rate, to balance for the fact that more units are active than at training time.</p>
+
+  <p class="body"><a id="pgfId-1017634"></a>Consider a NumPy matrix containing the output of a layer, <code class="fm-code-in-text">layer_output</code>, of shape <code class="fm-code-in-text">(batch_size, features)</code>. At training time, we zero out at random a fraction of the values in the matrix:</p>
+  <pre class="programlisting"><a id="pgfId-1017643"></a>layer_output *= np.random.randint(<span class="fm-codeblue">0</span>, high=<span class="fm-codeblue">2</span>, size=layer_output.shape)  <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026717"></a><span class="fm-combinumeral">❶</span> At training time, drops out 50% of the units in the output</p>
+
+  <p class="body"><a id="pgfId-1017683"></a>At test time, we scale down the output by the dropout rate. Here, we scale by 0.5 (because we previously dropped half the units):</p>
+  <pre class="programlisting"><a id="pgfId-1017689"></a>layer_output *= <span class="fm-codeblue">0.5   </span> <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026700"></a><span class="fm-combinumeral">❶</span> At test time</p>
+
+  <p class="body"><a id="pgfId-1017729"></a>Note that this process can be implemented by doing both operations at training time and leaving the output unchanged at test time, which is often the way it’s implemented in practice (see figure 5.20):</p>
+  <pre class="programlisting"><a id="pgfId-1017735"></a>layer_output *= np.random.randint(<span class="fm-codeblue">0</span>, high=<span class="fm-codeblue">2</span>, size=layer_output.shape)   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1017755"></a>layer_output /= <span class="fm-codeblue">0.5 </span>                                                    <span class="fm-combinumeral">❷</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026558"></a><span class="fm-combinumeral">❶</span> At training time</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1026559"></a><span class="fm-combinumeral">❷</span> Note that we’re scaling up rather than scaling down in this case.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-20.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029473"></a>Figure 5.20 Dropout applied to an activation matrix at training time, with rescaling happening during training. At test time the activation matrix is unchanged.</p>
+
+  <p class="body"><a id="pgfId-1017813"></a>This technique may seem strange and arbitrary. Why would this help reduce overfitting? Hinton says he was inspired by, among other things, a fraud-prevention mechanism used by banks. In his own words, “I went to my bank. The tellers kept changing and I asked one of them why. He said he didn’t know but they got moved around a lot. I figured it must be because it would require cooperation between employees to successfully defraud the bank. This made me realize that randomly removing a different subset of neurons on each example would prevent conspiracies and thus reduce overfitting.” The core idea is that introducing noise in the output values of a layer can break up happenstance patterns that aren’t significant (what Hinton refers to as <i class="fm-italics">conspiracies</i>), which the model will start memorizing if no noise is present.</p>
+
+  <p class="body"><a id="pgfId-1017865"></a>In Keras, you can introduce dropout in a model via <a id="marker-1017844"></a>the <code class="fm-code-in-text">Dropout</code> layer, which is applied to the output of the layer right before it. Let’s add two <code class="fm-code-in-text">Dropout</code> layers in the IMDB model to see how well they do at reducing overfitting.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017925"></a>Listing 5.15 Adding dropout to the IMDB model</p>
+  <pre class="programlisting"><a id="pgfId-1025184"></a>model = keras.Sequential([
+<a id="pgfId-1025185"></a>    layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1025186"></a>    layers.Dropout(<span class="fm-codeblue">0.5</span>),
+<a id="pgfId-1025187"></a>    layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1025188"></a>    layers.Dropout(<span class="fm-codeblue">0.5</span>),
+<a id="pgfId-1025189"></a>    layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)
+<a id="pgfId-1025190"></a>])
+<a id="pgfId-1025191"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1025192"></a>              loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1025193"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1025194"></a>history_dropout = model.fit(
+<a id="pgfId-1025195"></a>    train_data, train_labels,
+<a id="pgfId-1018030"></a>    epochs=<span class="fm-codeblue">20</span>, batch_size=<span class="fm-codeblue">512</span>, validation_split=<span class="fm-codeblue">0.4</span>)</pre>
+
+  <p class="body"><a id="pgfId-1018036"></a>Figure 5.21 shows a plot of the results. This is a clear improvement over the reference model—it also seems to be working much better than L2 regularization, since the lowest validation loss reached has improved.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/05-21.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1029515"></a>Figure 5.21 Effect of dropout on validation loss</p>
+
+  <p class="body"><a id="pgfId-1018052"></a>To recap, these are the most common ways to maximize generalization and prevent overfitting in neural networks:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018072"></a>Get more training data, or better training data.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018086"></a>Develop better features.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018096"></a>Reduce the capacity of the model.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018106"></a>Add weight regularization (for smaller models).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018116"></a>Add dropout. <a class="calibre11" id="marker-1018122"></a><a class="calibre11" id="marker-1018125"></a><a class="calibre11" id="marker-1018127"></a><a class="calibre11" id="marker-1018129"></a><a class="calibre11" id="marker-1018131"></a><a class="calibre11" id="marker-1018133"></a><a class="calibre11" id="marker-1018135"></a><a class="calibre11" id="marker-1018137"></a></p>
+    </li>
+  </ul>
+
+  <h2 class="fm-head" id="heading_id_19"><a id="pgfId-1018143"></a>Summary</h2>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018153"></a>The purpose of a machine learning model is to <i class="fm-italics1">generalize</i>: to perform accurately on never-before-seen inputs. It’s harder than it seems.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018176"></a>A deep neural network achieves generalization by learning a parametric model that can successfully <i class="fm-italics1">interpolate</i> between training samples—such a model can be said to have learned the “latent manifold” of the training data. This is why deep learning models can only make sense of inputs that are very close to what they’ve seen during training.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018195"></a>The fundamental problem in machine learning is <i class="fm-italics1">the tension between optimization and generalization</i>: to attain generalization, you must first achieve a good fit to the training data, but improving your model’s fit to the training data will inevitably start hurting generalization after a while. Every single deep learning best practice deals with managing this tension.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018214"></a>The ability of deep learning models to generalize comes from the fact that they manage to learn to approximate the <i class="fm-italics1">latent manifold</i> of their data, and can thus make sense of new inputs via interpolation.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018233"></a>It’s essential to be able to accurately evaluate the generalization power of your model while you’re developing it. You have at your disposal an array of evaluation methods, from simple holdout validation to K-fold cross-validation and iterated K-fold cross-validation with shuffling. Remember to always keep a completely separate test set for final model evaluation, since information leaks from your validation data to your model may have occurred.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018243"></a>When you start working on a model, your goal is first to achieve a model that has some generalization power and that can overfit. Best practices for doing this include tuning your learning rate and batch size, leveraging better architecture priors, increasing model capacity, or simply training longer.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018253"></a>As your model starts overfitting, your goal switches to improving generalization through <i class="fm-italics1">model regularization</i>. You can reduce your model’s capacity, add dropout or weight regularization, and use early stopping. And naturally, a larger or better dataset is always the number one way to help a model generalize.</p>
+    </li>
+  </ul>
+  <hr class="calibre15"/>
+
+  <p class="fm-footnote"><a href="../Text/05.htm#Id-1012190"><sup class="footnotenumber1">1</sup></a> <a id="pgfId-1012190"></a>Mark Twain even called it “the most delicious fruit known to men.”</p>
+</body>
+</html>

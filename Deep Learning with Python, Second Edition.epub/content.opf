@@ -1,0 +1,266 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid_id" version="2.0">
+  <metadata xmlns:calibre="http://calibre.kovidgoyal.net/2009/metadata" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <dc:title>Deep Learning with Python, Second Edition</dc:title>
+    <dc:creator opf:role="aut" opf:file-as="Chollet, François">François Chollet</dc:creator>
+    <dc:date>2021-10-21T22:00:00+00:00</dc:date>
+    <dc:publisher>Manning Publications Co.</dc:publisher>
+    <dc:contributor opf:role="bkp">calibre (4.8.0) [https://calibre-ebook.com]</dc:contributor>
+    <dc:identifier id="uuid_id" opf:scheme="uuid">8a2ccaab-1ba4-493e-8957-947349c6b906</dc:identifier>
+    <dc:language>en</dc:language>
+    <dc:identifier opf:scheme="calibre">8a2ccaab-1ba4-493e-8957-947349c6b906</dc:identifier>
+    <meta name="cover" content="cover"/>
+    <meta name="calibre:title_sort" content="Deep Learning with Python, Second Edition"/>
+    <meta name="calibre:timestamp" content="2021-11-01T17:08:59.520000+00:00"/>
+    <meta name="calibre:author_link_map" content="{&quot;François Chollet&quot;: &quot;&quot;}"/>
+  </metadata>
+  <manifest>
+    <item href="titlepage.xhtml" id="titlepage" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/title.htm" id="title.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/copyright.htm" id="copyright.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/dedication.htm" id="dedication.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/btoc.htm" id="btoc.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/toc.htm" id="toc.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/fm.htm" id="fm.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/01.htm" id="x01.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/02.htm" id="x02.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/03.htm" id="x03.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/04.htm" id="x04.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/05.htm" id="x05.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/06.htm" id="x06.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/07.htm" id="x07.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/08.htm" id="x08.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/09.htm" id="x09.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/10.htm" id="x10.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/11.htm" id="x11.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/12.htm" id="x12.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/13.htm" id="x13.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/14.htm" id="x14.htm" media-type="application/xhtml+xml"/>
+    <item href="OEBPS/Text/index.htm" id="index.htm" media-type="application/xhtml+xml"/>
+    <item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml"/>
+    <item href="page_styles.css" id="page_css" media-type="text/css"/>
+    <item href="stylesheet.css" id="css" media-type="text/css"/>
+    <item href="cover.jpeg" id="cover" media-type="image/jpeg"/>
+    <item href="OEBPS/Images/01-01.png" id="x01-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-02.png" id="x01-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-03.png" id="x01-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-04.png" id="x01-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-05.png" id="x01-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-06.png" id="x01-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-07.png" id="x01-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-08.png" id="x01-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-09.png" id="x01-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-10.png" id="x01-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-11.png" id="x01-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-12.png" id="x01-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-13.png" id="x01-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/01-14.png" id="x01-14.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-01.png" id="x02-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-02.png" id="x02-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-03.png" id="x02-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-04.png" id="x02-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-05.png" id="x02-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-06.png" id="x02-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-07.png" id="x02-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-08.png" id="x02-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-09.png" id="x02-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-10.png" id="x02-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-11.png" id="x02-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-12.png" id="x02-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-13.png" id="x02-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-14.png" id="x02-14.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-15.png" id="x02-15.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-16.png" id="x02-16.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-17.png" id="x02-17.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-18.png" id="x02-18.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-19.png" id="x02-19.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-20.png" id="x02-20.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-21.png" id="x02-21.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-22.png" id="x02-22.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-23.png" id="x02-23.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-24.png" id="x02-24.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-25.png" id="x02-25.png" media-type="image/png"/>
+    <item href="OEBPS/Images/02-26.png" id="x02-26.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-01.png" id="x03-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-02.png" id="x03-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-03.png" id="x03-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-04.png" id="x03-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-05.png" id="x03-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-06.png" id="x03-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-07.png" id="x03-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-08.png" id="x03-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/03-09.png" id="x03-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-01.png" id="x04-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-02.png" id="x04-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-03.png" id="x04-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-04.png" id="x04-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-05.png" id="x04-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-06.png" id="x04-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-07.png" id="x04-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-08.png" id="x04-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-09.png" id="x04-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/04-10.png" id="x04-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-01.png" id="x05-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-02.png" id="x05-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-03.png" id="x05-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-04.png" id="x05-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-05.png" id="x05-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-06.png" id="x05-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-07.png" id="x05-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-08.png" id="x05-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-09.png" id="x05-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-10.png" id="x05-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-11.png" id="x05-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-12.png" id="x05-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-13.png" id="x05-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-14.png" id="x05-14.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-15.png" id="x05-15.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-16.png" id="x05-16.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-17.png" id="x05-17.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-18.png" id="x05-18.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-19.png" id="x05-19.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-20.png" id="x05-20.png" media-type="image/png"/>
+    <item href="OEBPS/Images/05-21.png" id="x05-21.png" media-type="image/png"/>
+    <item href="OEBPS/Images/06-UN01.png" id="x06-UN01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/07-01.png" id="x07-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/07-02.png" id="x07-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/07-03.png" id="x07-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/07-04.png" id="x07-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/07-05.png" id="x07-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/07-06.png" id="x07-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/07-07.png" id="x07-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-01.png" id="x08-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-02.png" id="x08-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-03.png" id="x08-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-04.png" id="x08-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-05.png" id="x08-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-06.png" id="x08-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-07.png" id="x08-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-08.png" id="x08-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-09.png" id="x08-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-10.png" id="x08-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-11.png" id="x08-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-12.png" id="x08-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-13.png" id="x08-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-14.png" id="x08-14.png" media-type="image/png"/>
+    <item href="OEBPS/Images/08-15.png" id="x08-15.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-01.png" id="x09-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-02.png" id="x09-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-03.png" id="x09-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-04.png" id="x09-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-05.png" id="x09-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-06.png" id="x09-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-07.png" id="x09-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-08.png" id="x09-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-09.png" id="x09-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-10.png" id="x09-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-11.png" id="x09-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-12.png" id="x09-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-13.png" id="x09-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-14.png" id="x09-14.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-15.png" id="x09-15.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-16.png" id="x09-16.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-17.png" id="x09-17.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-18.png" id="x09-18.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-19.png" id="x09-19.png" media-type="image/png"/>
+    <item href="OEBPS/Images/09-20.png" id="x09-20.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-01.png" id="x10-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-02.png" id="x10-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-03.png" id="x10-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-04.png" id="x10-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-05.png" id="x10-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-06.png" id="x10-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-07.png" id="x10-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-08.png" id="x10-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-09.png" id="x10-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-10.png" id="x10-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-11.png" id="x10-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-12.png" id="x10-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-13.png" id="x10-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/10-14.png" id="x10-14.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-01.png" id="x11-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-02.png" id="x11-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-03.png" id="x11-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-04.png" id="x11-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-05.png" id="x11-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-06-UN01.png" id="x11-06-UN01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-06-UN02.png" id="x11-06-UN02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-06.png" id="x11-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-07.png" id="x11-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-08.png" id="x11-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-09.png" id="x11-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-10.png" id="x11-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-11.png" id="x11-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-12.png" id="x11-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-13.png" id="x11-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/11-14.png" id="x11-14.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-01.png" id="x12-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-02.png" id="x12-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-03.png" id="x12-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-04.png" id="x12-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-05.png" id="x12-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-06.png" id="x12-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-07.png" id="x12-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-08.png" id="x12-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-09.png" id="x12-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-10.png" id="x12-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-11.png" id="x12-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-12.png" id="x12-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-13.png" id="x12-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-14.png" id="x12-14.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-15.png" id="x12-15.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-16.png" id="x12-16.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-17.png" id="x12-17.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-18.png" id="x12-18.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-19.png" id="x12-19.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-20.png" id="x12-20.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-21.png" id="x12-21.png" media-type="image/png"/>
+    <item href="OEBPS/Images/12-22.png" id="x12-22.png" media-type="image/png"/>
+    <item href="OEBPS/Images/13-01-UN01.png" id="x13-01-UN01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/13-01.png" id="x13-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/13-02.png" id="x13-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-01.png" id="x14-01.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-02.png" id="x14-02.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-03.png" id="x14-03.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-04.png" id="x14-04.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-05.png" id="x14-05.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-06.png" id="x14-06.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-07.png" id="x14-07.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-08.png" id="x14-08.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-09.png" id="x14-09.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-10.png" id="x14-10.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-11.png" id="x14-11.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-12.png" id="x14-12.png" media-type="image/png"/>
+    <item href="OEBPS/Images/14-13.png" id="x14-13.png" media-type="image/png"/>
+    <item href="OEBPS/Images/Chollet.png" id="Chollet.png" media-type="image/png"/>
+    <item href="OEBPS/Images/Manning_copyright.png" id="Manning_copyright.png" media-type="image/png"/>
+    <item href="OEBPS/Images/Manning_M_small.png" id="Manning_M_small.png" media-type="image/png"/>
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="titlepage"/>
+    <itemref idref="title.htm"/>
+    <itemref idref="copyright.htm"/>
+    <itemref idref="dedication.htm"/>
+    <itemref idref="btoc.htm"/>
+    <itemref idref="toc.htm"/>
+    <itemref idref="fm.htm"/>
+    <itemref idref="x01.htm"/>
+    <itemref idref="x02.htm"/>
+    <itemref idref="x03.htm"/>
+    <itemref idref="x04.htm"/>
+    <itemref idref="x05.htm"/>
+    <itemref idref="x06.htm"/>
+    <itemref idref="x07.htm"/>
+    <itemref idref="x08.htm"/>
+    <itemref idref="x09.htm"/>
+    <itemref idref="x10.htm"/>
+    <itemref idref="x11.htm"/>
+    <itemref idref="x12.htm"/>
+    <itemref idref="x13.htm"/>
+    <itemref idref="x14.htm"/>
+    <itemref idref="index.htm"/>
+  </spine>
+  <guide>
+    <reference href="titlepage.xhtml" title="Cover" type="cover"/>
+  </guide>
+</package>

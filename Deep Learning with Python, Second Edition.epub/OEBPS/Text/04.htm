@@ -1,0 +1,1006 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>4</title>
+    
+  <link href="../../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+  <h1 class="tochead" id="heading_id_2"><a id="pgfId-998407"></a><a id="pgfId-1021181"></a>4 Getting started with neural networks: Classification and regression</h1>
+
+  <p class="co-summary-head"><a id="pgfId-1011754"></a>This chapter covers</p>
+
+  <ul class="calibre10">
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011760"></a>Your first examples of real-world machine learning workflows</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011774"></a>Handling classification problems over vector data</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011784"></a>Handling continuous regression problems over vector data</li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1011794"></a>This chapter is designed to get you started using neural networks to solve real problems. You’ll consolidate the knowledge you gained from chapters 2 and 3, and you’ll apply what you’ve learned to three new tasks covering the three most common use cases of neural networks—binary classification, multiclass classification, and scalar regression:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011800"></a>Classifying movie reviews as positive or negative (binary classification)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011814"></a>Classifying news wires by topic (multiclass classification)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1011824"></a>Estimating the price of a house, given real-estate data (scalar regression)</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1011834"></a>These examples will be your first contact with end-to-end machine learning workflows: you’ll get introduced to data preprocessing, basic model architecture principles, and model evaluation.</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1011852"></a>Classification and regression glossary</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1011862"></a>Classification and regression involve many specialized terms. You’ve come across some of them in earlier examples, and you’ll see more of them in future chapters. They have precise, machine learning–specific definitions, and you should be familiar with them:</p>
+
+    <ul class="calibre10">
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1011890"></a><i class="fm-italics">Sample</i> or <i class="fm-italics">input</i>—One data <a id="marker-1024085"></a>point that goes into your model.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1011923"></a><i class="fm-italics">Prediction</i> or <i class="fm-italics">output</i>—What comes <a id="marker-1024087"></a>out of your model.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1011944"></a><i class="fm-italics">Target</i>—The truth. What your <a id="marker-1024048"></a>model should ideally have predicted, according to an external source of data.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1011985"></a><i class="fm-italics">Prediction error</i> or <i class="fm-italics">loss value</i>—A measure of <a id="marker-1024121"></a>the distance between your model’s prediction and the target.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012006"></a><i class="fm-italics">Classes</i>—A set <a id="marker-1024123"></a>of possible labels to choose from in a classification problem. For example, when classifying cat and dog pictures, “dog” and “cat” are the two classes.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012029"></a><i class="fm-italics">Label</i> —A specific <a id="marker-1024213"></a>instance of a class annotation in a classification problem. For instance, if picture #1234 is annotated as containing the class “dog,” then “dog” is a label of picture #1234.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012070"></a><i class="fm-italics">Ground-truth</i> or <i class="fm-italics">annotations</i>—All targets <a id="marker-1024057"></a>for <a id="marker-1024058"></a>a dataset, typically collected by humans.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012091"></a><i class="fm-italics">Binary classification</i>—A classification task where each input sample should be categorized into two exclusive categories.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012108"></a><i class="fm-italics">Multiclass classification</i>—A classification <a id="marker-1024061"></a>task where each input sample should be categorized into more than two categories: for instance, classifying handwritten digits.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012131"></a><i class="fm-italics">Multilabel classification</i>—A classification <a id="marker-1024063"></a>task where each input sample can be assigned multiple labels. For instance, a given image may contain both a cat and a dog and should be annotated both with the “cat” label and the “dog” label. The number of labels per image is usually variable.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012154"></a><i class="fm-italics">Scalar regression</i>—A task <a id="marker-1024065"></a>where the target is a continuous scalar value. Predicting house prices is a good example: the different target prices form a continuous space.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012177"></a><i class="fm-italics">Vector regression</i>—A task <a id="marker-1024067"></a>where the target is a set of continuous values: for example, a continuous vector. If you’re doing regression against multiple values (such as the coordinates of a bounding box in an image), then you’re doing vector regression.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1012218"></a><i class="fm-italics">Mini-batch</i> or <i class="fm-italics">batch</i>—A small <a id="marker-1024069"></a>set <a id="marker-1024070"></a>of samples (typically between 8 and 128) that are processed simultaneously by the model. The number of samples is often a power of 2, to facilitate memory allocation on GPU. When training, a mini-batch is used to compute a single gradient-descent update applied to the weights of the model.</p>
+      </li>
+    </ul>
+  </div>
+
+  <p class="body"><a id="pgfId-1011840"></a>By the end of this chapter, you’ll be able to use neural networks to handle simple classification and regression tasks over vector data. You’ll then be ready to start building a more principled, theory-driven understanding of machine learning in chapter 5.</p>
+
+  <h2 class="fm-head" id="heading_id_3"><a id="pgfId-1012239"></a>4.1 Classifying movie reviews: A binary classification example</h2>
+
+  <p class="body"><a id="pgfId-1012258"></a><a id="marker-1012250"></a><a id="marker-1012252"></a><a id="marker-1012254"></a>Two-class classification, or binary classification, is one of the most common kinds of machine learning problems. In this example, you’ll learn to classify movie reviews as positive or negative, based on the text content of the reviews.</p>
+
+  <h3 class="fm-head1" id="heading_id_4"><a id="pgfId-1012263"></a>4.1.1 The IMDB dataset</h3>
+
+  <p class="body"><a id="pgfId-1012284"></a><a id="marker-1012274"></a><a id="marker-1012276"></a><a id="marker-1012278"></a>You’ll work with the IMDB dataset: a set of 50,000 highly polarized reviews from the Internet Movie Database. They’re split into 25,000 reviews for training and 25,000 reviews for testing, each set consisting of 50% negative and 50% positive reviews.</p>
+
+  <p class="body"><a id="pgfId-1012289"></a>Just like the MNIST dataset, the IMDB dataset comes packaged with Keras. It has already been preprocessed: the reviews (sequences of words) have been turned into sequences of integers, where each integer stands for a specific word in a dictionary. This enables us to focus on model building, training, and evaluation. In chapter 11, you’ll learn how to process raw text input from scratch.</p>
+
+  <p class="body"><a id="pgfId-1012295"></a>The following code will load the dataset (when you run it the first time, about 80 MB of data will be downloaded to your machine).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012352"></a>Listing 4.1 Loading the IMDB dataset</p>
+  <pre class="programlisting"><a id="pgfId-1028496"></a><b class="fm-codebrown">from</b> tensorflow.keras.datasets <b class="fm-codebrown">import</b> imdb
+<a id="pgfId-1028497"></a>(train_data, train_labels), (test_data, test_labels) = imdb.load_data(
+<a id="pgfId-1012397"></a>    num_words=<span class="fm-codeblue">10000</span>)</pre>
+
+  <p class="body"><a id="pgfId-1012403"></a>The argument <code class="fm-code-in-text">num_words=10000</code> means you’ll only keep the top 10,000 most frequently occurring words in the training data. Rare words will be discarded. This allows us to work with vector data of manageable size. If we didn’t set this limit, we’d be working with 88,585 unique words in the training data, which is unnecessarily large. Many of these words only occur in a single sample, and thus can’t be meaningfully used for classification.</p>
+
+  <p class="body"><a id="pgfId-1012474"></a>The variables <code class="fm-code-in-text">train_data</code> and <code class="fm-code-in-text">test_data</code> are lists of reviews; each review is a list of word indices (encoding a sequence of words). <code class="fm-code-in-text">train_labels</code> and <code class="fm-code-in-text">test_labels</code> are lists of 0s and 1s, where 0 stands for <i class="fm-italics">negative</i> and 1 stands for <i class="fm-italics">positive</i>:</p>
+  <pre class="programlisting"><a id="pgfId-1012483"></a>&gt;&gt;&gt; train_data[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1012497"></a>[1, 14, 22, 16, ... 178, 32]
+<a id="pgfId-1012503"></a>&gt;&gt;&gt; train_labels[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1012509"></a>1</pre>
+
+  <p class="body"><a id="pgfId-1012515"></a>Because we’re restricting ourselves to the top 10,000 most frequent words, no word index will exceed 10,000:</p>
+  <pre class="programlisting"><a id="pgfId-1012521"></a>&gt;&gt;&gt; max([max(sequence) <b class="fm-codebrown">for</b> sequence <b class="fm-codebrown">in</b> train_data])
+<a id="pgfId-1012535"></a>9999</pre>
+
+  <p class="body"><a id="pgfId-1012541"></a>For kicks, here’s how you can quickly decode one of these reviews back to English words.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012598"></a>Listing 4.2 Decoding reviews back to text</p>
+  <pre class="programlisting"><a id="pgfId-1012547"></a>word_index = imdb.get_word_index()                                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1028528"></a>reverse_word_index = dict(
+<a id="pgfId-1012649"></a>    [(value, key) <b class="fm-codebrown">for</b> (key, value) <b class="fm-codebrown">in</b> word_index.items()])        <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1012661"></a>decoded_review = <span class="fm-codegreen">" "</span>.join(
+<a id="pgfId-1012667"></a>    [reverse_word_index.get(i - <span class="fm-codeblue">3</span>, <span class="fm-codegreen">"?"</span>) <b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> train_data[<span class="fm-codeblue">0</span>]])  <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032481"></a><span class="fm-combinumeral">❶</span> word_index is a dictionary mapping words to an integer index.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032502"></a><span class="fm-combinumeral">❷</span> Reverses it, mapping integer indices to words</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032519"></a><span class="fm-combinumeral">❸</span> Decodes the review. Note that the indices are offset by 3 because 0, 1, and 2 are reserved indices for “padding,” “start of sequence,” and “unknown.”</p>
+
+  <h3 class="fm-head1" id="heading_id_5"><a id="pgfId-1012740"></a>4.1.2 Preparing the data</h3>
+
+  <p class="body"><a id="pgfId-1012761"></a><a id="marker-1012751"></a><a id="marker-1012753"></a><a id="marker-1012755"></a><a id="marker-1012757"></a>You can’t directly feed lists of integers into a neural network. They all have different lengths, but a neural network expects to process contiguous batches of data. You have to turn your lists into tensors. There are two ways to do that:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012790"></a>Pad your lists so that they all have the same length, turn them into an integer tensor of shape <code class="fm-code-in-text">(samples,</code> <code class="fm-code-in-text">max_length)</code>, and start your model with a layer capable of handling such integer tensors (the <code class="fm-code-in-text">Embedding</code> layer, which we’ll cover in detail later in the book).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012833"></a><i class="fm-italics1">Multi-hot encode</i> your lists <a class="calibre11" id="marker-1012812"></a>to turn them into vectors of 0s and 1s. This would mean, for instance, turning the sequence <code class="fm-code-in-text">[8,</code> <code class="fm-code-in-text">5]</code> into a 10,000-dimensional vector that would be all 0s except for indices 8 and 5, which would be 1s. Then you could use a <code class="fm-code-in-text">Dense</code> layer, capable of handling floating-point vector data, as the first layer in your model.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1012842"></a>Let’s go with the latter solution to vectorize the data, which you’ll do manually for maximum clarity.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012899"></a>Listing 4.3 Encoding the integer sequences via multi-hot encoding</p>
+  <pre class="programlisting"><a id="pgfId-1028604"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np 
+<a id="pgfId-1028605"></a><b class="fm-codebrown">def</b> vectorize_sequences(sequences, dimension=<span class="fm-codeblue">10000</span>): 
+<a id="pgfId-1012944"></a>    results = np.zeros((len(sequences), dimension))   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1028624"></a>    <b class="fm-codebrown">for</b> i, sequence <b class="fm-codebrown">in</b> enumerate(sequences):
+<a id="pgfId-1028625"></a>        <b class="fm-codebrown">for</b> j <b class="fm-codebrown">in</b> sequence:
+<a id="pgfId-1012968"></a>            results[i, j] = <span class="fm-codeblue">1.</span>                        <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1028654"></a>    <b class="fm-codebrown">return</b> results
+<a id="pgfId-1012986"></a>x_train = vectorize_sequences(train_data)             <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1012998"></a>x_test = vectorize_sequences(test_data)               <span class="fm-combinumeral">❹</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032245"></a><span class="fm-combinumeral">❶</span> Creates an all-zero matrix of shape (len(sequences), dimension)</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032266"></a><span class="fm-combinumeral">❷</span> Sets specific indices of results[i] to 1s</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032283"></a><span class="fm-combinumeral">❸</span> Vectorized training data</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032300"></a><span class="fm-combinumeral">❹</span> Vectorized test data</p>
+
+  <p class="body"><a id="pgfId-1013078"></a>Here’s what the samples look like now:</p>
+  <pre class="programlisting"><a id="pgfId-1013084"></a>&gt;&gt;&gt; x_train[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1013098"></a>array([ 0.,  1.,  1., ...,  0.,  0.,  0.])</pre>
+
+  <p class="body"><a id="pgfId-1013104"></a>You should also vectorize your labels, which is straightforward:</p>
+  <pre class="programlisting"><a id="pgfId-1028686"></a>y_train = np.asarray(train_labels).astype(<span class="fm-codegreen">"float32"</span>)
+<a id="pgfId-1013124"></a>y_test = np.asarray(test_labels).astype(<span class="fm-codegreen">"float32"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1013130"></a>Now the data is ready to be fed into a neural network. <a id="marker-1013132"></a><a id="marker-1013135"></a><a id="marker-1013137"></a><a id="marker-1013139"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_6"><a id="pgfId-1013145"></a>4.1.3 Building your model</h3>
+
+  <p class="body"><a id="pgfId-1013186"></a><a id="marker-1013156"></a><a id="marker-1013158"></a><a id="marker-1013160"></a>The input data is vectors, and the labels are scalars (1s and 0s): this is one of the simplest problem setups you’ll ever encounter. A type of model that performs well on such a problem is a plain stack of densely <a id="marker-1013165"></a>connected (<code class="fm-code-in-text">Dense</code>) layers with <code class="fm-code-in-text">relu</code> activations.</p>
+
+  <p class="body"><a id="pgfId-1013208"></a>There are two key architecture decisions to be made about such a stack <a id="marker-1013197"></a>of <code class="fm-code-in-text">Dense</code> layers:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013217"></a>How many layers to use</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013231"></a>How many units to choose for each layer</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1013241"></a>In chapter 5, you’ll learn formal principles to guide you in making these choices. For the time being, you’ll have to trust me with the following architecture choices:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013247"></a>Two intermediate layers with 16 units each</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013261"></a>A third layer that will output the scalar prediction regarding the sentiment of the current review</p>
+    </li>
+  </ul>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-01.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1033744"></a>Figure 4.1 The three-layer model</p>
+
+  <p class="body"><a id="pgfId-1013271"></a>Figure 4.1 shows what the model looks like. And the following listing shows the Keras implementation, similar to the MNIST example you saw previously.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1013352"></a>Listing 4.4 Model definition</p>
+  <pre class="programlisting"><a id="pgfId-1028733"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1028734"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1028735"></a>  
+<a id="pgfId-1028736"></a>model = keras.Sequential([
+<a id="pgfId-1028737"></a>    layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1028738"></a>    layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1028739"></a>    layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)
+<a id="pgfId-1013426"></a>])</pre>
+
+  <p class="body"><a id="pgfId-1013468"></a>The first argument being passed to each <code class="fm-code-in-text">Dense</code> layer is the number of <i class="fm-italics">units</i> in the layer: the dimensionality of representation space of the layer. You remember from chapters 2 and 3 that each such <code class="fm-code-in-text">Dense</code> layer with a <code class="fm-code-in-text">relu</code> activation implements the following chain of tensor operations:</p>
+  <pre class="programlisting"><a id="pgfId-1013477"></a>output = relu(dot(input, W) + b)</pre>
+
+  <p class="body"><a id="pgfId-1013537"></a>Having 16 units means the weight matrix <code class="fm-code-in-text">W</code> will have shape <code class="fm-code-in-text">(input_dimension,</code> <code class="fm-code-in-text">16)</code>: the dot product with <code class="fm-code-in-text">W</code> will project the input data onto a 16-dimensional representation space (and then you’ll add the bias vector <code class="fm-code-in-text">b</code> and apply the <code class="fm-code-in-text">relu</code> operation). You can intuitively understand the dimensionality of your representation space as “how much freedom you’re allowing the model to have when learning internal representations.” Having more units (a higher-dimensional representation space) allows your model to learn more-complex representations, but it makes the model more computationally expensive and may lead to learning unwanted patterns (patterns that will improve performance on the training data but not on the test data).</p>
+
+  <p class="body"><a id="pgfId-1013584"></a>The intermediate layers use <code class="fm-code-in-text">relu</code> as their activation function, and the final layer uses a sigmoid activation so as to output a probability (a score between 0 and 1 indicating how likely the sample is to have the target “1”: how likely the review is to be positive). A <code class="fm-code-in-text">relu</code> (rectified linear unit) is a <a id="marker-1033785"></a>function <a id="marker-1033786"></a>meant to zero out negative values (see figure 4.2), whereas a sigmoid “squashes” arbitrary values into the <code class="fm-code-in-text">[0,</code> <code class="fm-code-in-text">1]</code> interval (see figure 4.3), outputting something that can be interpreted as a probability.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-02.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1033827"></a>Figure 4.2 The rectified linear unit function</p>
+
+  <p class="body"><a id="pgfId-1033892"></a>Finally, you need to choose a loss function and an optimizer. Because you’re facing a binary classification problem and the output of your model is a probability (you end your model with a single-unit layer with a sigmoid activation), it’s best to use the <code class="fm-code-in-text">binary_crossentropy</code> loss. It isn’t the only viable choice: for instance, you could use <code class="fm-code-in-text">mean_squared_error</code>. But crossentropy is usually the best choice when you’re dealing with models that output probabilities. <i class="fm-italics">Crossentropy</i> is a quantity from the field of information theory that measures the distance between probability distributions or, in this case, between the ground-truth distribution and your predictions.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-03.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1033862"></a>Figure 4.3 The sigmoid function</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1013627"></a>What are activation functions, and why are they necessary?</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1013677"></a>Without an activation function like <code class="fm-code-in-text1">relu</code> (also called a <i class="fm-italics">non-linearity</i>), the <code class="fm-code-in-text1">Dense</code> layer would consist of two linear operations—a dot product and an addition:</p>
+    <pre class="programlisting"><a id="pgfId-1013686"></a>output = dot(input, W) + b</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1013727"></a>The layer could only <a id="marker-1033804"></a>learn <i class="fm-italics">linear transformations</i> (affine transformations) of the input data: the <i class="fm-italics">hypothesis space</i> of the <a id="marker-1033806"></a>layer would be the set of all possible linear transformations of the input data into a 16-dimensional space. Such a hypothesis space is too restricted and wouldn’t benefit from multiple layers of representations, because a deep stack of linear layers would still implement a linear operation: adding more layers wouldn’t extend the hypothesis space (as you saw in chapter 2).</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1013768"></a>In order to get access to a much richer hypothesis space that will benefit from deep representations, you need a non-linearity, or activation function. <code class="fm-code-in-text1">relu</code> is the most popular activation function in deep learning, but there are many other candidates, which all come with similarly strange names: <code class="fm-code-in-text1">prelu</code>, <code class="fm-code-in-text1">elu</code>, and so on.</p>
+  </div>
+
+  <p class="body"><a id="pgfId-1013812"></a>As for the choice of the optimizer, we’ll go with <code class="fm-code-in-text">rmsprop</code>, which is a usually a good default choice for virtually any problem.</p>
+
+  <p class="body"><a id="pgfId-1013849"></a>Here’s the step where we configure the model with the <code class="fm-code-in-text">rmsprop</code> optimizer and <a id="marker-1013838"></a>the <code class="fm-code-in-text">binary_crossentropy</code> loss function. Note that we’ll also monitor accuracy during training. <a id="marker-1013854"></a><a id="marker-1013857"></a><a id="marker-1013859"></a></p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1013916"></a>Listing 4.5 Compiling the model</p>
+  <pre class="programlisting"><a id="pgfId-1028756"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1028757"></a>              loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1013961"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])</pre>
+
+  <h3 class="fm-head1" id="heading_id_7"><a id="pgfId-1013967"></a>4.1.4 Validating your approach</h3>
+
+  <p class="body"><a id="pgfId-1013988"></a><a id="marker-1013978"></a><a id="marker-1013980"></a><a id="marker-1013982"></a><a id="marker-1013984"></a>As you learned in chapter 3, a deep learning model should never be evaluated on its training data—it’s standard practice to use a validation set to monitor the accuracy of the model during training. Here, we’ll create a validation set by setting apart 10,000 samples from the original training data.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014044"></a>Listing 4.6 Setting aside a validation set</p>
+  <pre class="programlisting"><a id="pgfId-1028772"></a>x_val = x_train[:<span class="fm-codeblue">10000</span>]
+<a id="pgfId-1028773"></a>partial_x_train = x_train[<span class="fm-codeblue">10000</span>:]
+<a id="pgfId-1028774"></a>y_val = y_train[:<span class="fm-codeblue">10000</span>]
+<a id="pgfId-1014095"></a>partial_y_train = y_train[<span class="fm-codeblue">10000</span>:]</pre>
+
+  <p class="body"><a id="pgfId-1014101"></a>We will now train the model for 20 epochs (20 iterations over all samples in the training data) in mini-batches of 512 samples. At the same time, we will monitor loss and accuracy on the 10,000 samples that we set apart. We do so by passing the validation data as the <code class="fm-code-in-text">validation_data</code> argument.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014167"></a>Listing 4.7 Training your model</p>
+  <pre class="programlisting"><a id="pgfId-1028791"></a>history = model.fit(partial_x_train,
+<a id="pgfId-1028792"></a>                    partial_y_train,
+<a id="pgfId-1028793"></a>                    epochs=<span class="fm-codeblue">20</span>,
+<a id="pgfId-1028794"></a>                    batch_size=<span class="fm-codeblue">512</span>,
+<a id="pgfId-1014224"></a>                    validation_data=(x_val, y_val))</pre>
+
+  <p class="body"><a id="pgfId-1014230"></a>On CPU, this will take less than 2 seconds per epoch—training is over in 20 seconds. At the end of every epoch, there is a slight pause as the model computes its loss and accuracy on the 10,000 samples of the validation data.</p>
+
+  <p class="body"><a id="pgfId-1014269"></a>Note that the <a id="marker-1014238"></a>call to <code class="fm-code-in-text">model.fit()</code> returns a <code class="fm-code-in-text">History</code> object, as you saw in chapter 3. This object has a member <code class="fm-code-in-text">history</code>, which is a dictionary containing data about everything that happened during training. Let’s look at it:</p>
+  <pre class="programlisting"><a id="pgfId-1014278"></a>&gt;&gt;&gt; history_dict = history.history
+<a id="pgfId-1014292"></a>&gt;&gt;&gt; history_dict.keys()
+<a id="pgfId-1014298"></a>[u"accuracy", u"loss", u"val_accuracy", u"val_loss"]</pre>
+
+  <p class="body"><a id="pgfId-1014304"></a>The dictionary contains four entries: one per metric that was being monitored during training and during validation. In the following two listings, let’s use Matplotlib to plot the training and validation loss side by side (see figure 4.4), as well as the training and validation accuracy (see figure 4.5). Note that your own results may vary slightly due to a different random initialization of your model.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-04.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1033941"></a>Figure 4.4 Training and validation loss</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-05.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1033983"></a>Figure 4.5 Training and validation accuracy</p>
+
+  <p class="body"><a id="pgfId-1033927"></a>  </p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014361"></a>Listing 4.8 Plotting the training and validation loss</p>
+  <pre class="programlisting"><a id="pgfId-1028957"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1028958"></a>history_dict = history.history
+<a id="pgfId-1028959"></a>loss_values = history_dict[<span class="fm-codegreen">"loss"</span>]
+<a id="pgfId-1028960"></a>val_loss_values = history_dict[<span class="fm-codegreen">"val_loss"</span>]
+<a id="pgfId-1028961"></a>epochs = range(<span class="fm-codeblue">1</span>, len(loss_values) + <span class="fm-codeblue">1</span>)
+<a id="pgfId-1014424"></a>plt.plot(epochs, loss_values, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training loss"</span>)        <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014436"></a>plt.plot(epochs, val_loss_values, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation loss"</span>)   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1028989"></a>plt.title(<span class="fm-codegreen">"Training and validation loss"</span>)
+<a id="pgfId-1028990"></a>plt.xlabel(<span class="fm-codegreen">"Epochs"</span>)
+<a id="pgfId-1028991"></a>plt.ylabel(<span class="fm-codegreen">"Loss"</span>)
+<a id="pgfId-1028992"></a>plt.legend()
+<a id="pgfId-1014472"></a>plt.show()</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032084"></a><span class="fm-combinumeral">❶</span> "bo" is for "blue dot."</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1029981"></a><span class="fm-combinumeral">❷</span> "b" is for "solid blue line."</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1026415"></a>Listing 4.9 Plotting the training and validation accuracy</p>
+  <pre class="programlisting"><a id="pgfId-1014524"></a>plt.clf()                           <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1029005"></a>acc = history_dict[<span class="fm-codegreen">"accuracy"</span>]
+<a id="pgfId-1029006"></a>val_acc = history_dict[<span class="fm-codegreen">"val_accuracy"</span>]
+<a id="pgfId-1029007"></a>plt.plot(epochs, acc, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training acc"</span>)
+<a id="pgfId-1029008"></a>plt.plot(epochs, val_acc, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation acc"</span>)
+<a id="pgfId-1029009"></a>plt.title(<span class="fm-codegreen">"Training and validation accuracy"</span>)
+<a id="pgfId-1029010"></a>plt.xlabel(<span class="fm-codegreen">"Epochs"</span>)
+<a id="pgfId-1029011"></a>plt.ylabel(<span class="fm-codegreen">"Accuracy"</span>)
+<a id="pgfId-1029012"></a>plt.legend()
+<a id="pgfId-1014682"></a>plt.show()</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032190"></a><span class="fm-combinumeral">❶</span> Clears the figure</p>
+
+  <p class="body"><a id="pgfId-1014718"></a>As you can see, the training loss decreases with every epoch, and the training accuracy increases with every epoch. That’s what you would expect when running gradient-descent optimization—the quantity you’re trying to minimize should be less with every iteration. But that isn’t the case for the validation loss and accuracy: they seem to peak at the fourth epoch. This is an example of what we warned against earlier: a model that performs better on the training data isn’t necessarily a model that will do better on data it has never seen before. In precise terms, what you’re seeing is <i class="fm-italics">overfitting</i>: after the <a id="marker-1030002"></a>fourth epoch, you’re overoptimizing on the training data, and you end up learning representations that are specific to the training data and don’t generalize to data outside of the training set.</p>
+
+  <p class="body"><a id="pgfId-1014753"></a>In this case, to prevent overfitting, you could stop training after four epochs. In general, you can use a range of techniques to mitigate overfitting, which we’ll cover in chapter 5.</p>
+
+  <p class="body"><a id="pgfId-1014759"></a>Let’s train a new model from scratch for four epochs and then evaluate it on the test data.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014816"></a>Listing 4.10 Retraining a model from scratch</p>
+  <pre class="programlisting"><a id="pgfId-1029027"></a>model = keras.Sequential([
+<a id="pgfId-1029028"></a>    layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029029"></a>    layers.Dense(<span class="fm-codeblue">16</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029030"></a>    layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)
+<a id="pgfId-1029031"></a>])
+<a id="pgfId-1029032"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1029033"></a>              loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1029034"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1029035"></a>model.fit(x_train, y_train, epochs=<span class="fm-codeblue">4</span>, batch_size=<span class="fm-codeblue">512</span>)
+<a id="pgfId-1014903"></a>results = model.evaluate(x_test, y_test)</pre>
+
+  <p class="body"><a id="pgfId-1014909"></a>The final results are as follows:</p>
+  <pre class="programlisting"><a id="pgfId-1014915"></a>&gt;&gt;&gt; results
+<a id="pgfId-1014929"></a>[0.2929924130630493, 0.88327999999999995]    <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032026"></a><span class="fm-combinumeral">❶</span> The first number, 0.29, is the test loss, and the second number, 0.88, is the test accuracy.</p>
+
+  <p class="body"><a id="pgfId-1014961"></a>This fairly naive approach achieves an accuracy of 88%. With state-of-the-art approaches, you should be able to get close to 95%. <a id="marker-1026814"></a><a id="marker-1026815"></a><a id="marker-1026816"></a><a id="marker-1026817"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_8"><a id="pgfId-1014976"></a>4.1.5 Using a trained model to generate predictions on new data</h3>
+
+  <p class="body"><a id="pgfId-1015001"></a><a id="marker-1014987"></a><a id="marker-1014989"></a><a id="marker-1014991"></a>After having trained a model, you’ll want to use it in a practical setting. You can generate the likelihood of reviews being positive by using the <code class="fm-code-in-text">predict</code> method, as you’ve learned in chapter 3:</p>
+  <pre class="programlisting"><a id="pgfId-1015010"></a>&gt;&gt;&gt; model.predict(x_test)
+<a id="pgfId-1029066"></a>array([[ 0.98006207]
+<a id="pgfId-1029067"></a>       [ 0.99758697]
+<a id="pgfId-1029068"></a>       [ 0.99975556]
+<a id="pgfId-1029069"></a>       ...,
+<a id="pgfId-1029070"></a>       [ 0.82167041]
+<a id="pgfId-1029071"></a>       [ 0.02885115]
+<a id="pgfId-1015060"></a>       [ 0.65371346]], dtype=float32)</pre>
+
+  <p class="body"><a id="pgfId-1015066"></a>As you can see, the model is confident for some samples (0.99 or more, or 0.01 or less) but less confident for others (0.6, 0.4). <a id="marker-1015068"></a><a id="marker-1015071"></a><a id="marker-1015073"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_9"><a id="pgfId-1015079"></a>4.1.6 Further experiments</h3>
+
+  <p class="body"><a id="pgfId-1015089"></a>The following experiments will help convince you that the architecture choices you’ve made are all fairly reasonable, although there’s still room for improvement:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015095"></a>You used two representation layers before the final classification layer. Try using one or three representation layers, and see how doing so affects validation and test accuracy.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015109"></a>Try using layers with more units or fewer units: 32 units, 64 units, and so on.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015145"></a>Try using the <code class="fm-code-in-text">mse</code> loss function <a class="calibre11" id="marker-1015134"></a>instead of <code class="fm-code-in-text">binary_crossentropy</code>.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015174"></a>Try using the <code class="fm-code-in-text">tanh</code> activation (an activation that was popular in the early days of neural networks) instead of <code class="fm-code-in-text">relu</code>.</p>
+    </li>
+  </ul>
+
+  <h3 class="fm-head1" id="heading_id_10"><a id="pgfId-1015183"></a>4.1.7 Wrapping up</h3>
+
+  <p class="body"><a id="pgfId-1015193"></a>Here’s what you should take away from this example:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015199"></a>You usually need to do quite a bit of preprocessing on your raw data in order to be able to feed it—as tensors—into a neural network. Sequences of words can be encoded as binary vectors, but there are other encoding options too.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015233"></a>Stacks of <code class="fm-code-in-text">Dense</code> layers with <code class="fm-code-in-text">relu</code> activations can solve a wide range of problems (including sentiment classification), and you’ll likely use them frequently.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015262"></a>In a binary classification problem (two output classes), your model should end with a <code class="fm-code-in-text">Dense</code> layer with one unit and a <code class="fm-code-in-text">sigmoid</code> activation: the output <a class="calibre11" id="marker-1015267"></a>of your model should be a scalar between 0 and 1, encoding a probability.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015277"></a>With such a scalar sigmoid output on a binary classification problem, the loss function you should use is <code class="fm-code-in-text">binary_crossentropy</code>.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015296"></a>The <code class="fm-code-in-text">rmsprop</code> optimizer is generally a good enough choice, whatever your problem. That’s one less thing for you to worry about.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015315"></a>As they get better on their training data, neural networks eventually start overfitting and end up obtaining increasingly worse results on data they’ve never seen before. Be sure to always monitor performance on data that is outside of the training set. <a class="calibre11" id="marker-1015321"></a><a class="calibre11" id="marker-1015324"></a><a class="calibre11" id="marker-1015326"></a></p>
+    </li>
+  </ul>
+
+  <h2 class="fm-head" id="heading_id_11"><a id="pgfId-1015332"></a>4.2 Classifying newswires: A multiclass classification example</h2>
+
+  <p class="body"><a id="pgfId-1015351"></a><a id="marker-1015343"></a><a id="marker-1015345"></a><a id="marker-1015347"></a>In the previous section, you saw how to classify vector inputs into two mutually exclusive classes using a densely connected neural network. But what happens when you have more than two classes?</p>
+
+  <p class="body"><a id="pgfId-1015400"></a>In this section, we’ll build a model to classify Reuters newswires into 46 mutually exclusive topics. Because we have many classes, this problem is an instance of <i class="fm-italics">multiclass classification</i>, and because each data point should be classified into only one category, the problem is more specifically an instance <a id="marker-1015367"></a>of <i class="fm-italics">single-label multiclass classification</i>. If each data point could belong to multiple categories (in this case, topics), we’d be facing <a id="marker-1015389"></a>a <i class="fm-italics">multilabel multiclass classification</i> problem.</p>
+
+  <h3 class="fm-head1" id="heading_id_12"><a id="pgfId-1015415"></a>4.2.1 The Reuters dataset</h3>
+
+  <p class="body"><a id="pgfId-1015442"></a><a id="marker-1015426"></a><a id="marker-1015430"></a>You’ll work with the <i class="fm-italics">Reuters dataset</i>, a set of short newswires and their topics, published by Reuters in 1986. It’s a simple, widely used toy dataset for text classification. There are 46 different topics; some topics are more represented than others, but each topic has at least 10 examples in the training set.</p>
+
+  <p class="body"><a id="pgfId-1015451"></a>Like IMDB and MNIST, the Reuters dataset comes packaged as part of Keras. Let’s take a look.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015508"></a>Listing 4.11 Loading the Reuters dataset</p>
+  <pre class="programlisting"><a id="pgfId-1029090"></a><b class="fm-codebrown">from</b> tensorflow.keras.datasets <b class="fm-codebrown">import</b> reuters
+<a id="pgfId-1029091"></a>(train_data, train_labels), (test_data, test_labels) = reuters.load_data(
+<a id="pgfId-1015553"></a>    num_words=<span class="fm-codeblue">10000</span>)</pre>
+
+  <p class="body"><a id="pgfId-1015559"></a>As with the IMDB dataset, the argument <code class="fm-code-in-text">num_words=10000</code> restricts the data to the 10,000 most frequently occurring words found in the data.</p>
+
+  <p class="body"><a id="pgfId-1015574"></a>You have 8,982 training examples and 2,246 test examples:</p>
+  <pre class="programlisting"><a id="pgfId-1015580"></a>&gt;&gt;&gt; len(train_data)
+<a id="pgfId-1015594"></a>8982
+<a id="pgfId-1015600"></a>&gt;&gt;&gt; len(test_data)
+<a id="pgfId-1015606"></a>2246</pre>
+
+  <p class="body"><a id="pgfId-1015612"></a>As with the IMDB reviews, each example is a list of integers (word indices):</p>
+  <pre class="programlisting"><a id="pgfId-1015618"></a>&gt;&gt;&gt; train_data[<span class="fm-codeblue">10</span>]
+<a id="pgfId-1015632"></a>[1, 245, 273, 207, 156, 53, 74, 160, 26, 14, 46, 296, 26, 39, 74, 2979,
+<a id="pgfId-1015638"></a>3554, 14, 46, 4689, 4329, 86, 61, 3499, 4795, 14, 61, 451, 4329, 17, 12]</pre>
+
+  <p class="body"><a id="pgfId-1015644"></a>Here’s how you can decode it back to words, in case you’re curious.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015701"></a>Listing 4.12 Decoding newswires back to text</p>
+  <pre class="programlisting"><a id="pgfId-1029110"></a>word_index = reuters.get_word_index()
+<a id="pgfId-1029111"></a>reverse_word_index = dict(
+<a id="pgfId-1030363"></a>    [(value, key) <b class="fm-codebrown">for</b> (key, value) <b class="fm-codebrown">in</b> word_index.items()])
+<a id="pgfId-1029112"></a>decoded_newswire = <span class="fm-codegreen">" "</span>.join(
+<a id="pgfId-1030405"></a>    [reverse_word_index.get(i - <span class="fm-codeblue">3</span>, <span class="fm-codegreen">"?"</span>) <b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b>     train_data[<span class="fm-codeblue">0</span>]])   <span class="fm-combinumeral">❶</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031977"></a><span class="fm-combinumeral">❶</span> Note that the indices are offset by 3 because 0, 1, and 2 are reserved indices for “padding,” “start of sequence,” and “unknown.”</p>
+
+  <p class="body"><a id="pgfId-1015784"></a>The label associated with an example is an integer between 0 and 45—a topic index:<a id="marker-1015786"></a><a id="marker-1015791"></a></p>
+  <pre class="programlisting"><a id="pgfId-1015799"></a>&gt;&gt;&gt; train_labels[<span class="fm-codeblue">10</span>]
+<a id="pgfId-1015813"></a>3</pre>
+
+  <h3 class="fm-head1" id="heading_id_13"><a id="pgfId-1015819"></a>4.2.2 Preparing the data</h3>
+
+  <p class="body"><a id="pgfId-1015840"></a><a id="marker-1015830"></a><a id="marker-1015832"></a><a id="marker-1015834"></a><a id="marker-1015836"></a>You can vectorize the data with the exact same code as in the previous example.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015896"></a>Listing 4.13 Encoding the input data</p>
+  <pre class="programlisting"><a id="pgfId-1015845"></a>x_train = vectorize_sequences(train_data)      <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1015941"></a>x_test = vectorize_sequences(test_data)        <span class="fm-combinumeral">❷</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031873"></a><span class="fm-combinumeral">❶</span> Vectorized training data</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031894"></a><span class="fm-combinumeral">❷</span> Vectorized test data</p>
+
+  <p class="body"><a id="pgfId-1016012"></a>To vectorize the labels, there are two possibilities: you can cast the label list as an integer tensor, or you can <a id="marker-1015991"></a>use <i class="fm-italics">one-hot encoding</i>. One-hot encoding is a widely used format for categorical data, also called <i class="fm-italics">categorical encoding</i>. In this <a id="marker-1016017"></a>case, one-hot encoding of the labels consists of embedding each label as an all-zero vector with a 1 in the place of the label index. The following listing shows an example.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016078"></a>Listing 4.14 Encoding the labels</p>
+  <pre class="programlisting"><a id="pgfId-1029136"></a><b class="fm-codebrown">def</b> to_one_hot(labels, dimension=<span class="fm-codeblue">46</span>):
+<a id="pgfId-1029137"></a>    results = np.zeros((len(labels), dimension))
+<a id="pgfId-1029138"></a>    <b class="fm-codebrown">for</b> i, label <b class="fm-codebrown">in</b> enumerate(labels):
+<a id="pgfId-1029139"></a>        results[i, label] = <span class="fm-codeblue">1.</span> 
+<a id="pgfId-1029140"></a>    <b class="fm-codebrown">return</b> results
+<a id="pgfId-1016141"></a>y_train = to_one_hot(train_labels)     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1016153"></a>y_test = to_one_hot(test_labels)       <span class="fm-combinumeral">❷</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031769"></a><span class="fm-combinumeral">❶</span> Vectorized training labels</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031790"></a><span class="fm-combinumeral">❷</span> Vectorized test labels</p>
+
+  <p class="body"><a id="pgfId-1016201"></a>Note that there is a built-in way to do this in Keras:<a id="marker-1016203"></a><a id="marker-1016206"></a><a id="marker-1016208"></a><a id="marker-1016210"></a></p>
+  <pre class="programlisting"><a id="pgfId-1029160"></a><b class="fm-codebrown">from</b> tensorflow.keras.utils <b class="fm-codebrown">import</b> to_categorical
+<a id="pgfId-1029161"></a>y_train = to_categorical(train_labels)
+<a id="pgfId-1016236"></a>y_test = to_categorical(test_labels)</pre>
+
+  <h3 class="fm-head1" id="heading_id_14"><a id="pgfId-1016242"></a>4.2.3 Building your model</h3>
+
+  <p class="body"><a id="pgfId-1016261"></a><a id="marker-1016253"></a><a id="marker-1016255"></a><a id="marker-1016257"></a>This topic-classification problem looks similar to the previous movie-review classification problem: in both cases, we’re trying to classify short snippets of text. But there is a new constraint here: the number of output classes has gone from 2 to 46. The dimensionality of the output space is much larger.</p>
+
+  <p class="body"><a id="pgfId-1016266"></a>In a stack of <code class="fm-code-in-text">Dense</code> layers like those we’ve been using, each layer can only access information present in the output of the previous layer. If one layer drops some information relevant to the classification problem, this information can never be recovered by later layers: each layer can potentially become an information bottleneck. In the previous example, we used 16-dimensional intermediate layers, but a 16-dimensional space may be too limited to learn to separate 46 different classes: such small layers may act as information bottlenecks, permanently dropping relevant information.</p>
+
+  <p class="body"><a id="pgfId-1016281"></a>For this reason we’ll use larger layers. Let’s go with 64 units.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016338"></a>Listing 4.15 Model definition</p>
+  <pre class="programlisting"><a id="pgfId-1029176"></a>model = keras.Sequential([
+<a id="pgfId-1029177"></a>    layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029178"></a>    layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029179"></a>    layers.Dense(<span class="fm-codeblue">46</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1016395"></a>])</pre>
+
+  <p class="body"><a id="pgfId-1016401"></a>There are two other things you should note about this architecture.</p>
+
+  <p class="body"><a id="pgfId-1016407"></a>First, we end the model with a <code class="fm-code-in-text">Dense</code> layer of size 46. This means for each input sample, the network will output a 46-dimensional vector. Each entry in this vector (each dimension) will encode a different output class.</p>
+
+  <p class="body"><a id="pgfId-1016470"></a>Second, the last layer uses a <code class="fm-code-in-text">softmax</code> activation. You saw <a id="marker-1016433"></a>this pattern in the MNIST example. It means the model will <a id="marker-1016439"></a>output a <i class="fm-italics">probability distribution</i> over the 46 different output classes—for every input sample, the model will produce a 46-dimensional output vector, where <code class="fm-code-in-text">output[i]</code> is the probability that the sample belongs to class <code class="fm-code-in-text">i</code>. The 46 scores will sum to 1.</p>
+
+  <p class="body"><a id="pgfId-1016479"></a>The best loss function to use in this case is <code class="fm-code-in-text">categorical_crossentropy</code>. It measures <a id="marker-1016490"></a>the distance between two probability distributions: here, between the probability distribution output by the model and the true distribution of the labels. By minimizing the distance between these two distributions, you train the model to output something as close as possible to the true labels. <a id="marker-1016496"></a><a id="marker-1016499"></a><a id="marker-1016501"></a></p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016558"></a>Listing 4.16 Compiling the model</p>
+  <pre class="programlisting"><a id="pgfId-1029198"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1029199"></a>              loss=<span class="fm-codegreen">"categorical_crossentropy"</span>,
+<a id="pgfId-1016603"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])</pre>
+
+  <h3 class="fm-head1" id="heading_id_15"><a id="pgfId-1016609"></a>4.2.4 Validating your approach</h3>
+
+  <p class="body"><a id="pgfId-1016630"></a><a id="marker-1016620"></a><a id="marker-1016622"></a><a id="marker-1016624"></a><a id="marker-1016626"></a>Let’s set apart 1,000 samples in the training data to use as a validation set.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016686"></a>Listing 4.17 Setting aside a validation set</p>
+  <pre class="programlisting"><a id="pgfId-1016635"></a>x_val = x_train[:<span class="fm-codeblue">1000</span>]
+<a id="pgfId-1016725"></a>partial_x_train = x_train[<span class="fm-codeblue">1000</span>:]
+<a id="pgfId-1016731"></a>y_val = y_train[:<span class="fm-codeblue">1000</span>]
+<a id="pgfId-1016737"></a>partial_y_train = y_train[<span class="fm-codeblue">1000</span>:]</pre>
+
+  <p class="body"><a id="pgfId-1016743"></a>Now, let’s train the model for 20 epochs.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016800"></a>Listing 4.18 Training the model</p>
+  <pre class="programlisting"><a id="pgfId-1016749"></a>history = model.fit(partial_x_train,
+<a id="pgfId-1016839"></a>                    partial_y_train,
+<a id="pgfId-1016845"></a>                    epochs=<span class="fm-codeblue">20</span>,
+<a id="pgfId-1016851"></a>                    batch_size=<span class="fm-codeblue">512</span>,
+<a id="pgfId-1016857"></a>                    validation_data=(x_val, y_val))</pre>
+
+  <p class="body"><a id="pgfId-1016863"></a>And finally, let’s display its loss and accuracy curves (see figures 4.6 and 4.7).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-06.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1034038"></a>Figure 4.6 Training and validation loss</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-07.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1034073"></a>Figure 4.7 Training and validation accuracy</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016920"></a>Listing 4.19 Plotting the training and validation loss</p>
+  <pre class="programlisting"><a id="pgfId-1029216"></a>loss = history.history[<span class="fm-codegreen">"loss"</span>]
+<a id="pgfId-1029217"></a>val_loss = history.history[<span class="fm-codegreen">"val_loss"</span>]
+<a id="pgfId-1029218"></a>epochs = range(<span class="fm-codeblue">1</span>, len(loss) + <span class="fm-codeblue">1</span>)
+<a id="pgfId-1029219"></a>plt.plot(epochs, loss, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training loss"</span>)
+<a id="pgfId-1029220"></a>plt.plot(epochs, val_loss, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation loss"</span>)
+<a id="pgfId-1029221"></a>plt.title(<span class="fm-codegreen">"Training and validation loss"</span>)
+<a id="pgfId-1029222"></a>plt.xlabel(<span class="fm-codegreen">"Epochs"</span>)
+<a id="pgfId-1029223"></a>plt.ylabel(<span class="fm-codegreen">"Loss"</span>)
+<a id="pgfId-1029224"></a>plt.legend()
+<a id="pgfId-1017007"></a>plt.show()
+<a id="pgfId-1032721"></a> 
+<a id="pgfId-1032719"></a> </pre>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017064"></a>Listing 4.20 Plotting the training and validation accuracy</p>
+  <pre class="programlisting"><a id="pgfId-1017013"></a>plt.clf()                          <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1029237"></a>acc = history.history[<span class="fm-codegreen">"accuracy"</span>]
+<a id="pgfId-1029238"></a>val_acc = history.history[<span class="fm-codegreen">"val_accuracy"</span>]
+<a id="pgfId-1029239"></a>plt.plot(epochs, acc, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training accuracy"</span>)
+<a id="pgfId-1029240"></a>plt.plot(epochs, val_acc, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation accuracy"</span>)
+<a id="pgfId-1029241"></a>plt.title(<span class="fm-codegreen">"Training and validation accuracy"</span>)
+<a id="pgfId-1029242"></a>plt.xlabel(<span class="fm-codegreen">"Epochs"</span>)
+<a id="pgfId-1029243"></a>plt.ylabel(<span class="fm-codegreen">"Accuracy"</span>)
+<a id="pgfId-1029244"></a>plt.legend()
+<a id="pgfId-1017157"></a>plt.show()</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031698"></a><span class="fm-combinumeral">❶</span> Clears the figure</p>
+
+  <p class="body"><a id="pgfId-1017217"></a>The model begins to overfit after nine epochs. Let’s train a new model from scratch for nine epochs and then evaluate it on the test set.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017288"></a>Listing 4.21 Retraining a model from scratch</p>
+  <pre class="programlisting"><a id="pgfId-1029259"></a>model = keras.Sequential([
+<a id="pgfId-1029260"></a>    layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029261"></a>    layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029262"></a>    layers.Dense(<span class="fm-codeblue">46</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1029263"></a>])
+<a id="pgfId-1029264"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1029265"></a>              loss=<span class="fm-codegreen">"categorical_crossentropy"</span>,
+<a id="pgfId-1029266"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1029267"></a>model.fit(x_train,
+<a id="pgfId-1029268"></a>          y_train,
+<a id="pgfId-1029269"></a>          epochs=<span class="fm-codeblue">9</span>,
+<a id="pgfId-1029270"></a>          batch_size=<span class="fm-codeblue">512</span>)
+<a id="pgfId-1017393"></a>results = model.evaluate(x_test, y_test)</pre>
+
+  <p class="body"><a id="pgfId-1017399"></a>Here are the final results:</p>
+  <pre class="programlisting"><a id="pgfId-1017405"></a>&gt;&gt;&gt; results
+<a id="pgfId-1017419"></a>[0.9565213431445807, 0.79697239536954589]</pre>
+
+  <p class="body"><a id="pgfId-1017425"></a>This approach reaches an accuracy of ~80%. With a balanced binary classification problem, the accuracy reached by a purely random classifier would be 50%. But in this case, we have 46 classes, and they may not be equally represented. What would be the accuracy of a random baseline? We could try quickly implementing one to check this empirically:</p>
+  <pre class="programlisting"><a id="pgfId-1030248"></a>&gt;&gt;&gt; <b class="fm-codebrown">import</b> copy
+<a id="pgfId-1030249"></a>&gt;&gt;&gt; test_labels_copy = copy.copy(test_labels)
+<a id="pgfId-1030250"></a>&gt;&gt;&gt; np.random.shuffle(test_labels_copy)
+<a id="pgfId-1030251"></a>&gt;&gt;&gt; hits_array = np.array(test_labels) == np.array(test_labels_copy)
+<a id="pgfId-1017463"></a>&gt;&gt;&gt; hits_array.mean()
+<a id="pgfId-1017469"></a>0.18655387355298308</pre>
+
+  <p class="body"><a id="pgfId-1017475"></a>As you can see, a random classifier would score around 19% classification accuracy, so the results of our model seem pretty good in that light. <a id="marker-1017477"></a><a id="marker-1017480"></a><a id="marker-1017482"></a><a id="marker-1017484"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_16"><a id="pgfId-1017490"></a>4.2.5 Generating predictions on new data</h3>
+
+  <p class="body"><a id="pgfId-1017515"></a><a id="marker-1017501"></a><a id="marker-1017503"></a><a id="marker-1017505"></a>Calling the model’s <code class="fm-code-in-text">predict</code> method on <a id="marker-1017520"></a>new samples returns a class probability distribution over all 46 topics for each sample. Let’s generate topic predictions for all of the test data:</p>
+  <pre class="programlisting"><a id="pgfId-1017530"></a>predictions = model.predict(x_test)</pre>
+
+  <p class="body"><a id="pgfId-1017544"></a>Each entry in “predictions” is a vector of length 46:</p>
+  <pre class="programlisting"><a id="pgfId-1017550"></a>&gt;&gt;&gt; predictions[<span class="fm-codeblue">0</span>].shape
+<a id="pgfId-1017564"></a>(46,)</pre>
+
+  <p class="body"><a id="pgfId-1017570"></a>The coefficients in this vector sum to 1, as they form a probability distribution:</p>
+  <pre class="programlisting"><a id="pgfId-1017576"></a>&gt;&gt;&gt; np.sum(predictions[<span class="fm-codeblue">0</span>])
+<a id="pgfId-1017590"></a>1.0</pre>
+
+  <p class="body"><a id="pgfId-1017596"></a>The largest entry is the predicted class—the class with the highest probability:<a id="marker-1017598"></a><a id="marker-1017601"></a><a id="marker-1017603"></a></p>
+  <pre class="programlisting"><a id="pgfId-1017609"></a>&gt;&gt;&gt; np.argmax(predictions[<span class="fm-codeblue">0</span>])
+<a id="pgfId-1017623"></a>4</pre>
+
+  <h3 class="fm-head1" id="heading_id_17"><a id="pgfId-1017629"></a>4.2.6 A different way to handle the labels and the loss</h3>
+
+  <p class="body"><a id="pgfId-1017648"></a><a id="marker-1017640"></a><a id="marker-1017642"></a><a id="marker-1017644"></a>We mentioned earlier that another way to encode the labels would be to cast them as an integer tensor, like this:</p>
+  <pre class="programlisting"><a id="pgfId-1017653"></a>y_train = np.array(train_labels)
+<a id="pgfId-1017667"></a>y_test = np.array(test_labels)</pre>
+
+  <p class="body"><a id="pgfId-1017695"></a>The only thing this approach would change is the choice of the loss function. The loss function used in listing 4.21, <code class="fm-code-in-text">categorical_crossentropy</code>, expects the labels to follow a categorical encoding. With integer labels, you should <a id="marker-1017684"></a>use <code class="fm-code-in-text">sparse_categorical_ crossentropy</code>:</p>
+  <pre class="programlisting"><a id="pgfId-1029287"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1029288"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1017724"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])</pre>
+
+  <p class="body"><a id="pgfId-1017730"></a>This new loss function is still mathematically the same as <code class="fm-code-in-text">categorical_crossentropy</code>; it just has a different interface. <a id="marker-1017741"></a><a id="marker-1017744"></a><a id="marker-1017746"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_18"><a id="pgfId-1017752"></a>4.2.7 The importance of having sufficiently large intermediate layers</h3>
+
+  <p class="body"><a id="pgfId-1017773"></a><a id="marker-1017763"></a><a id="marker-1017765"></a><a id="marker-1017767"></a><a id="marker-1017769"></a>We mentioned earlier that because the final outputs are 46-dimensional, you should avoid intermediate layers with many fewer than 46 units. Now let’s see what happens when we introduce an information bottleneck by having intermediate layers that are significantly less than 46-dimensional: for example, 4-dimensional.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017829"></a>Listing 4.22 A model with an information bottleneck</p>
+  <pre class="programlisting"><a id="pgfId-1029303"></a>model = keras.Sequential([
+<a id="pgfId-1029304"></a>    layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029305"></a>    layers.Dense(<span class="fm-codeblue">4</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029306"></a>    layers.Dense(<span class="fm-codeblue">46</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1029307"></a>])
+<a id="pgfId-1029308"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1029309"></a>              loss=<span class="fm-codegreen">"categorical_crossentropy"</span>,
+<a id="pgfId-1029310"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1029311"></a>model.fit(partial_x_train,
+<a id="pgfId-1029312"></a>          partial_y_train,
+<a id="pgfId-1029313"></a>          epochs=<span class="fm-codeblue">20</span>,
+<a id="pgfId-1029314"></a>          batch_size=<span class="fm-codeblue">128</span>,
+<a id="pgfId-1017934"></a>          validation_data=(x_val, y_val))</pre>
+
+  <p class="body"><a id="pgfId-1017940"></a>The model now peaks at ~71% validation accuracy, an 8% absolute drop. This drop is mostly due to the fact that we’re trying to compress a lot of information (enough information to recover the separation hyperplanes of 46 classes) into an intermediate space that is too low-dimensional. The model is able to cram <i class="fm-italics">most</i> of the necessary information into these four-dimensional representations, but not all of it. <a id="marker-1017951"></a><a id="marker-1017954"></a><a id="marker-1017956"></a><a id="marker-1017958"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_19"><a id="pgfId-1017964"></a>4.2.8 Further experiments</h3>
+
+  <p class="body"><a id="pgfId-1017974"></a>Like in the previous example, I encourage you to try out the following experiments to train your intuition about the kind of configuration decisions you have to make with such models:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017980"></a>Try using larger or smaller layers: 32 units, 128 units, and so on.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017994"></a>You used two intermediate layers before the final softmax classification layer. Now try using a single intermediate layer, or three intermediate layers.</p>
+    </li>
+  </ul>
+
+  <h3 class="fm-head1" id="heading_id_20"><a id="pgfId-1018004"></a>4.2.9 Wrapping up</h3>
+
+  <p class="body"><a id="pgfId-1018014"></a>Here’s what you should take away from this example:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018054"></a>If you’re trying to classify data points among <i class="fm-italics1">N</i> classes, your model should end with a <code class="fm-code-in-text">Dense</code> layer of size <i class="fm-italics1">N</i>.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018083"></a>In a single-label, multiclass classification problem, your model should end with a <code class="fm-code-in-text">softmax</code> activation so that it will output a probability distribution over the <i class="fm-italics1">N</i> output classes.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018092"></a>Categorical crossentropy is almost always the loss function you should use for such problems. It minimizes the distance between the probability distributions output by the model and the true distribution of the targets.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018102"></a>There are two ways to handle labels in multiclass classification:</p>
+
+      <ul class="calibre16">
+        <li class="fm-list-bullet1">
+          <p class="list"><a class="calibre11" id="pgfId-1018112"></a>Encoding the labels via categorical encoding (also known as one-hot encoding) and using <code class="fm-code-in-text">categorical_crossentropy</code> as a loss function</p>
+        </li>
+
+        <li class="fm-list-bullet1">
+          <p class="list"><a class="calibre11" id="pgfId-1018139"></a>Encoding the labels as integers and using the <code class="fm-code-in-text">sparse_categorical_crossentropy</code> loss function</p>
+        </li>
+      </ul>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018158"></a>If you need to classify data into a large number of categories, you should avoid creating information bottlenecks in your model due to intermediate layers that are too small. <a class="calibre11" id="marker-1018164"></a><a class="calibre11" id="marker-1018167"></a><a class="calibre11" id="marker-1018169"></a></p>
+    </li>
+  </ul>
+
+  <h2 class="fm-head" id="heading_id_21"><a id="pgfId-1018175"></a>4.3 Predicting house prices: A regression example</h2>
+
+  <p class="body"><a id="pgfId-1018198"></a><a id="marker-1018186"></a><a id="marker-1018188"></a>The two previous examples were considered classification problems, where the goal was to predict a single discrete label of an input data point. Another common type of machine learning problem is <i class="fm-italics">regression</i>, which consists of predicting a continuous value instead of a discrete label: for instance, predicting the temperature tomorrow, given meteorological data or predicting the time that a software project will take to complete, given its specifications.</p>
+
+  <p class="fm-callout"><a id="pgfId-1018207"></a><span class="fm-callout-head">Note</span> Don’t confuse <i class="fm-italics">regression</i> and the <i class="fm-italics">logistic regression</i> algorithm. Confusingly, logistic regression <a id="marker-1025136"></a>isn’t a regression algorithm—it’s a classification algorithm.</p>
+
+  <h3 class="fm-head1" id="heading_id_22"><a id="pgfId-1018248"></a>4.3.1 The Boston housing price dataset</h3>
+
+  <p class="body"><a id="pgfId-1018273"></a><a id="marker-1025227"></a><a id="marker-1025228"></a>In this section, we’ll attempt to predict the median price of homes in a given Boston suburb in the mid-1970s, given data points about the suburb at the time, such as the crime rate, the local property tax rate, and so on. The dataset we’ll use has an interesting difference from the two previous examples. It has relatively few data points: only 506, split between 404 training samples and 102 test samples. And each <i class="fm-italics">feature</i> in the input data (for example, the crime rate) has a different scale. For instance, some values are proportions, which take values between 0 and 1, others take values between 1 and 12, others between 0 and 100, and so on.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018333"></a>Listing 4.23 Loading the Boston housing dataset</p>
+  <pre class="programlisting"><a id="pgfId-1029333"></a><b class="fm-codebrown">from</b> tensorflow.keras.datasets <b class="fm-codebrown">import</b> boston_housing
+<a id="pgfId-1018372"></a>(train_data, train_targets), (test_data, test_targets) = (
+<a id="pgfId-1030557"></a>    boston_housing.load_data())</pre>
+
+  <p class="body"><a id="pgfId-1018378"></a>Let’s look at the data:</p>
+  <pre class="programlisting"><a id="pgfId-1018384"></a>&gt;&gt;&gt; train_data.shape
+<a id="pgfId-1018398"></a>(404, 13)
+<a id="pgfId-1018404"></a>&gt;&gt;&gt; test_data.shape
+<a id="pgfId-1018410"></a>(102, 13)</pre>
+
+  <p class="body"><a id="pgfId-1018416"></a>As you can see, we have 404 training samples and 102 test samples, each with 13 numerical features, such as per capita crime rate, average number of rooms per dwelling, accessibility to highways, and so on.</p>
+
+  <p class="body"><a id="pgfId-1018422"></a>The targets are the median values of owner-occupied homes, in thousands of dollars:</p>
+  <pre class="programlisting"><a id="pgfId-1018428"></a>&gt;&gt;&gt; train_targets
+<a id="pgfId-1018442"></a>[ 15.2,  42.3,  50. ...  19.4,  19.4,  29.1]</pre>
+
+  <p class="body"><a id="pgfId-1018448"></a>The prices are typically between $10,000 and $50,000. If that sounds cheap, remember that this was the mid-1970s, and these prices aren’t adjusted for inflation. <a id="marker-1018450"></a><a id="marker-1018453"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_23"><a id="pgfId-1018461"></a>4.3.2 Preparing the data</h3>
+
+  <p class="body"><a id="pgfId-1018480"></a><a id="marker-1018472"></a><a id="marker-1018474"></a><a id="marker-1018476"></a>It would be problematic to feed into a neural network values that all take wildly different ranges. The model might be able to automatically adapt to such heterogeneous data, but it would definitely make learning more difficult. A widespread best practice for dealing with such data is to do feature-wise normalization: for each feature in the input data (a column in the input data matrix), we subtract the mean of the feature and divide by the standard deviation, so that the feature is centered around 0 and has a unit standard deviation. This is easily done in NumPy.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018536"></a>Listing 4.24 Normalizing the data</p>
+  <pre class="programlisting"><a id="pgfId-1018485"></a>mean = train_data.mean(axis=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1018575"></a>train_data -= mean
+<a id="pgfId-1018581"></a>std = train_data.std(axis=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1018587"></a>train_data /= std
+<a id="pgfId-1018593"></a>test_data -= mean
+<a id="pgfId-1018599"></a>test_data /= std</pre>
+
+  <p class="body"><a id="pgfId-1018605"></a>Note that the quantities used for normalizing the test data are computed using the training data. You should never use any quantity computed on the test data in your workflow, even for something as simple as data normalization. <a id="marker-1018607"></a><a id="marker-1018610"></a><a id="marker-1018612"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_24"><a id="pgfId-1018618"></a>4.3.3 Building your model</h3>
+
+  <p class="body"><a id="pgfId-1018635"></a><a id="marker-1018629"></a><a id="marker-1018631"></a>Because so few samples are available, we’ll use a very small model with two intermediate layers, each with 64 units. In general, the less training data you have, the worse overfitting will be, and using a small model is one way to mitigate overfitting.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018691"></a>Listing 4.25 Model definition</p>
+  <pre class="programlisting"><a id="pgfId-1029350"></a><b class="fm-codebrown">def</b> build_model():
+<a id="pgfId-1018730"></a>    model = keras.Sequential([              <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1029366"></a>        layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029367"></a>        layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1029368"></a>        layers.Dense(<span class="fm-codeblue">1</span>)
+<a id="pgfId-1029369"></a>    ])
+<a id="pgfId-1029370"></a>    model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>, loss=<span class="fm-codegreen">"mse"</span>, metrics=[<span class="fm-codegreen">"mae"</span>])
+<a id="pgfId-1018772"></a>    <b class="fm-codebrown">return</b> model</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031627"></a><span class="fm-combinumeral">❶</span> Because we need to instantiate the same model multiple times, we use a function to construct it.</p>
+
+  <p class="body"><a id="pgfId-1018798"></a>The model ends with a single unit and no activation (it will be a linear layer). This is a typical setup for scalar regression (a regression where you’re trying to predict a single continuous value). Applying an activation function would constrain the range the output can take; for instance, if you applied a <code class="fm-code-in-text">sigmoid</code> activation function to the last layer, the model could only learn to predict values between 0 and 1. Here, because the last layer is purely linear, the model is free to learn to predict values in any range.</p>
+
+  <p class="body"><a id="pgfId-1018829"></a>Note that we compile the model with the <code class="fm-code-in-text">mse</code> loss function—<i class="fm-italics">mean squared error</i>, the square <a id="marker-1024696"></a>of the difference between the predictions and the targets. This is a widely used loss function for regression problems.</p>
+
+  <p class="body"><a id="pgfId-1018857"></a>We’re also monitoring a new metric during <a id="marker-1018846"></a>training: <i class="fm-italics">mean absolute error</i> (MAE). It’s the absolute value of the difference between the predictions and the targets. For instance, an MAE of 0.5 on this problem would mean your predictions are off by $500 on average. <a id="marker-1018862"></a><a id="marker-1018865"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_25"><a id="pgfId-1018871"></a>4.3.4 Validating your approach using K-fold validation</h3>
+
+  <p class="body"><a id="pgfId-1018898"></a><a id="marker-1018882"></a><a id="marker-1018884"></a><a id="marker-1018886"></a><a id="marker-1018888"></a>To evaluate our model while we keep adjusting its parameters (such as the number of epochs used for training), we could split the data into a training set and a validation set, as we did in the previous examples. But because we have so few data points, the validation set would end up being very small (for instance, about 100 examples). As a consequence, the validation scores might change a lot depending on which data points we chose for validation and which we chose for training: the validation scores might have a high <i class="fm-italics">variance</i> with regard to the validation split. This would prevent us from reliably evaluating our model.</p>
+
+  <p class="body"><a id="pgfId-1018963"></a>The best practice in such situations is to use <i class="fm-italics">K-fold</i> cross-validation (see figure 4.8).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-08.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1034135"></a>Figure 4.8 K-fold cross-validation with K=3</p>
+
+  <p class="body"><a id="pgfId-1027322"></a>It consists of splitting the available data into <i class="fm-italics">K</i> partitions (typically <i class="fm-italics">K</i> = 4 or 5), instantiating <i class="fm-italics">K</i> identical models, and training each one on <i class="fm-italics">K</i> – 1 partitions while evaluating on the remaining partition. The validation score for the model used is then the average of the <i class="fm-italics">K</i> validation scores obtained. In terms of code, this is straightforward.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019047"></a>Listing 4.26 K-fold validation</p>
+  <pre class="programlisting"><a id="pgfId-1029514"></a>k = <span class="fm-codeblue">4</span> 
+<a id="pgfId-1029515"></a>num_val_samples = len(train_data) // k
+<a id="pgfId-1029516"></a>num_epochs = <span class="fm-codeblue">100</span> 
+<a id="pgfId-1029517"></a>all_scores = [] 
+<a id="pgfId-1029518"></a><b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(k):
+<a id="pgfId-1029519"></a>    <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Processing fold #{i}"</span>)
+<a id="pgfId-1019116"></a>    val_data = train_data[i * num_val_samples: (i + <span class="fm-codeblue">1</span>) * num_val_samples]   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1029536"></a>    val_targets = train_targets[i * num_val_samples: (i + <span class="fm-codeblue">1</span>) * num_val_samples]
+<a id="pgfId-1019134"></a>    partial_train_data = np.concatenate(                                    <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1029558"></a>        [train_data[:i * num_val_samples],
+<a id="pgfId-1029559"></a>         train_data[(i + <span class="fm-codeblue">1</span>) * num_val_samples:]],
+<a id="pgfId-1029560"></a>        axis=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1029561"></a>    partial_train_targets = np.concatenate(
+<a id="pgfId-1029562"></a>        [train_targets[:i * num_val_samples],
+<a id="pgfId-1029563"></a>         train_targets[(i + <span class="fm-codeblue">1</span>) * num_val_samples:]],
+<a id="pgfId-1029564"></a>        axis=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1019188"></a>    model = build_model()                                                   <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1019200"></a>    model.fit(partial_train_data, partial_train_targets,                    <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1029591"></a>              epochs=num_epochs, batch_size=<span class="fm-codeblue">16</span>, verbose=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1019218"></a>    val_mse, val_mae = model.evaluate(val_data, val_targets, verbose=<span class="fm-codeblue">0</span>)     <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1019230"></a>    all_scores.append(val_mae)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031308"></a><span class="fm-combinumeral">❶</span> Prepares the validation data: data from partition #k</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031329"></a><span class="fm-combinumeral">❷</span> Prepares the training data: data from all other partitions</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031346"></a><span class="fm-combinumeral">❸</span> Builds the Keras model (already compiled)</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031370"></a><span class="fm-combinumeral">❹</span> Trains the model (in silent mode, verbose = 0)</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031387"></a><span class="fm-combinumeral">❺</span> Evaluates the model on the validation data</p>
+
+  <p class="body"><a id="pgfId-1019320"></a>Running this with <code class="fm-code-in-text">num_epochs</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">100</code> yields the following results:</p>
+  <pre class="programlisting"><a id="pgfId-1019335"></a>&gt;&gt;&gt; all_scores
+<a id="pgfId-1019349"></a>[2.112449, 3.0801501, 2.6483836, 2.4275346]
+<a id="pgfId-1019355"></a>&gt;&gt;&gt; np.mean(all_scores)
+<a id="pgfId-1019361"></a>2.5671294</pre>
+
+  <p class="body"><a id="pgfId-1019367"></a>The different runs do indeed show rather different validation scores, from 2.1 to 3.1. The average (2.6) is a much more reliable metric than any single score—that’s the entire point of K-fold cross-validation. In this case, we’re off by $2,600 on average, which is significant considering that the prices range from $10,000 to $50,000.</p>
+
+  <p class="body"><a id="pgfId-1019373"></a>Let’s try training the model a bit longer: 500 epochs. To keep a record of how well the model does at each epoch, we’ll modify the training loop to save the per-epoch validation score log for each fold.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019430"></a>Listing 4.27 Saving the validation logs at each fold</p>
+  <pre class="programlisting"><a id="pgfId-1029623"></a>num_epochs = <span class="fm-codeblue">500</span> 
+<a id="pgfId-1029624"></a>all_mae_histories = [] 
+<a id="pgfId-1029625"></a><b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(k):
+<a id="pgfId-1029626"></a>    <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Processing fold #{i}"</span>)
+<a id="pgfId-1019487"></a>    val_data = train_data[i * num_val_samples: (i + <span class="fm-codeblue">1</span>) * num_val_samples]   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1029656"></a>    val_targets = train_targets[i * num_val_samples: (i + <span class="fm-codeblue">1</span>) * num_val_samples]
+<a id="pgfId-1019505"></a>    partial_train_data = np.concatenate(                                    <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1029679"></a>        [train_data[:i * num_val_samples],
+<a id="pgfId-1029680"></a>         train_data[(i + <span class="fm-codeblue">1</span>) * num_val_samples:]],
+<a id="pgfId-1029681"></a>        axis=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1029682"></a>    partial_train_targets = np.concatenate(
+<a id="pgfId-1029683"></a>        [train_targets[:i * num_val_samples],
+<a id="pgfId-1029684"></a>         train_targets[(i + <span class="fm-codeblue">1</span>) * num_val_samples:]],
+<a id="pgfId-1029685"></a>        axis=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1019559"></a>    model = build_model()                                                   <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1019571"></a>    history = model.fit(partial_train_data, partial_train_targets,          <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1029639"></a>                        validation_data=(val_data, val_targets),
+<a id="pgfId-1029640"></a>                        epochs=num_epochs, batch_size=<span class="fm-codeblue">16</span>, verbose=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1029641"></a>    mae_history = history.history[<span class="fm-codegreen">"val_mae"</span>]
+<a id="pgfId-1019601"></a>    all_mae_histories.append(mae_history)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031024"></a><span class="fm-combinumeral">❶</span> Prepares the validation data: data from partition #k</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031045"></a><span class="fm-combinumeral">❷</span> Prepares the training data: data from all other partitions</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031062"></a><span class="fm-combinumeral">❸</span> Builds the Keras model (already compiled)</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1031079"></a><span class="fm-combinumeral">❹</span> Trains the model (in silent mode, verbose=0)</p>
+
+  <p class="body"><a id="pgfId-1019675"></a>We can then compute the average of the per-epoch MAE scores for all folds.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019732"></a>Listing 4.28 Building the history of successive mean K-fold validation scores</p>
+  <pre class="programlisting"><a id="pgfId-1029796"></a>average_mae_history = [
+<a id="pgfId-1019771"></a>    np.mean([x[i] <b class="fm-codebrown">for</b> x <b class="fm-codebrown">in</b> all_mae_histories]) <b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(num_epochs)]</pre>
+
+  <p class="body"><a id="pgfId-1019777"></a>Let’s plot this; see figure 4.9.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-09.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1034196"></a>Figure 4.9 Validation MAE by epoch</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019834"></a>Listing 4.29 Plotting validation scores</p>
+  <pre class="programlisting"><a id="pgfId-1029813"></a>plt.plot(range(<span class="fm-codeblue">1</span>, len(average_mae_history) + <span class="fm-codeblue">1</span>), average_mae_history)
+<a id="pgfId-1029814"></a>plt.xlabel(<span class="fm-codegreen">"Epochs"</span>)
+<a id="pgfId-1029815"></a>plt.ylabel(<span class="fm-codegreen">"Validation MAE"</span>)
+<a id="pgfId-1019885"></a>plt.show()</pre>
+
+  <p class="body"><a id="pgfId-1019901"></a>It may be a little difficult to read the plot, due to a scaling issue: the validation MAE for the first few epochs is dramatically higher than the values that follow. Let’s omit the first 10 data points, which are on a different scale than the rest of the curve.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019972"></a>Listing 4.30 Plotting validation scores, excluding the first 10 data points</p>
+  <pre class="programlisting"><a id="pgfId-1029830"></a>truncated_mae_history = average_mae_history[<span class="fm-codeblue">10</span>:]
+<a id="pgfId-1029831"></a>plt.plot(range(<span class="fm-codeblue">1</span>, len(truncated_mae_history) + <span class="fm-codeblue">1</span>), truncated_mae_history)
+<a id="pgfId-1029832"></a>plt.xlabel(<span class="fm-codegreen">"Epochs"</span>)
+<a id="pgfId-1029833"></a>plt.ylabel(<span class="fm-codegreen">"Validation MAE"</span>)
+<a id="pgfId-1020029"></a>plt.show()</pre>
+
+  <p class="body"><a id="pgfId-1020035"></a>As you can see in figure 4.10, validation MAE stops improving significantly after 120–140 epochs (this number includes the 10 epochs we omitted). Past that point, we start overfitting.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/04-10.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1034236"></a>Figure 4.10 Validation MAE by epoch, excluding the first 10 data points</p>
+
+  <p class="body"><a id="pgfId-1020051"></a>Once you’re finished tuning other parameters of the model (in addition to the number of epochs, you could also adjust the size of the intermediate layers), you can train a final production model on all of the training data, with the best parameters, and then look at its performance on the test data.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020122"></a>Listing 4.31 Training the final model</p>
+  <pre class="programlisting"><a id="pgfId-1020071"></a>model = build_model()                                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1020167"></a>model.fit(train_data, train_targets,                 <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1020179"></a>          epochs=<span class="fm-codeblue">130</span>, batch_size=<span class="fm-codeblue">16</span>, verbose=<span class="fm-codeblue">0</span>)
+<a id="pgfId-1020185"></a>test_mse_score, test_mae_score = model.evaluate(test_data, test_targets)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1030908"></a><span class="fm-combinumeral">❶</span> Gets a fresh, compiled model</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1030909"></a><span class="fm-combinumeral">❷</span> Trains it on the entirety of the data</p>
+
+  <p class="body"><a id="pgfId-1020227"></a>Here’s the final result:</p>
+  <pre class="programlisting"><a id="pgfId-1020233"></a>&gt;&gt;&gt; test_mae_score
+<a id="pgfId-1020247"></a>2.4642276763916016</pre>
+
+  <p class="body"><a id="pgfId-1020253"></a>We’re still off by a bit under $2,500. It’s an improvement! Just like with the two previous tasks, you can try varying the number of layers in the model, or the number of units per layer, to see if you can squeeze out a lower test error. <a id="marker-1020255"></a><a id="marker-1020258"></a><a id="marker-1020260"></a><a id="marker-1020262"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_26"><a id="pgfId-1020268"></a>4.3.5 Generating predictions on new data</h3>
+
+  <p class="body"><a id="pgfId-1020307"></a><a id="marker-1020279"></a><a id="marker-1020281"></a>When calling <code class="fm-code-in-text">predict()</code> on our <a id="marker-1020296"></a>binary classification model, we retrieved a scalar score between 0 and 1 for each input sample. With our multiclass classification model, we retrieved a probability distribution over all classes for each sample. Now, with this scalar regression model, <code class="fm-code-in-text">predict()</code> returns the model’s guess for the sample’s price in thousands of dollars:</p>
+  <pre class="programlisting"><a id="pgfId-1030315"></a>&gt;&gt;&gt; predictions = model.predict(test_data)
+<a id="pgfId-1020330"></a>&gt;&gt;&gt; predictions[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1020336"></a>array([9.990133], dtype=float32)</pre>
+
+  <p class="body"><a id="pgfId-1020342"></a>The first house in the test set is predicted to have a price of about $10,000. <a id="marker-1020344"></a><a id="marker-1020347"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_27"><a id="pgfId-1020353"></a>4.3.6 Wrapping up</h3>
+
+  <p class="body"><a id="pgfId-1020363"></a>Here’s what you should take away from this scalar regression example:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020369"></a>Regression is done using different loss functions than we used for classification. Mean squared <a class="calibre11" id="marker-1020379"></a>error (MSE) is a loss function commonly used for regression.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020389"></a>Similarly, evaluation metrics to be used for regression differ from those used for classification; naturally, the concept of accuracy doesn’t apply for regression. A common regression metric is mean absolute error (MAE).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020399"></a>When features in the input data have values in different ranges, each feature should be scaled independently as a preprocessing step.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020409"></a>When there is little data available, using K-fold validation is a great way to reliably evaluate a model.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020419"></a>When little training data is available, it’s preferable to use a small model with few intermediate layers (typically only one or two), in order to avoid severe overfitting. <a class="calibre11" id="marker-1020425"></a><a class="calibre11" id="marker-1020428"></a></p>
+    </li>
+  </ul>
+
+  <h2 class="fm-head" id="heading_id_28"><a id="pgfId-1020434"></a>Summary</h2>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020444"></a>The three most common kinds of machine learning tasks on vector data are binary classification, multiclass classification, and scalar regression.</p>
+
+      <ul class="calibre16">
+        <li class="fm-list-bullet1">
+          <p class="list"><a class="calibre11" id="pgfId-1020458"></a>The “Wrapping up” sections earlier in the chapter summarize the important points you’ve learned regarding each task.</p>
+        </li>
+
+        <li class="fm-list-bullet1">
+          <p class="list"><a class="calibre11" id="pgfId-1020476"></a>Regression uses different loss functions and different evaluation metrics than classification.</p>
+        </li>
+      </ul>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020486"></a>You’ll usually need to preprocess raw data before feeding it into a neural network.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020496"></a>When your data has features with different ranges, scale each feature independently as part of preprocessing.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020506"></a>As training progresses, neural networks eventually begin to overfit and obtain worse results on never-before-seen data.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020516"></a>If you don’t have much training data, use a small model with only one or two intermediate layers, to avoid severe overfitting.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020526"></a>If your data is divided into many categories, you may cause information bottlenecks if you make the intermediate layers too small.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020536"></a>When you’re working with little data, K-fold validation can help reliably evaluate your model.</p>
+    </li>
+  </ul>
+</body>
+</html>

@@ -1,0 +1,1246 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>8</title>
+    
+  <link href="../../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+  <h1 class="tochead" id="heading_id_2"><a id="pgfId-998407"></a><a id="pgfId-1022569"></a>8 Introduction to deep learning for computer vision</h1>
+
+  <p class="co-summary-head"><a id="pgfId-1011754"></a>This chapter covers</p>
+
+  <ul class="calibre10">
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011760"></a>Understanding convolutional neural networks (convnets)</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011774"></a>Using data augmentation to mitigate overfitting</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011784"></a>Using a pretrained convnet to do feature extraction</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011794"></a>Fine-tuning a pretrained convnet</li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1011804"></a>Computer vision is the earliest and biggest success story of deep learning. Every day, you’re interacting with deep vision models—via Google Photos, Google image search, YouTube, video filters in camera apps, OCR software, and many more. These models are also at the heart of cutting-edge research in autonomous driving, robotics, AI-assisted medical diagnosis, autonomous retail checkout systems, and even autonomous farming.</p>
+
+  <p class="body"><a id="pgfId-1011810"></a>Computer vision is the problem domain that led to the initial rise of deep learning between 2011 and 2015. A type of deep learning model called <i class="fm-italics">convolutional neural networks</i> started getting <a id="marker-1011821"></a>remarkably good results on image classification competitions around that time, first with Dan Ciresan winning two niche competitions (the ICDAR 2011 Chinese character recognition competition and the IJCNN 2011 German traffic signs recognition competition), and then more notably in fall 2012 with Hinton’s group winning the high-profile ImageNet large-scale visual recognition challenge. Many more promising results quickly started bubbling up in other computer vision tasks.</p>
+
+  <p class="body"><a id="pgfId-1011831"></a>Interestingly, these early successes weren’t quite enough to make deep learning mainstream at the time—it took a few years. The computer vision research community had spent many years investing in methods other than neural networks, and it wasn’t quite ready to give up on them just because there was a new kid on the block. In 2013 and 2014, deep learning still faced intense skepticism from many senior computer vision researchers. It was only in 2016 that it finally became dominant. I remember exhorting an ex-professor of mine, in February 2014, to pivot to deep learning. “It’s the next big thing!” I would say. “Well, maybe it’s just a fad,” he replied. By 2016, his entire lab was doing deep learning. There’s no stopping an idea whose time has come.</p>
+
+  <p class="body"><a id="pgfId-1011837"></a>This chapter introduces convolutional neural networks, also known as <i class="fm-italics">convnets</i>, the type of deep learning model that is now used almost universally in computer vision applications. You’ll learn to apply convnets to image-classification problems—in particular those involving small training datasets, which are the most common use case if you aren’t a large tech company.</p>
+
+  <h2 class="fm-head" id="heading_id_3"><a id="pgfId-1011852"></a>8.1 Introduction to convnets</h2>
+
+  <p class="body"><a id="pgfId-1011871"></a><a id="marker-1011865"></a><a id="marker-1011867"></a>We’re about to dive into the theory of what convnets are and why they have been so successful at computer vision tasks. But first, let’s take a practical look at a simple convnet example that classifies MNIST digits, a task we performed in chapter 2 using a densely connected network (our test accuracy then was 97.8%). Even though the convnet will be basic, its accuracy will blow our densely connected model from chapter 2 out of the water.</p>
+
+  <p class="body"><a id="pgfId-1011899"></a>The following listing shows what a basic convnet looks like. It’s a stack <a id="marker-1011878"></a>of <code class="fm-code-in-text">Conv2D</code> and <code class="fm-code-in-text">MaxPooling2D</code> layers. You’ll see in <a id="marker-1011904"></a>a minute exactly what they do. We’ll build the model using the Functional API, which we introduced in the previous chapter.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1011965"></a>Listing 8.1 Instantiating a small convnet</p>
+  <pre class="programlisting"><a id="pgfId-1029865"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1029866"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1029867"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">28</span>, <span class="fm-codeblue">28</span>, <span class="fm-codeblue">1</span>))
+<a id="pgfId-1029868"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">32</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1029869"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1029870"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">64</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1029871"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1029872"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">128</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1029873"></a>x = layers.Flatten()(x)
+<a id="pgfId-1029874"></a>outputs = layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)(x)
+<a id="pgfId-1012058"></a>model = keras.Model(inputs=inputs, outputs=outputs)</pre>
+
+  <p class="body"><a id="pgfId-1012080"></a>Importantly, a convnet takes as input tensors of shape <code class="fm-code-in-text">(image_height,</code> <code class="fm-code-in-text">image_width,</code> <code class="fm-code-in-text">image_channels)</code>, not including the batch dimension. In this case, we’ll configure the convnet to process inputs of size <code class="fm-code-in-text">(28,</code> <code class="fm-code-in-text">28,</code> <code class="fm-code-in-text">1)</code>, which is the format of MNIST images.</p>
+
+  <p class="body"><a id="pgfId-1012089"></a>Let’s display the architecture of our convnet.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012146"></a>Listing 8.2 Displaying the model’s summary</p>
+  <pre class="programlisting"><a id="pgfId-1012095"></a>&gt;&gt;&gt; model.summary()
+<a id="pgfId-1029887"></a>Model: "model" 
+<a id="pgfId-1029888"></a>_________________________________________________________________
+<a id="pgfId-1029889"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1029890"></a>================================================================= 
+<a id="pgfId-1029891"></a>input_1 (InputLayer)         [(None, 28, 28, 1)]       0 
+<a id="pgfId-1029892"></a>_________________________________________________________________
+<a id="pgfId-1029893"></a>conv2d (Conv2D)              (None, 26, 26, 32)        320 
+<a id="pgfId-1029894"></a>_________________________________________________________________
+<a id="pgfId-1029895"></a>max_pooling2d (MaxPooling2D) (None, 13, 13, 32)        0 
+<a id="pgfId-1029896"></a>_________________________________________________________________
+<a id="pgfId-1029897"></a>conv2d_1 (Conv2D)            (None, 11, 11, 64)        18496 
+<a id="pgfId-1029898"></a>_________________________________________________________________
+<a id="pgfId-1029899"></a>max_pooling2d_1 (MaxPooling2 (None, 5, 5, 64)          0 
+<a id="pgfId-1029900"></a>_________________________________________________________________
+<a id="pgfId-1029901"></a>conv2d_2 (Conv2D)            (None, 3, 3, 128)         73856 
+<a id="pgfId-1029902"></a>_________________________________________________________________
+<a id="pgfId-1029903"></a>flatten (Flatten)            (None, 1152)              0 
+<a id="pgfId-1029904"></a>_________________________________________________________________
+<a id="pgfId-1029905"></a>dense (Dense)                (None, 10)                11530 
+<a id="pgfId-1029906"></a>=================================================================
+<a id="pgfId-1029907"></a>Total params: 104,202 
+<a id="pgfId-1029908"></a>Trainable params: 104,202 
+<a id="pgfId-1029909"></a>Non-trainable params: 0 
+<a id="pgfId-1012323"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1012365"></a>You can see that the output of every <code class="fm-code-in-text">Conv2D</code> and <code class="fm-code-in-text">MaxPooling2D</code> layer is a rank-3 tensor of shape <code class="fm-code-in-text">(height,</code> <code class="fm-code-in-text">width,</code> <code class="fm-code-in-text">channels)</code>. The width and height dimensions tend to shrink as you go deeper in the model. The number of channels is controlled by the first argument passed to the <code class="fm-code-in-text">Conv2D</code> layers (32, 64, or 128).</p>
+
+  <p class="body"><a id="pgfId-1012432"></a>After the last <code class="fm-code-in-text">Conv2D</code> layer, we end up with an output of shape <code class="fm-code-in-text">(3,</code> <code class="fm-code-in-text">3,</code> <code class="fm-code-in-text">128)</code>—a 3 × 3 feature map of 128 channels. The next step is to feed this output into a densely connected classifier like those you’re already familiar with: a stack <a id="marker-1012395"></a>of <code class="fm-code-in-text">Dense</code> layers. These classifiers process vectors, which are 1D, whereas the current output is a rank-3 tensor. To bridge the gap, we flatten the 3D outputs to 1D with a <code class="fm-code-in-text">Flatten</code> layer before <a id="marker-1012421"></a>adding the <code class="fm-code-in-text">Dense</code> layers.</p>
+
+  <p class="body"><a id="pgfId-1012441"></a>Finally, we do 10-way classification, so our last layer has 10 outputs and a softmax activation.</p>
+
+  <p class="body"><a id="pgfId-1012460"></a>Now, let’s train the convnet on the MNIST digits. We’ll reuse a lot of the code from the MNIST example in chapter 2. Because we’re doing 10-way classification with a softmax output, we’ll use the categorical crossentropy loss, and because our labels are integers, we’ll use the sparse <a id="marker-1012449"></a>version, <code class="fm-code-in-text">sparse_categorical_crossentropy</code>.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012520"></a>Listing 8.3 Training the convnet on MNIST images</p>
+  <pre class="programlisting"><a id="pgfId-1029924"></a><b class="fm-codebrown">from</b> tensorflow.keras.datasets <b class="fm-codebrown">import</b> mnist
+<a id="pgfId-1029925"></a>  
+<a id="pgfId-1029926"></a>(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+<a id="pgfId-1029927"></a>train_images = train_images.reshape((<span class="fm-codeblue">60000</span>, <span class="fm-codeblue">28</span>, <span class="fm-codeblue">28</span>, <span class="fm-codeblue">1</span>))
+<a id="pgfId-1029928"></a>train_images = train_images.astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1029929"></a>test_images = test_images.reshape((<span class="fm-codeblue">10000</span>, <span class="fm-codeblue">28</span>, <span class="fm-codeblue">28</span>, <span class="fm-codeblue">1</span>))
+<a id="pgfId-1029930"></a>test_images = test_images.astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1029931"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1029932"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1029933"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1012612"></a>model.fit(train_images, train_labels, epochs=<span class="fm-codeblue">5</span>, batch_size=<span class="fm-codeblue">64</span>)</pre>
+
+  <p class="body"><a id="pgfId-1012618"></a>Let’s evaluate the model on the test data.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012675"></a>Listing 8.4 Evaluating the convnet</p>
+  <pre class="programlisting"><a id="pgfId-1032157"></a>&gt;&gt;&gt; test_loss, test_acc = model.evaluate(test_images, test_labels)
+<a id="pgfId-1012714"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test accuracy: {test_acc:.3f}"</span>)
+<a id="pgfId-1012720"></a>Test accuracy: 0.991 </pre>
+
+  <p class="body"><a id="pgfId-1012726"></a>Whereas the densely connected model from chapter 2 had a test accuracy of 97.8%, the basic convnet has a test accuracy of 99.1%: we decreased the error rate by about 60% (relative). Not bad!</p>
+
+  <p class="body"><a id="pgfId-1012748"></a>But why does this simple convnet work so well, compared to a densely connected model? To answer this, let’s dive into what the <code class="fm-code-in-text">Conv2D</code> and <code class="fm-code-in-text">MaxPooling2D</code> layers do.</p>
+
+  <h3 class="fm-head1" id="heading_id_4"><a id="pgfId-1012757"></a>8.1.1 The convolution operation</h3>
+
+  <p class="body"><a id="pgfId-1012782"></a><a id="marker-1012768"></a><a id="marker-1012770"></a><a id="marker-1012772"></a>The fundamental difference between a densely connected layer and a convolution layer is this: <code class="fm-code-in-text">Dense</code> layers learn global patterns in their input feature space (for example, for a MNIST digit, patterns involving all pixels), whereas convolution layers learn local patterns—in the case of images, patterns found in small 2D windows of the inputs (see figure 8.1). In the previous example, these windows were all 3 × 3.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-01.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035484"></a>Figure 8.1 Images can be broken into local patterns such as edges, textures, and so on.</p>
+
+  <p class="body"><a id="pgfId-1012801"></a>This key characteristic gives convnets two interesting properties:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012843"></a><i class="fm-italics1">The patterns they learn are translation-invariant</i>. After learning a certain pattern in the lower-right corner of a picture, a convnet can recognize it anywhere: for example, in the upper-left corner. A densely connected model would have to learn the pattern anew if it appeared at a new location. This makes convnets data-efficient when processing images (because the <i class="fm-italics1">visual world is fundamentally translation-invariant</i>): they need fewer training samples to learn representations that have generalization power.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012870"></a><i class="fm-italics1">They can learn spatial hierarchies of patterns</i>. A first convolution layer will learn small local patterns such as edges, a second convolution layer will learn larger patterns made of the features of the first layers, and so on (see figure 8.2). This allows convnets to efficiently learn increasingly complex and abstract visual concepts, because <i class="fm-italics1">the visual world is fundamentally spatially hierarchical</i>.</p>
+    </li>
+  </ul>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-02.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035530"></a>Figure 8.2 The visual world forms a spatial hierarchy of visual modules: elementary lines or textures combine into simple objects such as eyes or ears, which combine into high-level concepts such as “cat.”</p>
+
+  <p class="body"><a id="pgfId-1012987"></a>Convolutions operate over rank-3 tensors called <i class="fm-italics">feature maps</i>, with two <a id="marker-1012914"></a>spatial axes (<i class="fm-italics">height</i> and <i class="fm-italics">width</i>) as well as <a id="marker-1012940"></a>a <i class="fm-italics">depth</i> axis (also called the <i class="fm-italics">channels</i> axis). For an RGB image, the dimension of the depth axis is 3, because the image has three color channels: red, green, and blue. For a black-and-white picture, like the MNIST digits, the depth is 1 (levels of gray). The convolution operation extracts patches from its input feature map and applies the same transformation to all of these patches, producing an <i class="fm-italics">output feature map</i>. This output <a id="marker-1012976"></a>feature map is still a rank-3 tensor: it has a width and a height. Its depth can be arbitrary, because the output depth is a parameter of the layer, and the different channels in that depth axis no longer stand for specific colors as in RGB input; rather, they stand for <i class="fm-italics">filters</i>. Filters encode <a id="marker-1012992"></a>specific aspects of the input data: at a high level, a single filter could encode the concept “presence of a face in the input,” for instance.</p>
+
+  <p class="body"><a id="pgfId-1013028"></a>In the MNIST example, the first convolution layer takes a feature map of size <code class="fm-code-in-text">(28,</code> <code class="fm-code-in-text">28,</code> <code class="fm-code-in-text">1)</code> and outputs a feature map of size <code class="fm-code-in-text">(26,</code> <code class="fm-code-in-text">26,</code> <code class="fm-code-in-text">32)</code>: it computes 32 filters over its input. Each of these 32 output channels contains a 26 × 26 grid of values, which is a <i class="fm-italics">response map</i> of the <a id="marker-1013033"></a>filter over the input, indicating the response of that filter pattern at different locations in the input (see figure 8.3).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-03.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035572"></a>Figure 8.3 The concept of a response map: a 2D map of the presence of a pattern at different locations in an input</p>
+
+  <p class="body"><a id="pgfId-1013093"></a>That is what the term <i class="fm-italics">feature map</i> means: every dimension in the depth axis is a <i class="fm-italics">feature</i> (or filter), and the rank-2 tensor <code class="fm-code-in-text">output[:,</code> <code class="fm-code-in-text">:,</code> <code class="fm-code-in-text">n]</code> is the 2D spatial <i class="fm-italics">map</i> of the response of this filter over the input.</p>
+
+  <p class="body"><a id="pgfId-1013102"></a>Convolutions are defined by two key parameters:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013108"></a><i class="fm-italics1">Size of the patches extracted from the inputs</i>—These are typically 3 × 3 or 5 × 5. In the example, they were 3 × 3, which is a common choice.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013129"></a><i class="fm-italics1">Depth of the output feature map</i>—This is the number of filters computed by the convolution. The example started with a depth of 32 and ended with a depth of 64.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1013162"></a>In Keras <code class="fm-code-in-text">Conv2D</code> layers, these parameters are the first arguments passed to the layer: <code class="fm-code-in-text">Conv2D(output_depth,</code> <code class="fm-code-in-text">(window_height,</code> <code class="fm-code-in-text">window_width))</code>.</p>
+
+  <p class="body"><a id="pgfId-1013243"></a>A convolution works by <i class="fm-italics">sliding</i> these windows of size 3 × 3 or 5 × 5 over the 3D input feature map, stopping at every possible location, and extracting the 3D patch of surrounding features (shape <code class="fm-code-in-text">(window_height,</code> <code class="fm-code-in-text">window_width,</code> <code class="fm-code-in-text">input_depth)</code>). Each such 3D patch is then transformed into a 1D vector of shape <code class="fm-code-in-text">(output_depth,)</code>, which is done via a tensor product with a learned weight matrix, called the <i class="fm-italics">convolution kernel</i>—the same <a id="marker-1013212"></a>kernel is reused across every patch. All of these vectors (one per patch) are then spatially reassembled into a 3D output map of shape <code class="fm-code-in-text">(height,</code> <code class="fm-code-in-text">width,</code> <code class="fm-code-in-text">output_ depth)</code>. Every spatial location in the output feature map corresponds to the same location in the input feature map (for example, the lower-right corner of the output contains information about the lower-right corner of the input). For instance, with 3 × 3 windows, the vector <code class="fm-code-in-text">output[i,</code> <code class="fm-code-in-text">j,</code> <code class="fm-code-in-text">:]</code> comes from the 3D patch <code class="fm-code-in-text">input[i-1:i+1,</code> <code class="fm-code-in-text">j-1:j+1,</code> <code class="fm-code-in-text">:]</code>. The full process is detailed in figure 8.4.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-04.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035614"></a>Figure 8.4 How convolution works</p>
+
+  <p class="body"><a id="pgfId-1013262"></a>Note that the output width and height may differ from the input width and height for two reasons:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013282"></a>Border effects, which can be countered by padding the input feature map</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013296"></a>The use of <i class="fm-italics1">strides</i>, which I’ll define in a second</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1013315"></a>Let’s take a deeper look at these notions.</p>
+
+  <p class="fm-head2"><a id="pgfId-1013321"></a>Understanding border effects and padding</p>
+
+  <p class="body"><a id="pgfId-1013340"></a><a id="marker-1013332"></a><a id="marker-1013334"></a><a id="marker-1013336"></a>Consider a 5 × 5 feature map (25 tiles total). There are only 9 tiles around which you can center a 3 × 3 window, forming a 3 × 3 grid (see figure 8.5). Hence, the output feature map will be 3 × 3. It shrinks a little: by exactly two tiles alongside each dimension, in this case. You can see this border effect in action in the earlier example: you start with 28 × 28 inputs, which become 26 × 26 after the first convolution layer.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-05.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035656"></a>Figure 8.5 Valid locations of 3 × 3 patches in a 5 × 5 input feature map</p>
+
+  <p class="body"><a id="pgfId-1013355"></a>If you want to get an output feature map with the same spatial dimensions as the input, you can use <i class="fm-italics">padding</i>. Padding consists of adding an appropriate number of rows and columns on each side of the input feature map so as to make it possible to fit center convolution windows around every input tile. For a 3 × 3 window, you add one column on the right, one column on the left, one row at the top, and one row at the bottom. For a 5 × 5 window, you add two rows (see figure 8.6).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-06.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035701"></a>Figure 8.6 Padding a 5 × 5 input in order to be able to extract 25 3 × 3 patches</p>
+
+  <p class="body"><a id="pgfId-1013464"></a>In <code class="fm-code-in-text">Conv2D</code> layers, padding is configurable via the <code class="fm-code-in-text">padding</code> argument, which takes two values: <code class="fm-code-in-text">"valid"</code>, which means no padding (only valid window locations will be used), and <code class="fm-code-in-text">"same"</code>, which means “pad in such a way as to have an output with the same width and height as the input.” The <code class="fm-code-in-text">padding</code> argument defaults to <code class="fm-code-in-text">"valid"</code>. <a id="marker-1013469"></a><a id="marker-1013472"></a><a id="marker-1013474"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1013480"></a>Understanding convolution strides</p>
+
+  <p class="body"><a id="pgfId-1013523"></a><a id="marker-1013491"></a><a id="marker-1013493"></a>The other factor that can influence output size is the notion of <i class="fm-italics">strides</i>. Our description of convolution so far has assumed that the center tiles of the convolution windows are all contiguous. But the distance between two successive windows is a parameter of the convolution, called its <i class="fm-italics">stride</i>, which defaults to 1. It’s possible to have <i class="fm-italics">strided convolutions</i>: convolutions with a stride higher than 1. In figure 8.7, you can see the patches extracted by a 3 × 3 convolution with stride 2 over a 5 × 5 input (without padding).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-07.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035743"></a>Figure 8.7 3 × 3 convolution patches with 2 × 2 strides</p>
+
+  <p class="body"><a id="pgfId-1013542"></a>Using stride 2 means the width and height of the feature map are downsampled by a factor of 2 (in addition to any changes induced by border effects). Strided convolutions are rarely used in classification models, but they come in handy for some types of models, as you will see in the next chapter.</p>
+
+  <p class="body"><a id="pgfId-1013562"></a>In classification models, instead of strides, we tend to use the <i class="fm-italics">max-pooling</i> operation to <a id="marker-1013573"></a>downsample feature maps, which you saw in action in our first convnet example. Let’s look at it in more depth. <a id="marker-1013579"></a><a id="marker-1013582"></a><a id="marker-1013584"></a><a id="marker-1013586"></a><a id="marker-1013588"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_5"><a id="pgfId-1013594"></a>8.1.2 The max-pooling operation</h3>
+
+  <p class="body"><a id="pgfId-1013629"></a><a id="marker-1013605"></a><a id="marker-1013607"></a><a id="marker-1013609"></a>In the convnet example, you may have noticed that the size of the feature maps is halved after every <code class="fm-code-in-text">MaxPooling2D</code> layer. For instance, before the first <code class="fm-code-in-text">MaxPooling2D</code> layers, the feature map is 26 × 26, but the max-pooling operation halves it to 13 × 13. That’s the role of max pooling: to aggressively downsample feature maps, much like strided convolutions.</p>
+
+  <p class="body"><a id="pgfId-1013638"></a>Max pooling consists of extracting windows from the input feature maps and outputting the max value of each channel. It’s conceptually similar to convolution, except that instead of transforming local patches via a learned linear transformation (the convolution kernel), they’re transformed via a hardcoded <code class="fm-code-in-text">max</code> tensor operation. A big difference from convolution is that max pooling is usually done with 2 × 2 windows and stride 2, in order to downsample the feature maps by a factor of 2. On the other hand, convolution is typically done with 3 × 3 windows and no stride (stride 1).</p>
+
+  <p class="body"><a id="pgfId-1013653"></a>Why downsample feature maps this way? Why not remove the max-pooling layers and keep fairly large feature maps all the way up? Let’s look at this option. Our model would then look like the following listing.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1013710"></a>Listing 8.5 An incorrectly structured convnet missing its max-pooling layers</p>
+  <pre class="programlisting"><a id="pgfId-1029970"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">28</span>, <span class="fm-codeblue">28</span>, <span class="fm-codeblue">1</span>))
+<a id="pgfId-1029971"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">32</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1029972"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">64</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1029973"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">128</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1029974"></a>x = layers.Flatten()(x)
+<a id="pgfId-1029975"></a>outputs = layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)(x)
+<a id="pgfId-1013779"></a>model_no_max_pool = keras.Model(inputs=inputs, outputs=outputs)</pre>
+
+  <p class="body"><a id="pgfId-1013785"></a>Here’s a summary of the model:</p>
+  <pre class="programlisting"><a id="pgfId-1013791"></a>&gt;&gt;&gt; model_no_max_pool.summary()
+<a id="pgfId-1029992"></a>Model: "model_1" 
+<a id="pgfId-1029993"></a>_________________________________________________________________
+<a id="pgfId-1029994"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1029995"></a>=================================================================
+<a id="pgfId-1029996"></a>input_2 (InputLayer)         [(None, 28, 28, 1)]       0 
+<a id="pgfId-1029997"></a>_________________________________________________________________
+<a id="pgfId-1029998"></a>conv2d_3 (Conv2D)            (None, 26, 26, 32)        320 
+<a id="pgfId-1029999"></a>_________________________________________________________________
+<a id="pgfId-1030000"></a>conv2d_4 (Conv2D)            (None, 24, 24, 64)        18496 
+<a id="pgfId-1030001"></a>_________________________________________________________________
+<a id="pgfId-1030002"></a>conv2d_5 (Conv2D)            (None, 22, 22, 128)       73856 
+<a id="pgfId-1030003"></a>_________________________________________________________________
+<a id="pgfId-1030004"></a>flatten_1 (Flatten)          (None, 61952)             0 
+<a id="pgfId-1030005"></a>_________________________________________________________________
+<a id="pgfId-1030006"></a>dense_1 (Dense)              (None, 10)                619530 
+<a id="pgfId-1030007"></a>=================================================================
+<a id="pgfId-1030008"></a>Total params: 712,202 
+<a id="pgfId-1030009"></a>Trainable params: 712,202 
+<a id="pgfId-1030010"></a>Non-trainable params: 0 
+<a id="pgfId-1013919"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1013925"></a>What’s wrong with this setup? Two things:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013931"></a>It isn’t conducive to learning a spatial hierarchy of features. The 3 × 3 windows in the third layer will only contain information coming from 7 × 7 windows in the initial input. The high-level patterns learned by the convnet will still be very small with regard to the initial input, which may not be enough to learn to classify digits (try recognizing a digit by only looking at it through windows that are 7 × 7 pixels!). We need the features from the last convolution layer to contain information about the totality of the input.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1013945"></a>The final feature map has 22 × 22 × 128 = 61,952 total coefficients per sample. This is huge. When you flatten it to stick a <code class="fm-code-in-text">Dense</code> layer of size 10 on top, that layer would have over half a million parameters. This is far too large for such a small model and would result in intense overfitting.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1013964"></a>In short, the reason to use downsampling is to reduce the number of feature-map coefficients to process, as well as to induce spatial-filter hierarchies by making successive convolution layers look at increasingly large windows (in terms of the fraction of the original input they cover).</p>
+
+  <p class="body"><a id="pgfId-1014002"></a>Note that max pooling isn’t the only way you can achieve such downsampling. As you already know, you can also use strides in the prior convolution layer. And you can use average pooling instead of max pooling, where each local input patch is transformed by taking the average value of each channel over the patch, rather than the max. But max pooling tends to work better than these alternative solutions. The reason is that features tend to encode the spatial presence of some pattern or concept over the different tiles of the feature map (hence the term <i class="fm-italics">feature map</i>), and it’s more informative to look at the <i class="fm-italics">maximal presence</i> of different <a id="marker-1013991"></a>features than at their <i class="fm-italics">average presence</i>. The most <a id="marker-1014007"></a>reasonable subsampling strategy is to first produce dense maps of features (via unstrided convolutions) and then look at the maximal activation of the features over small patches, rather than looking at sparser windows of the inputs (via strided convolutions) or averaging input patches, which could cause you to miss or dilute feature-presence information.</p>
+
+  <p class="body"><a id="pgfId-1014017"></a>At this point, you should understand the basics of convnets—feature maps, convolution, and max pooling—and you should know how to build a small convnet to solve a toy problem such as MNIST digits classification. Now let’s move on to more useful, practical applications. <a id="marker-1014019"></a><a id="marker-1014022"></a><a id="marker-1014024"></a><a id="marker-1014028"></a><a id="marker-1014030"></a></p>
+
+  <h2 class="fm-head" id="heading_id_6"><a id="pgfId-1014036"></a>8.2 Training a convnet from scratch on a small dataset</h2>
+
+  <p class="body"><a id="pgfId-1014055"></a><a id="marker-1014047"></a><a id="marker-1014049"></a><a id="marker-1014051"></a>Having to train an image-classification model using very little data is a common situation, which you’ll likely encounter in practice if you ever do computer vision in a professional context. A “few” samples can mean anywhere from a few hundred to a few tens of thousands of images. As a practical example, we’ll focus on classifying images as dogs or cats in a dataset containing 5,000 pictures of cats and dogs (2,500 cats, 2,500 dogs). We’ll use 2,000 pictures for training, 1,000 for validation, and 2,000 for testing.</p>
+
+  <p class="body"><a id="pgfId-1014060"></a>In this section, we’ll review one basic strategy to tackle this problem: training a new model from scratch using what little data you have. We’ll start by naively training a small convnet on the 2,000 training samples, without any regularization, to set a baseline for what can be achieved. This will get us to a classification accuracy of about 70%. At that point, the main issue will be overfitting. Then we’ll introduce <i class="fm-italics">data augmentation</i>, a powerful <a id="marker-1014071"></a>technique for mitigating overfitting in computer vision. By using data augmentation, we’ll improve the model to reach an accuracy of 80–85%.</p>
+
+  <p class="body"><a id="pgfId-1014097"></a>In the next section, we’ll review two more essential techniques for applying deep learning to small datasets: <i class="fm-italics">feature extraction with a pretrained model</i> (which will get us to an accuracy of 97.5%) and <i class="fm-italics">fine-tuning a pretrained model</i> (which will get us to a final accuracy of 98.5%). Together, these three strategies—training a small model from scratch, doing feature extraction using a pretrained model, and fine-tuning a pretrained model—will constitute your future toolbox for tackling the problem of performing image classification with small datasets.</p>
+
+  <h3 class="fm-head1" id="heading_id_7"><a id="pgfId-1014106"></a>8.2.1 The relevance of deep learning for small-data problems</h3>
+
+  <p class="body"><a id="pgfId-1014123"></a><a id="marker-1014117"></a><a id="marker-1014119"></a>What qualifies as “enough samples” to train a model is relative—relative to the size and depth of the model you’re trying to train, for starters. It isn’t possible to train a convnet to solve a complex problem with just a few tens of samples, but a few hundred can potentially suffice if the model is small and well regularized and the task is simple. Because convnets learn local, translation-invariant features, they’re highly data-efficient on perceptual problems. Training a convnet from scratch on a very small image dataset will yield reasonable results despite a relative lack of data, without the need for any custom feature engineering. You’ll see this in action in this section.</p>
+
+  <p class="body"><a id="pgfId-1014128"></a>What’s more, deep learning models are by nature highly repurposable: you can take, say, an image-classification or speech-to-text model trained on a large-scale dataset and reuse it on a significantly different problem with only minor changes. Specifically, in the case of computer vision, many pretrained models (usually trained on the ImageNet dataset) are now publicly available for download and can be used to bootstrap powerful vision models out of very little data. This is one of the greatest strengths of deep learning: feature reuse. You’ll explore this in the next section.</p>
+
+  <p class="body"><a id="pgfId-1014134"></a>Let’s start by getting our hands on the data. <a id="marker-1014136"></a><a id="marker-1014139"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_8"><a id="pgfId-1014145"></a>8.2.2 Downloading the data</h3>
+
+  <p class="body"><a id="pgfId-1014162"></a><a id="marker-1014156"></a><a id="marker-1014158"></a>The Dogs vs. Cats dataset that we will use isn’t packaged with Keras. It was made available by Kaggle as part of a computer vision competition in late 2013, back when convnets weren’t mainstream. You can download the original dataset from <span class="fm-hyperlink"><a class="url" href="https://www.kaggle.com/c/dogs-vs-cats/data">www.kaggle.com/c/dogs-vs-cats/data</a></span> (you’ll need to create a Kaggle account if you don’t already have one—don’t worry, the process is painless). You can also use the Kaggle API to download the dataset in Colab (see the “Downloading a Kaggle dataset in Google Colaboratory” sidebar).</p>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1014167"></a>Downloading a Kaggle dataset in Google Colaboratory</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1014190"></a>Kaggle makes available an easy-to-use API to programmatically download Kaggle-hosted datasets. You can use it to download the Dogs vs. Cats dataset to a Colab notebook, for instance. This API is available as <a id="marker-1027310"></a>the <code class="fm-code-in-text1">kaggle</code> package, which is preinstalled on Colab. Downloading this dataset is as easy as running the following command in a Colab cell:</p>
+    <pre class="programlisting"><a id="pgfId-1014199"></a>!kaggle competitions download -c dogs-vs-cats</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1014217"></a>However, access to the API is restricted to Kaggle users, so in order to run the preceding command, you first need to authenticate yourself. The <code class="fm-code-in-text1">kaggle</code> package will look for your login credentials in a JSON file located at ~/.kaggle/kaggle.json. Let’s create this file.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035206"></a>First, you need to create a Kaggle API key and download it to your local machine. Just navigate to the Kaggle website in a web browser, log in, and go to the My Account page. In your account settings, you’ll find an API section. Clicking the Create New API Token button will generate a kaggle.json key file and will download it to your machine.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035207"></a>Second, go to your Colab notebook, and upload the API’s key JSON file to your Colab session by running the following code in a notebook cell:</p>
+    <pre class="programlisting"><a id="pgfId-1035208"></a><b class="fm-codebrown">from</b> google.colab <b class="fm-codebrown">import</b> files
+<a id="pgfId-1035209"></a>files.upload()</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035210"></a>When you run this cell, you will see a Choose Files button appear. Click it and select the kaggle.json file you just downloaded. This uploads the file to the local Colab runtime.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035211"></a>Finally, create a ~/.kaggle folder (<code class="fm-code-in-text1">mkdir</code> <code class="fm-code-in-text1">~/.kaggle</code>), and copy the key file to it (<code class="fm-code-in-text1">cp</code> <code class="fm-code-in-text1">kaggle.json</code> <code class="fm-code-in-text1">~/.kaggle/</code>). As a security best practice, you should also make sure that the file is only readable by the current user, yourself (<code class="fm-code-in-text1">chmod</code> <code class="fm-code-in-text1">600</code>):</p>
+    <pre class="programlisting"><a id="pgfId-1035212"></a>!mkdir ~/.kaggle
+<a id="pgfId-1035213"></a>!cp kaggle.json ~/.kaggle/
+<a id="pgfId-1035214"></a>!chmod 600 ~/.kaggle/kaggle.json</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035215"></a>You can now download the data we’re about to use:</p>
+    <pre class="programlisting"><a id="pgfId-1035216"></a>!kaggle competitions download -c dogs-vs-cats</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035217"></a>The first time you try to download the data, you may get a “403 Forbidden” error. That’s because you need to accept the terms associated with the dataset before you download it—you’ll have to go to <span class="fm-hyperlink"><a class="url" href="https://www.kaggle.com/c/dogs-vs-cats/rules">www.kaggle.com/c/dogs-vs-cats/rules</a></span> (while logged into your Kaggle account) and click the I Understand and Accept button. You only need to do this once.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035219"></a>Finally, the training data is a compressed file named train.zip. Make sure you uncompress it (<code class="fm-code-in-text1">unzip</code>) silently (<code class="fm-code-in-text1">-qq</code>):</p>
+    <pre class="programlisting"><a id="pgfId-1035220"></a>!unzip -qq train.zip</pre>
+  </div>
+
+  <p class="body"><a id="pgfId-1014412"></a>The pictures in our dataset are medium-resolution color JPEGs. Figure 8.8 shows some examples.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-08.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035785"></a>Figure 8.8 Samples from the Dogs vs. Cats dataset. Sizes weren’t modified: the samples come in different sizes, colors, backgrounds, etc.</p>
+
+  <p class="body"><a id="pgfId-1014428"></a>Unsurprisingly, the original dogs-versus-cats Kaggle competition, all the way back in 2013, was won by entrants who used convnets. The best entries achieved up to 95% accuracy. In this example, we will get fairly close to this accuracy (in the next section), even though we will train our models on less than 10% of the data that was available to the competitors.</p>
+
+  <p class="body"><a id="pgfId-1014448"></a>This dataset contains 25,000 images of dogs and cats (12,500 from each class) and is 543 MB (compressed). After downloading and uncompressing the data, we’ll create a new dataset containing three subsets: a training set with 1,000 samples of each class, a validation set with 500 samples of each class, and a test set with 1,000 samples of each class. Why do this? Because many of the image datasets you’ll encounter in your career only contain a few thousand samples, not tens of thousands. Having more data available would make the problem easier, so it’s good practice to learn with a small dataset.</p>
+
+  <p class="body"><a id="pgfId-1014454"></a>The subsampled dataset we will work with will have the following directory structure:</p>
+  <pre class="programlisting"><a id="pgfId-1014460"></a>cats_vs_dogs_small/
+<a id="pgfId-1014474"></a>...train/
+<a id="pgfId-1014480"></a>......cat/         <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014492"></a>......dog/         <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014504"></a>...validation/
+<a id="pgfId-1014510"></a>......cat/         <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1014522"></a>......dog/         <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1014534"></a>...test/
+<a id="pgfId-1014540"></a>......cat/         <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1014552"></a>......dog/         <span class="fm-combinumeral">❻</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033899"></a><span class="fm-combinumeral">❶</span> Contains 1,000 cat images</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033920"></a><span class="fm-combinumeral">❷</span> Contains 1,000 dog images</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033940"></a><span class="fm-combinumeral">❸</span> Contains 500 cat images</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033957"></a><span class="fm-combinumeral">❹</span> Contains 500 dog images</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033974"></a><span class="fm-combinumeral">❺</span> Contains 1,000 cat images</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033991"></a><span class="fm-combinumeral">❻</span> Contains 1,000 dog images</p>
+
+  <p class="body"><a id="pgfId-1014664"></a>Let’s make it happen in a couple calls to <code class="fm-code-in-text">shutil</code>.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014730"></a>Listing 8.6 Copying images to training, validation, and test directories</p>
+  <pre class="programlisting"><a id="pgfId-1030053"></a><b class="fm-codebrown">import</b> os, shutil, pathlib
+<a id="pgfId-1030054"></a>  
+<a id="pgfId-1014769"></a>original_dir = pathlib.Path(<span class="fm-codegreen">"train"</span>)                           <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014786"></a>new_base_dir = pathlib.Path(<span class="fm-codegreen">"cats_vs_dogs_small"</span>)              <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014803"></a> 
+<a id="pgfId-1014798"></a><b class="fm-codebrown">def</b> make_subset(subset_name, start_index, end_index):          <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1030091"></a>    <b class="fm-codebrown">for</b> category <b class="fm-codebrown">in</b> (<span class="fm-codegreen">"cat"</span>, <span class="fm-codegreen">"dog"</span>):
+<a id="pgfId-1030092"></a>        dir = new_base_dir / subset_name / category
+<a id="pgfId-1030093"></a>        os.makedirs(dir)
+<a id="pgfId-1030094"></a>        fnames = [f<span class="fm-codegreen">"{category}.{i}.jpg"</span> 
+<a id="pgfId-1032287"></a><b class="fm-codebrown">                  for</b> i <b class="fm-codebrown">in</b> range(start_index, end_index)]
+<a id="pgfId-1030095"></a>        <b class="fm-codebrown">for</b> fname <b class="fm-codebrown">in</b> fnames:
+<a id="pgfId-1030096"></a>            shutil.copyfile(src=original_dir / fname,
+<a id="pgfId-1030097"></a>                            dst=dir / fname)
+<a id="pgfId-1030098"></a>  
+<a id="pgfId-1014857"></a>make_subset(<span class="fm-codegreen">"train"</span>, start_index=<span class="fm-codeblue">0</span>, end_index=<span class="fm-codeblue">1000</span>)            <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1014874"></a>make_subset(<span class="fm-codegreen">"validation"</span>, start_index=<span class="fm-codeblue">1000</span>, end_index=<span class="fm-codeblue">1500</span>)    <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1014886"></a>make_subset(<span class="fm-codegreen">"test"</span>, start_index=<span class="fm-codeblue">1500</span>, end_index=<span class="fm-codeblue">2500</span>)          <span class="fm-combinumeral">❻</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033547"></a><span class="fm-combinumeral">❶</span> Path to the directory where the original dataset was uncompressed</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033568"></a><span class="fm-combinumeral">❷</span> Directory where we will store our smaller dataset</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033588"></a><span class="fm-combinumeral">❸</span> Utility function to copy cat (and dog) images from index start_index to index end_index to the subdirectory new_base_dir/{subset_name}/cat (and /dog). The "subset_name" will be either "train", "validation", or "test".</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033605"></a><span class="fm-combinumeral">❹</span> Create the training subset with the first 1,000 images of each category.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033622"></a><span class="fm-combinumeral">❺</span> Create the validation subset with the next 500 images of each category.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033639"></a><span class="fm-combinumeral">❻</span> Create the test subset with the next 1,000 images of each category.</p>
+
+  <p class="body"><a id="pgfId-1014998"></a>We now have 2,000 training images, 1,000 validation images, and 2,000 test images. Each split contains the same number of samples from each class: this is a balanced binary-classification problem, which means classification accuracy will be an appropriate measure of success. <a id="marker-1015000"></a><a id="marker-1015003"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_9"><a id="pgfId-1015009"></a>8.2.3 Building the model</h3>
+
+  <p class="body"><a id="pgfId-1015052"></a><a id="marker-1015020"></a><a id="marker-1015022"></a>We will reuse the same general model structure you saw in the first example: the convnet will be a stack of alternated <code class="fm-code-in-text">Conv2D</code> (with <code class="fm-code-in-text">relu</code> activation) and <code class="fm-code-in-text">MaxPooling2D</code> layers.</p>
+
+  <p class="body"><a id="pgfId-1015097"></a>But because we’re dealing with bigger images and a more complex problem, we’ll make our model larger, accordingly: it will have two more <code class="fm-code-in-text">Conv2D</code> and <code class="fm-code-in-text">MaxPooling2D</code> stages. This serves both to augment the capacity of the model and to further reduce the size of the feature maps so they aren’t overly large when we reach the <code class="fm-code-in-text">Flatten</code> layer. Here, because we start from inputs of size 180 pixels × 180 pixels (a somewhat arbitrary choice), we end up with feature maps of size 7 × 7 just before the <code class="fm-code-in-text">Flatten</code> layer.</p>
+
+  <p class="fm-callout"><a id="pgfId-1015106"></a><span class="fm-callout-head">Note</span> The depth of the feature maps progressively increases in the model (from 32 to 256), whereas the size of the feature maps decreases (from 180 × 180 to 7 × 7). This is a pattern you’ll see in almost all convnets.</p>
+
+  <p class="body"><a id="pgfId-1015138"></a>Because we’re looking at a binary-classification problem, we’ll end the model with a single unit (a <code class="fm-code-in-text">Dense</code> layer of size 1) and a <code class="fm-code-in-text">sigmoid</code> activation. This unit <a id="marker-1015143"></a>will encode the probability that the model is looking at one class or the other.</p>
+
+  <p class="body"><a id="pgfId-1015166"></a>One last small difference: we will start the model <a id="marker-1015155"></a>with a <code class="fm-code-in-text">Rescaling</code> layer, which will rescale image inputs (whose values are originally in the [0, 255] range) to the [0, 1] range.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015226"></a>Listing 8.7 Instantiating a small convnet for dogs vs. cats classification</p>
+  <pre class="programlisting"><a id="pgfId-1030145"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1030146"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1030147"></a>  
+<a id="pgfId-1015271"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>, <span class="fm-codeblue">3</span>))                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1015288"></a>x = layers.Rescaling(<span class="fm-codeblue">1.</span>/<span class="fm-codeblue">255</span>)(inputs)                                 <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1030181"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">32</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030182"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030183"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">64</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030184"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030185"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">128</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030186"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030187"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">256</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030188"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030189"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">256</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030190"></a>x = layers.Flatten()(x)
+<a id="pgfId-1030191"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)(x)
+<a id="pgfId-1015366"></a>model = keras.Model(inputs=inputs, outputs=outputs)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033387"></a><span class="fm-combinumeral">❶</span> The model expects RGB images of size 180 × 180.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033408"></a><span class="fm-combinumeral">❷</span> Rescale inputs to the [0, 1] range by dividing them by 255.</p>
+
+  <p class="body"><a id="pgfId-1015408"></a>Let’s look at how the dimensions of the feature maps change with every successive layer:</p>
+  <pre class="programlisting"><a id="pgfId-1015414"></a>&gt;&gt;&gt; model.summary()
+<a id="pgfId-1030206"></a>Model: "model_2" 
+<a id="pgfId-1030207"></a>_________________________________________________________________
+<a id="pgfId-1030208"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1030209"></a>=================================================================
+<a id="pgfId-1030210"></a>input_3 (InputLayer)         [(None, 180, 180, 3)]     0 
+<a id="pgfId-1030211"></a>_________________________________________________________________
+<a id="pgfId-1030212"></a>rescaling (Rescaling)        (None, 180, 180, 3)       0 
+<a id="pgfId-1030213"></a>_________________________________________________________________
+<a id="pgfId-1030214"></a>conv2d_6 (Conv2D)            (None, 178, 178, 32)      896 
+<a id="pgfId-1030215"></a>_________________________________________________________________
+<a id="pgfId-1030216"></a>max_pooling2d_2 (MaxPooling2 (None, 89, 89, 32)        0 
+<a id="pgfId-1030217"></a>_________________________________________________________________
+<a id="pgfId-1030218"></a>conv2d_7 (Conv2D)            (None, 87, 87, 64)        18496 
+<a id="pgfId-1030219"></a>_________________________________________________________________
+<a id="pgfId-1030220"></a>max_pooling2d_3 (MaxPooling2 (None, 43, 43, 64)        0 
+<a id="pgfId-1030221"></a>_________________________________________________________________
+<a id="pgfId-1030222"></a>conv2d_8 (Conv2D)            (None, 41, 41, 128)       73856 
+<a id="pgfId-1030223"></a>_________________________________________________________________
+<a id="pgfId-1030224"></a>max_pooling2d_4 (MaxPooling2 (None, 20, 20, 128)       0 
+<a id="pgfId-1030225"></a>_________________________________________________________________
+<a id="pgfId-1030226"></a>conv2d_9 (Conv2D)            (None, 18, 18, 256)       295168 
+<a id="pgfId-1030227"></a>_________________________________________________________________
+<a id="pgfId-1030228"></a>max_pooling2d_5 (MaxPooling2 (None, 9, 9, 256)         0 
+<a id="pgfId-1030229"></a>_________________________________________________________________
+<a id="pgfId-1030230"></a>conv2d_10 (Conv2D)           (None, 7, 7, 256)         590080 
+<a id="pgfId-1030231"></a>_________________________________________________________________
+<a id="pgfId-1030232"></a>flatten_2 (Flatten)          (None, 12544)             0 
+<a id="pgfId-1030233"></a>_________________________________________________________________
+<a id="pgfId-1030234"></a>dense_2 (Dense)              (None, 1)                 12545 
+<a id="pgfId-1030235"></a>=================================================================
+<a id="pgfId-1030236"></a>Total params: 991,041 
+<a id="pgfId-1030237"></a>Trainable params: 991,041 
+<a id="pgfId-1030238"></a>Non-trainable params: 0 
+<a id="pgfId-1015626"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1015632"></a>For the compilation step, we’ll go with the <code class="fm-code-in-text">RMSprop</code> optimizer, as usual. Because we ended the model with a single sigmoid unit, we’ll use binary crossentropy as the loss (as a reminder, check out table 6.1 in chapter 6 for a cheat sheet on which loss function to use in various situations). <a id="marker-1015643"></a><a id="marker-1015646"></a></p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015703"></a>Listing 8.8 Configuring the model for training</p>
+  <pre class="programlisting"><a id="pgfId-1030257"></a>model.compile(loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1030258"></a>              optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1015748"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])</pre>
+
+  <h3 class="fm-head1" id="heading_id_10"><a id="pgfId-1015754"></a>8.2.4 Data preprocessing</h3>
+
+  <p class="body"><a id="pgfId-1015771"></a><a id="marker-1015765"></a><a id="marker-1015767"></a>As you know by now, data should be formatted into appropriately preprocessed floating-point tensors before being fed into the model. Currently, the data sits on a drive as JPEG files, so the steps for getting it into the model are roughly as follows:</p>
+
+  <ol class="calibre14">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015776"></a>Read the picture files.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015790"></a>Decode the JPEG content to RGB grids of pixels.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015800"></a>Convert these into floating-point tensors.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015810"></a>Resize them to a shared size (we’ll use 180 × 180).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015820"></a>Pack them into batches (we’ll use batches of 32 images).</p>
+    </li>
+  </ol>
+
+  <p class="body"><a id="pgfId-1015830"></a>It may seem a bit daunting, but fortunately Keras has utilities to take care of these steps automatically. In particular, Keras features the utility function <code class="fm-code-in-text">image_dataset_from_ directory()</code>, which lets <a id="marker-1015841"></a>you quickly set up a data pipeline that can automatically turn image files on disk into batches of preprocessed tensors. This is what we’ll use here.</p>
+
+  <p class="body"><a id="pgfId-1015877"></a>Calling <code class="fm-code-in-text">image_dataset_from_directory(directory)</code> will first list the subdirectories of <code class="fm-code-in-text">directory</code> and assume each one contains images from one of our classes. It will then index the image files in each subdirectory. Finally, it will create and return a <code class="fm-code-in-text">tf.data.Dataset</code> object configured <a id="marker-1015882"></a>to read these files, shuffle them, decode them to tensors, resize them to a shared size, and pack them into batches.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015943"></a>Listing 8.9 Using <code class="fm-code-in-text">image_dataset_from_directory</code> to read images</p>
+  <pre class="programlisting"><a id="pgfId-1030277"></a><b class="fm-codebrown">from</b> tensorflow.keras.utils <b class="fm-codebrown">import</b> image_dataset_from_directory
+<a id="pgfId-1030278"></a>  
+<a id="pgfId-1030279"></a>train_dataset = image_dataset_from_directory(
+<a id="pgfId-1030280"></a>    new_base_dir / <span class="fm-codegreen">"train"</span>,
+<a id="pgfId-1030281"></a>    image_size=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>),
+<a id="pgfId-1030282"></a>    batch_size=<span class="fm-codeblue">32</span>)
+<a id="pgfId-1030283"></a>validation_dataset = image_dataset_from_directory(
+<a id="pgfId-1030284"></a>    new_base_dir / <span class="fm-codegreen">"validation"</span>,
+<a id="pgfId-1030285"></a>    image_size=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>),
+<a id="pgfId-1030286"></a>    batch_size=<span class="fm-codeblue">32</span>)
+<a id="pgfId-1030287"></a>test_dataset = image_dataset_from_directory(
+<a id="pgfId-1030288"></a>    new_base_dir / <span class="fm-codegreen">"test"</span>,
+<a id="pgfId-1030289"></a>    image_size=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>),
+<a id="pgfId-1016066"></a>    batch_size=<span class="fm-codeblue">32</span>)</pre>
+
+  <div class="fm-sidebar-block">
+    <p class="fm-sidebar-title"><a class="calibre11" id="pgfId-1016072"></a>Understanding TensorFlow <code class="fm-code-in-text2">Dataset</code> objects</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1016107"></a>TensorFlow makes available the <code class="fm-code-in-text1">tf.data</code> API to create efficient input pipelines for machine learning models. Its core class is <code class="fm-code-in-text1">tf.data.Dataset</code>.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1016158"></a>A <code class="fm-code-in-text1">Dataset</code> object is an iterator: you can use it in a <code class="fm-code-in-text1">for</code> loop. It will <a id="marker-1029068"></a>typically return batches of input data and labels. You can pass a <code class="fm-code-in-text1">Dataset</code> object directly to the <code class="fm-code-in-text1">fit()</code> method of <a id="marker-1029070"></a>a Keras model.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1016173"></a>The <code class="fm-code-in-text1">Dataset</code> class handles <a id="marker-1029071"></a>many key features that would otherwise be cumbersome to implement yourself—in particular, asynchronous data prefetching (preprocessing the next batch of data while the previous one is being handled by the model, which keeps execution flowing without interruptions).</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1016210"></a>The <code class="fm-code-in-text1">Dataset</code> class also exposes a functional-style API for modifying datasets. Here’s a quick example: let’s create a <code class="fm-code-in-text1">Dataset</code> instance from a NumPy array of random numbers. We’ll consider 1,000 samples, where each sample is a vector of size 16:</p>
+    <pre class="programlisting"><a id="pgfId-1030308"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np 
+<a id="pgfId-1030309"></a><b class="fm-codebrown">import</b> tensorflow <b class="fm-codebrown">as</b> tf
+<a id="pgfId-1030310"></a>random_numbers = np.random.normal(size=(<span class="fm-codeblue">1000</span>, <span class="fm-codeblue">16</span>))
+<a id="pgfId-1016249"></a>dataset = tf.data.Dataset.from_tensor_slices(random_numbers)      <span class="fm-combinumeral">❶</span></pre>
+
+    <p class="fm-code-annotation"><a id="pgfId-1033297"></a><span class="fm-combinumeral">❶</span> The from_tensor_slices() class method can be used to create a Dataset from a NumPy array, or a tuple or dict of NumPy arrays.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1016281"></a>At first, our dataset just yields single samples:</p>
+    <pre class="programlisting"><a id="pgfId-1032175"></a>&gt;&gt;&gt; <b class="fm-codebrown">for</b> i, element <b class="fm-codebrown">in</b> enumerate(dataset):
+<a id="pgfId-1032176"></a>&gt;&gt;&gt;     <b class="fm-codebrown">print</b>(element.shape)
+<a id="pgfId-1032177"></a>&gt;&gt;&gt;     <b class="fm-codebrown">if</b> i &gt;= <span class="fm-codeblue">2</span>:
+<a id="pgfId-1016317"></a>&gt;&gt;&gt;         <b class="fm-codebrown">break</b>
+<a id="pgfId-1030371"></a>(16,)
+<a id="pgfId-1030372"></a>(16,)
+<a id="pgfId-1016335"></a>(16,)</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1016341"></a>We can use the <code class="fm-code-in-text1">.batch()</code> method to <a id="marker-1034304"></a>batch the data:</p>
+    <pre class="programlisting"><a id="pgfId-1035276"></a>&gt;&gt;&gt; batched_dataset = dataset.batch(<span class="fm-codeblue">32</span>)
+<a id="pgfId-1035277"></a>&gt;&gt;&gt; <b class="fm-codebrown">for</b> i, element <b class="fm-codebrown">in</b> enumerate(batched_dataset):
+<a id="pgfId-1035278"></a>&gt;&gt;&gt;     <b class="fm-codebrown">print</b>(element.shape)
+<a id="pgfId-1035279"></a>&gt;&gt;&gt;     <b class="fm-codebrown">if</b> i &gt;= <span class="fm-codeblue">2</span>:
+<a id="pgfId-1035280"></a>&gt;&gt;&gt;         <b class="fm-codebrown">break</b>
+<a id="pgfId-1035281"></a>(32, 16)
+<a id="pgfId-1035282"></a>(32, 16)
+<a id="pgfId-1035283"></a>(32, 16)</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035284"></a>More broadly, we have access to a range of useful dataset methods, such as</p>
+
+    <ul class="calibre10">
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1035286"></a><code class="fm-code-in-text1">.shuffle(buffer_size)</code>—Shuffles elements <a id="marker-1035285"></a>within a buffer</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1035288"></a><code class="fm-code-in-text1">.prefetch(buffer_size)</code>—Prefetches a buffer <a id="marker-1035287"></a>of elements in GPU memory to achieve better device utilization.</p>
+      </li>
+
+      <li class="fm-sidebar-bullet">
+        <p class="list-s"><a id="pgfId-1035290"></a><code class="fm-code-in-text1">.map(callable)</code>—Applies an <a id="marker-1035289"></a>arbitrary transformation to each element of the dataset (the function <code class="fm-code-in-text1">callable</code>, which expects to take as input a single element yielded by the dataset).</p>
+      </li>
+    </ul>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035292"></a>The <code class="fm-code-in-text1">.map()</code> method, in particular, is one <a id="marker-1035291"></a>that you will use often. Here’s an example. We’ll use it to reshape the elements in our toy dataset from shape <code class="fm-code-in-text1">(16,)</code> to shape <code class="fm-code-in-text1">(4,</code> <code class="fm-code-in-text1">4)</code>:</p>
+    <pre class="programlisting"><a id="pgfId-1035293"></a>&gt;&gt;&gt; reshaped_dataset = dataset.map(<b class="fm-codebrown">lambda</b> x: tf.reshape(x, (<span class="fm-codeblue">4</span>, <span class="fm-codeblue">4</span>)))
+<a id="pgfId-1035294"></a>&gt;&gt;&gt; <b class="fm-codebrown">for</b> i, element <b class="fm-codebrown">in</b> enumerate(reshaped_dataset):
+<a id="pgfId-1035295"></a>&gt;&gt;&gt;     <b class="fm-codebrown">print</b>(element.shape)
+<a id="pgfId-1035296"></a>&gt;&gt;&gt;     <b class="fm-codebrown">if</b> i &gt;= <span class="fm-codeblue">2</span>:
+<a id="pgfId-1035297"></a>&gt;&gt;&gt;         <b class="fm-codebrown">break</b>
+<a id="pgfId-1035298"></a>(4, 4)
+<a id="pgfId-1035299"></a>(4, 4)
+<a id="pgfId-1035300"></a>(4, 4)</pre>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035301"></a>You’re about to see more <code class="fm-code-in-text1">map()</code> action in this chapter.</p>
+
+    <p class="fm-sidebar-text"><a id="pgfId-1035265"></a> </p>
+  </div>
+
+  <p class="body"><a id="pgfId-1016653"></a>Let’s look at the output of one of these <code class="fm-code-in-text">Dataset</code> objects: it yields batches of 180 × 180 RGB images (shape <code class="fm-code-in-text">(32,</code> <code class="fm-code-in-text">180,</code> <code class="fm-code-in-text">180,</code> <code class="fm-code-in-text">3)</code>) and integer labels (shape <code class="fm-code-in-text">(32,)</code>). There are 32 samples in each batch (the batch size).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016713"></a>Listing 8.10 Displaying the shapes of the data and labels yielded by the <code class="fm-code-in-text">Dataset</code></p>
+  <pre class="programlisting"><a id="pgfId-1031945"></a>&gt;&gt;&gt; <b class="fm-codebrown">for</b> data_batch, labels_batch <b class="fm-codebrown">in</b> train_dataset:
+<a id="pgfId-1031946"></a>&gt;&gt;&gt;     <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"data batch shape:"</span>, data_batch.shape)
+<a id="pgfId-1031947"></a>&gt;&gt;&gt;     <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"labels batch shape:"</span>, labels_batch.shape)
+<a id="pgfId-1016772"></a>&gt;&gt;&gt;     <b class="fm-codebrown">break</b>
+<a id="pgfId-1030428"></a>data batch shape: (32, 180, 180, 3)
+<a id="pgfId-1016784"></a>labels batch shape: (32,)</pre>
+
+  <p class="body"><a id="pgfId-1016816"></a>Let’s fit the model on our dataset. We’ll use the <code class="fm-code-in-text">validation_data</code> argument in <code class="fm-code-in-text">fit()</code> to monitor validation metrics on a separate <code class="fm-code-in-text">Dataset</code> object.</p>
+
+  <p class="body"><a id="pgfId-1016867"></a>Note that we’ll also use a <code class="fm-code-in-text">ModelCheckpoint</code> callback to <a id="marker-1016836"></a>save the model after each epoch. We’ll configure it with the path specifying where to save the file, as well as the arguments <code class="fm-code-in-text">save_best_only=True</code> and <code class="fm-code-in-text">monitor="val_loss"</code>: they tell the callback to only save a new file (overwriting any previous one) when the current value of the <code class="fm-code-in-text">val_loss</code> metric is lower than at any previous time during training. This guarantees that your saved file will always contain the state of the model corresponding to its best-performing training epoch, in terms of its performance on the validation data. As a result, we won’t have to retrain a new model for a lower number of epochs if we start overfitting: we can just reload our saved file.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016927"></a>Listing 8.11 Fitting the model using a <code class="fm-code-in-text">Dataset</code></p>
+  <pre class="programlisting"><a id="pgfId-1030447"></a>callbacks = [
+<a id="pgfId-1030448"></a>    keras.callbacks.ModelCheckpoint(
+<a id="pgfId-1030449"></a>        filepath=<span class="fm-codegreen">"convnet_from_scratch.keras"</span>,
+<a id="pgfId-1030450"></a>        save_best_only=<code class="fm-codegreen">True</code>,
+<a id="pgfId-1030451"></a>        monitor=<span class="fm-codegreen">"val_loss"</span>)
+<a id="pgfId-1030452"></a>]
+<a id="pgfId-1030453"></a>history = model.fit(
+<a id="pgfId-1030454"></a>    train_dataset,
+<a id="pgfId-1030455"></a>    epochs=<span class="fm-codeblue">30</span>,
+<a id="pgfId-1030456"></a>    validation_data=validation_dataset,
+<a id="pgfId-1017028"></a>    callbacks=callbacks)</pre>
+
+  <p class="body"><a id="pgfId-1017034"></a>Let’s plot the loss and accuracy of the model over the training and validation data during training (see figure 8.9).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017091"></a>Listing 8.12 Displaying curves of loss and accuracy during training</p>
+  <pre class="programlisting"><a id="pgfId-1030475"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1030476"></a>accuracy = history.history[<span class="fm-codegreen">"accuracy"</span>]
+<a id="pgfId-1030477"></a>val_accuracy = history.history[<span class="fm-codegreen">"val_accuracy"</span>]
+<a id="pgfId-1030478"></a>loss = history.history[<span class="fm-codegreen">"loss"</span>]
+<a id="pgfId-1030479"></a>val_loss = history.history[<span class="fm-codegreen">"val_loss"</span>]
+<a id="pgfId-1030480"></a>epochs = range(<span class="fm-codeblue">1</span>, len(accuracy) + <span class="fm-codeblue">1</span>)
+<a id="pgfId-1030481"></a>plt.plot(epochs, accuracy, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training accuracy"</span>)
+<a id="pgfId-1030482"></a>plt.plot(epochs, val_accuracy, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation accuracy"</span>)
+<a id="pgfId-1030483"></a>plt.title(<span class="fm-codegreen">"Training and validation accuracy"</span>)
+<a id="pgfId-1030484"></a>plt.legend()
+<a id="pgfId-1030485"></a>plt.figure()
+<a id="pgfId-1030486"></a>plt.plot(epochs, loss, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training loss"</span>)
+<a id="pgfId-1030487"></a>plt.plot(epochs, val_loss, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation loss"</span>)
+<a id="pgfId-1030488"></a>plt.title(<span class="fm-codegreen">"Training and validation loss"</span>)
+<a id="pgfId-1030489"></a>plt.legend()
+<a id="pgfId-1017214"></a>plt.show()</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-09.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035834"></a>Figure 8.9 Training and validation metrics for a simple convnet</p>
+
+  <p class="body"><a id="pgfId-1017230"></a>These plots are characteristic of overfitting. The training accuracy increases linearly over time, until it reaches nearly 100%, whereas the validation accuracy peaks at 75%. The validation loss reaches its minimum after only ten epochs and then stalls, whereas the training loss keeps decreasing linearly as training proceeds.</p>
+
+  <p class="body"><a id="pgfId-1017250"></a>Let’s check the test accuracy. We’ll reload the model from its saved file to evaluate it as it was before it started overfitting.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017307"></a>Listing 8.13 Evaluating the model on the test set</p>
+  <pre class="programlisting"><a id="pgfId-1030508"></a>test_model = keras.models.load_model(<span class="fm-codegreen">"convnet_from_scratch.keras"</span>)
+<a id="pgfId-1030509"></a>test_loss, test_acc = test_model.evaluate(test_dataset) 
+<a id="pgfId-1017352"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test accuracy: {test_acc:.3f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1017358"></a>We get a test accuracy of 69.5%. (Due to the randomness of neural network initializations, you may get numbers within one percentage point of that.)</p>
+
+  <p class="body"><a id="pgfId-1017364"></a>Because we have relatively few training samples (2,000), overfitting will be our number one concern. You already know about a number of techniques that can help mitigate overfitting, such as dropout and weight decay (L2 regularization). We’re now going to work with a new one, specific to computer vision and used almost universally when processing images with deep learning models: <i class="fm-italics">data augmentation</i>. <a id="marker-1017375"></a><a id="marker-1017378"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_11"><a id="pgfId-1017384"></a>8.2.5 Using data augmentation</h3>
+
+  <p class="body"><a id="pgfId-1017409"></a><a id="marker-1017395"></a><a id="marker-1017397"></a><a id="marker-1017399"></a>Overfitting is caused by having too few samples to learn from, rendering you unable to train a model that can generalize to new data. Given infinite data, your model would be exposed to every possible aspect of the data distribution at hand: you would never overfit. Data augmentation takes the approach of generating more training data from existing training samples by <i class="fm-italics">augmenting</i> the samples via a number of random transformations that yield believable-looking images. The goal is that, at training time, your model will never see the exact same picture twice. This helps expose the model to more aspects of the data so it can generalize better.</p>
+
+  <p class="body"><a id="pgfId-1017450"></a>In Keras, this can be done by adding a number of <i class="fm-italics">data augmentation layers</i> at the start of your model. Let’s get started with an example: the following Sequential model chains <a id="marker-1017439"></a>several random image transformations. In our model, we’d include it right before the <code class="fm-code-in-text">Rescaling</code> layer.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017510"></a>Listing 8.14 Define a data augmentation stage to add to an image model</p>
+  <pre class="programlisting"><a id="pgfId-1030528"></a>data_augmentation = keras.Sequential(
+<a id="pgfId-1030529"></a>    [
+<a id="pgfId-1030530"></a>        layers.RandomFlip(<span class="fm-codegreen">"horizontal"</span>),
+<a id="pgfId-1030531"></a>        layers.RandomRotation(<span class="fm-codeblue">0.1</span>),
+<a id="pgfId-1030532"></a>        layers.RandomZoom(<span class="fm-codeblue">0.2</span>),
+<a id="pgfId-1030533"></a>    ]
+<a id="pgfId-1017579"></a>)</pre>
+
+  <p class="body"><a id="pgfId-1017585"></a>These are just a few of the layers available (for more, see the Keras documentation). Let’s quickly go over this code:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017591"></a><code class="fm-code-in-text">RandomFlip("horizontal")</code>—Applies horizontal flipping to a random 50% of the images that go through it</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017612"></a><code class="fm-code-in-text">RandomRotation(0.1)</code>—Rotates the input images by a random value in the range [–10%, +10%] (these are fractions of a full circle—in degrees, the range would be [–36 degrees, +36 degrees])</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017629"></a><code class="fm-code-in-text">RandomZoom(0.2)</code>—Zooms in or out of the image by a random factor in the range [-20%, +20%]</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1017646"></a>Let’s look at the augmented images (see figure 8.10).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017703"></a>Listing 8.15 Displaying some randomly augmented training images</p>
+  <pre class="programlisting"><a id="pgfId-1030552"></a>plt.figure(figsize=(<span class="fm-codeblue">10</span>, <span class="fm-codeblue">10</span>)) 
+<a id="pgfId-1017742"></a><b class="fm-codebrown">for</b> images, _ <b class="fm-codebrown">in</b> train_dataset.take(<span class="fm-codeblue">1</span>):                           <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1030569"></a>    <b class="fm-codebrown">for</b> i <b class="fm-codebrown">in</b> range(<span class="fm-codeblue">9</span>):
+<a id="pgfId-1017760"></a>        augmented_images = data_augmentation(images)              <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1030584"></a>        ax = plt.subplot(<span class="fm-codeblue">3</span>, <span class="fm-codeblue">3</span>, i + <span class="fm-codeblue">1</span>)
+<a id="pgfId-1017778"></a>        plt.imshow(augmented_images[<span class="fm-codeblue">0</span>].numpy().astype(<span class="fm-codegreen">"uint8"</span>))   <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1017790"></a>        plt.axis(<span class="fm-codegreen">"off"</span>)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033108"></a><span class="fm-combinumeral">❶</span> We can use take(N) to only sample N batches from the dataset. This is equivalent to inserting a break in the loop after the N th batch.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033129"></a><span class="fm-combinumeral">❷</span> Apply the augmentation stage to the batch of images.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033146"></a><span class="fm-combinumeral">❸</span> Display the first image in the output batch. For each of the nine iterations, this is a different augmentation of the same image.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-10.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035884"></a>Figure 8.10 Generating variations of a very good boy via random data augmentation</p>
+
+  <p class="body"><a id="pgfId-1017858"></a>If we train a new model using this data-augmentation configuration, the model will never see the same input twice. But the inputs it sees are still heavily intercorrelated because they come from a small number of original images—we can’t produce new information; we can only remix existing information. As such, this may not be enough to completely get rid of overfitting. To further fight overfitting, we’ll also add a <code class="fm-code-in-text">Dropout</code> layer to <a id="marker-1034395"></a>our model right before the densely connected classifier.</p>
+
+  <p class="body"><a id="pgfId-1017919"></a>One last thing you should know about random image augmentation layers: just like <code class="fm-code-in-text">Dropout</code>, they’re inactive during inference (when we call <code class="fm-code-in-text">predict()</code> or <code class="fm-code-in-text">evaluate()</code>). During evaluation, our model will behave just the same as when it did not include data augmentation and dropout.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017979"></a>Listing 8.16 Defining a new convnet that includes image augmentation and dropout</p>
+  <pre class="programlisting"><a id="pgfId-1030615"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1030616"></a>x = data_augmentation(inputs)
+<a id="pgfId-1030617"></a>x = layers.Rescaling(<span class="fm-codeblue">1.</span>/<span class="fm-codeblue">255</span>)(x)
+<a id="pgfId-1030618"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">32</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030619"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030620"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">64</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030621"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030622"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">128</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030623"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030624"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">256</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030625"></a>x = layers.MaxPooling2D(pool_size=<span class="fm-codeblue">2</span>)(x)
+<a id="pgfId-1030626"></a>x = layers.Conv2D(filters=<span class="fm-codeblue">256</span>, kernel_size=<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"relu"</span>)(x)
+<a id="pgfId-1030627"></a>x = layers.Flatten()(x)
+<a id="pgfId-1030628"></a>x = layers.Dropout(<span class="fm-codeblue">0.5</span>)(x)
+<a id="pgfId-1030629"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)(x)
+<a id="pgfId-1030630"></a>model = keras.Model(inputs=inputs, outputs=outputs)
+<a id="pgfId-1030631"></a>  
+<a id="pgfId-1030632"></a>model.compile(loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1030633"></a>              optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1018125"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])</pre>
+
+  <p class="body"><a id="pgfId-1018131"></a>Let’s train the model using data augmentation and dropout. Because we expect overfitting to occur much later during training, we will train for three times as many epochs—one hundred.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018188"></a>Listing 8.17 Training the regularized convnet</p>
+  <pre class="programlisting"><a id="pgfId-1030657"></a>callbacks = [
+<a id="pgfId-1030658"></a>    keras.callbacks.ModelCheckpoint(
+<a id="pgfId-1030659"></a>        filepath=<span class="fm-codegreen">"convnet_from_scratch_with_augmentation.keras"</span>,
+<a id="pgfId-1030660"></a>        save_best_only=<code class="fm-codegreen">True</code>,
+<a id="pgfId-1030661"></a>        monitor=<span class="fm-codegreen">"val_loss"</span>)
+<a id="pgfId-1030662"></a>]
+<a id="pgfId-1030663"></a>history = model.fit(
+<a id="pgfId-1030664"></a>    train_dataset,
+<a id="pgfId-1030665"></a>    epochs=<span class="fm-codeblue">100</span>,
+<a id="pgfId-1030666"></a>    validation_data=validation_dataset,
+<a id="pgfId-1018281"></a>    callbacks=callbacks)</pre>
+
+  <p class="body"><a id="pgfId-1018287"></a>Let’s plot the results again: see figure 8.11. Thanks to data augmentation and dropout, we start overfitting much later, around epochs 60–70 (compared to epoch 10 for the original model). The validation accuracy ends up consistently in the 80–85% range—a big improvement over our first try.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-11.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035926"></a>Figure 8.11 Training and validation metrics with data augmentation</p>
+
+  <p class="body"><a id="pgfId-1018303"></a>Let’s check the test accuracy.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018374"></a>Listing 8.18 Evaluating the model on the test set</p>
+  <pre class="programlisting"><a id="pgfId-1030685"></a>test_model = keras.models.load_model(
+<a id="pgfId-1030686"></a>    <span class="fm-codegreen">"convnet_from_scratch_with_augmentation.keras"</span>)
+<a id="pgfId-1030687"></a>test_loss, test_acc = test_model.evaluate(test_dataset)
+<a id="pgfId-1018425"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test accuracy: {test_acc:.3f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1018431"></a>We get a test accuracy of 83.5%. It’s starting to look good! If you’re using Colab, make sure you download the saved file (convnet_from_scratch_with_augmentation.keras), as we will use it for some experiments in the next chapter.</p>
+
+  <p class="body"><a id="pgfId-1018437"></a>By further tuning the model’s configuration (such as the number of filters per convolution layer, or the number of layers in the model), we might be able to get an even better accuracy, likely up to 90%. But it would prove difficult to go any higher just by training our own convnet from scratch, because we have so little data to work with. As a next step to improve our accuracy on this problem, we’ll have to use a pretrained model, which is the focus of the next two sections. <a id="marker-1018439"></a><a id="marker-1018442"></a><a id="marker-1018444"></a><a id="marker-1018446"></a><a id="marker-1018448"></a><a id="marker-1018450"></a></p>
+
+  <h2 class="fm-head" id="heading_id_12"><a id="pgfId-1018456"></a>8.3 Leveraging a pretrained model</h2>
+
+  <p class="body"><a id="pgfId-1018485"></a><a id="marker-1018469"></a><a id="marker-1018471"></a><a id="marker-1018473"></a><a id="marker-1018475"></a>A common and highly effective approach to deep learning on small image datasets is to use a pretrained model. A <i class="fm-italics">pretrained model</i> is a model that was previously trained on a large dataset, typically on a large-scale image-classification task. If this original dataset is large enough and general enough, the spatial hierarchy of features learned by the pretrained model can effectively act as a generic model of the visual world, and hence, its features can prove useful for many different computer vision problems, even though these new problems may involve completely different classes than those of the original task. For instance, you might train a model on ImageNet (where classes are mostly animals and everyday objects) and then repurpose this trained model for something as remote as identifying furniture items in images. Such portability of learned features across different problems is a key advantage of deep learning compared to many older, shallow learning approaches, and it makes deep learning very effective for small-data problems.</p>
+
+  <p class="body"><a id="pgfId-1018494"></a>In this case, let’s consider a large convnet trained on the ImageNet dataset (1.4 million labeled images and 1,000 different classes). ImageNet contains many animal classes, including different species of cats and dogs, and you can thus expect it to perform well on the dogs-versus-cats classification problem.</p>
+
+  <p class="body"><a id="pgfId-1018500"></a>We’ll use the VGG16 architecture, developed by Karen Simonyan and Andrew Zisserman in 2014.<a id="Id-1018503"></a><a href="../Text/08.htm#pgfId-1018503"><sup class="footnotenumber">1</sup></a> Although it’s an older model, far from the current state of the art and somewhat heavier than many other recent models, I chose it because its architecture is similar to what you’re already familiar with, and it’s easy to understand without introducing any new concepts. This may be your first encounter with one of these cutesy model names—VGG, ResNet, Inception, Xception, and so on; you’ll get used to them because they will come up frequently if you keep doing deep learning for computer vision.</p>
+
+  <p class="body"><a id="pgfId-1018536"></a>There are two ways to use a pretrained model: <i class="fm-italics">feature extraction</i> and <i class="fm-italics">fine-tuning</i>. We’ll cover both of them. Let’s start with feature extraction.</p>
+
+  <h3 class="fm-head1" id="heading_id_13"><a id="pgfId-1018545"></a>8.3.1 Feature extraction with a pretrained model</h3>
+
+  <p class="body"><a id="pgfId-1018564"></a><a id="marker-1018556"></a><a id="marker-1018558"></a><a id="marker-1018560"></a>Feature extraction consists of using the representations learned by a previously trained model to extract interesting features from new samples. These features are then run through a new classifier, which is trained from scratch.</p>
+
+  <p class="body"><a id="pgfId-1018569"></a>As you saw previously, convnets used for image classification comprise two parts: they start with a series of pooling and convolution layers, and they end with a densely connected classifier. The first part is called the <i class="fm-italics">convolutional base</i> of the <a id="marker-1018580"></a>model. In the case of convnets, feature extraction consists of taking the convolutional base of a previously trained network, running the new data through it, and training a new classifier on top of the output (see figure 8.12).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-12.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035968"></a>Figure 8.12 Swapping classifiers while keeping the same convolutional base</p>
+
+  <p class="body"><a id="pgfId-1018600"></a>Why only reuse the convolutional base? Could we reuse the densely connected classifier as well? In general, doing so should be avoided. The reason is that the representations learned by the convolutional base are likely to be more generic and, therefore, more reusable: the feature maps of a convnet are presence maps of generic concepts over a picture, which are likely to be useful regardless of the computer vision problem at hand. But the representations learned by the classifier will necessarily be specific to the set of classes on which the model was trained—they will only contain information about the presence probability of this or that class in the entire picture. Additionally, representations found in densely connected layers no longer contain any information about where objects are located in the input image; these layers get rid of the notion of space, whereas the object location is still described by convolutional feature maps. For problems where object location matters, densely connected features are largely useless.</p>
+
+  <p class="body"><a id="pgfId-1018620"></a>Note that the level of generality (and therefore reusability) of the representations extracted by specific convolution layers depends on the depth of the layer in the model. Layers that come earlier in the model extract local, highly generic feature maps (such as visual edges, colors, and textures), whereas layers that are higher up extract more-abstract concepts (such as “cat ear” or “dog eye”). So if your new dataset differs a lot from the dataset on which the original model was trained, you may be better off using only the first few layers of the model to do feature extraction, rather than using the entire convolutional base.</p>
+
+  <p class="body"><a id="pgfId-1018626"></a>In this case, because the ImageNet class set contains multiple dog and cat classes, it’s likely to be beneficial to reuse the information contained in the densely connected layers of the original model. But we’ll choose not to, in order to cover the more general case where the class set of the new problem doesn’t overlap the class set of the original model. Let’s put this into practice by using the convolutional base of the VGG16 network, trained on ImageNet, to extract interesting features from cat and dog images, and then train a dogs-versus-cats classifier on top of these features.</p>
+
+  <p class="body"><a id="pgfId-1018655"></a>The VGG16 model, among others, comes prepackaged with Keras. You can import it from <a id="marker-1018634"></a>the <code class="fm-code-in-text">keras.applications</code> module. Many other image-classification models (all pretrained on the ImageNet dataset) are available as part of <code class="fm-code-in-text">keras.applications</code>:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018664"></a>Xception</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018678"></a>ResNet</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018688"></a>MobileNet</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018698"></a>EfficientNet</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018708"></a>DenseNet</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018718"></a>etc.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1018728"></a>Let’s instantiate the VGG16 model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018785"></a>Listing 8.19 Instantiating the VGG16 convolutional base</p>
+  <pre class="programlisting"><a id="pgfId-1030706"></a>conv_base = keras.applications.vgg16.VGG16(
+<a id="pgfId-1030707"></a>    weights=<span class="fm-codegreen">"imagenet"</span>,
+<a id="pgfId-1030708"></a>    include_top=<code class="fm-codegreen">False</code>,
+<a id="pgfId-1018836"></a>    input_shape=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>, <span class="fm-codeblue">3</span>))</pre>
+
+  <p class="body"><a id="pgfId-1018842"></a>We pass three arguments to the constructor:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018848"></a><code class="fm-code-in-text">weights</code> specifies the weight checkpoint from which to initialize the model.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018897"></a><code class="fm-code-in-text">include_top</code> refers to including (or not) the densely connected classifier on top of the network. By default, this densely connected classifier corresponds to the 1,000 classes from ImageNet. Because we intend to use our own densely connected classifier (with only two classes: <code class="fm-code-in-text">cat</code> and <code class="fm-code-in-text">dog</code>), we don’t need to include it.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018906"></a><code class="fm-code-in-text">input_shape</code> is the shape of the image tensors that we’ll feed to the network. This argument is purely optional: if we don’t pass it, the network will be able to process inputs of any size. Here we pass it so that we can visualize (in the following summary) how the size of the feature maps shrinks with each new convolution and pooling layer.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1018923"></a>Here’s the detail of the architecture of the VGG16 convolutional base. It’s similar to the simple convnets you’re already familiar with:</p>
+  <pre class="programlisting"><a id="pgfId-1018929"></a>&gt;&gt;&gt; conv_base.summary()
+<a id="pgfId-1030727"></a>Model: "vgg16" 
+<a id="pgfId-1030728"></a>_________________________________________________________________
+<a id="pgfId-1030729"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1030730"></a>=================================================================
+<a id="pgfId-1030731"></a>input_19 (InputLayer)        [(None, 180, 180, 3)]     0 
+<a id="pgfId-1030732"></a>_________________________________________________________________
+<a id="pgfId-1030733"></a>block1_conv1 (Conv2D)        (None, 180, 180, 64)      1792 
+<a id="pgfId-1030734"></a>_________________________________________________________________
+<a id="pgfId-1030735"></a>block1_conv2 (Conv2D)        (None, 180, 180, 64)      36928 
+<a id="pgfId-1030736"></a>_________________________________________________________________
+<a id="pgfId-1030737"></a>block1_pool (MaxPooling2D)   (None, 90, 90, 64)        0 
+<a id="pgfId-1030738"></a>_________________________________________________________________
+<a id="pgfId-1030739"></a>block2_conv1 (Conv2D)        (None, 90, 90, 128)       73856 
+<a id="pgfId-1030740"></a>_________________________________________________________________
+<a id="pgfId-1030741"></a>block2_conv2 (Conv2D)        (None, 90, 90, 128)       147584 
+<a id="pgfId-1030742"></a>_________________________________________________________________
+<a id="pgfId-1030743"></a>block2_pool (MaxPooling2D)   (None, 45, 45, 128)       0 
+<a id="pgfId-1030744"></a>_________________________________________________________________
+<a id="pgfId-1030745"></a>block3_conv1 (Conv2D)        (None, 45, 45, 256)       295168 
+<a id="pgfId-1030746"></a>_________________________________________________________________
+<a id="pgfId-1030747"></a>block3_conv2 (Conv2D)        (None, 45, 45, 256)       590080 
+<a id="pgfId-1030748"></a>_________________________________________________________________
+<a id="pgfId-1030749"></a>block3_conv3 (Conv2D)        (None, 45, 45, 256)       590080 
+<a id="pgfId-1030750"></a>_________________________________________________________________
+<a id="pgfId-1030751"></a>block3_pool (MaxPooling2D)   (None, 22, 22, 256)       0 
+<a id="pgfId-1030752"></a>_________________________________________________________________
+<a id="pgfId-1030753"></a>block4_conv1 (Conv2D)        (None, 22, 22, 512)       1180160 
+<a id="pgfId-1030754"></a>_________________________________________________________________
+<a id="pgfId-1030755"></a>block4_conv2 (Conv2D)        (None, 22, 22, 512)       2359808 
+<a id="pgfId-1030756"></a>_________________________________________________________________
+<a id="pgfId-1030757"></a>block4_conv3 (Conv2D)        (None, 22, 22, 512)       2359808 
+<a id="pgfId-1030758"></a>_________________________________________________________________
+<a id="pgfId-1030759"></a>block4_pool (MaxPooling2D)   (None, 11, 11, 512)       0 
+<a id="pgfId-1030760"></a>_________________________________________________________________
+<a id="pgfId-1030761"></a>block5_conv1 (Conv2D)        (None, 11, 11, 512)       2359808 
+<a id="pgfId-1030762"></a>_________________________________________________________________
+<a id="pgfId-1030763"></a>block5_conv2 (Conv2D)        (None, 11, 11, 512)       2359808 
+<a id="pgfId-1030764"></a>_________________________________________________________________
+<a id="pgfId-1030765"></a>block5_conv3 (Conv2D)        (None, 11, 11, 512)       2359808 
+<a id="pgfId-1030766"></a>_________________________________________________________________
+<a id="pgfId-1030767"></a>block5_pool (MaxPooling2D)   (None, 5, 5, 512)         0 
+<a id="pgfId-1030768"></a>=================================================================
+<a id="pgfId-1030769"></a>Total params: 14,714,688 
+<a id="pgfId-1030770"></a>Trainable params: 14,714,688 
+<a id="pgfId-1030771"></a>Non-trainable params: 0 
+<a id="pgfId-1019213"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1019219"></a>The final feature map has shape <code class="fm-code-in-text">(5,</code> <code class="fm-code-in-text">5,</code> <code class="fm-code-in-text">512)</code>. That’s the feature map on top of which we’ll stick a densely connected classifier.</p>
+
+  <p class="body"><a id="pgfId-1019234"></a>At this point, there are two ways we could proceed:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019240"></a>Run the convolutional base over our dataset, record its output to a NumPy array on disk, and then use this data as input to a standalone, densely connected classifier similar to those you saw in chapter 4 of this book. This solution is fast and cheap to run, because it only requires running the convolutional base once for every input image, and the convolutional base is by far the most expensive part of the pipeline. But for the same reason, this technique won’t allow us to use data augmentation.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019274"></a>Extend the model we have (<code class="fm-code-in-text">conv_base</code>) by adding <code class="fm-code-in-text">Dense</code> layers on top, and run the whole thing from end to end on the input data. This will allow us to use data augmentation, because every input image goes through the convolutional base every time it’s seen by the model. But for the same reason, this technique is far more expensive than the first.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1019283"></a>We’ll cover both techniques. Let’s walk through the code required to set up the first one: recording the output of <code class="fm-code-in-text">conv_base</code> on our data and using these outputs as inputs to a new model.</p>
+
+  <p class="fm-head2"><a id="pgfId-1019298"></a>Fast feature extraction without data augmentation</p>
+
+  <p class="body"><a id="pgfId-1019337"></a><a id="marker-1019309"></a><a id="marker-1019311"></a>We’ll start by extracting features as NumPy arrays by <a id="marker-1019316"></a>calling the <code class="fm-code-in-text">predict()</code> method of the <code class="fm-code-in-text">conv_base</code> model on our training, validation, and testing datasets.</p>
+
+  <p class="body"><a id="pgfId-1019352"></a>Let’s iterate over our datasets to extract the VGG16 features.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019409"></a>Listing 8.20 Extracting the VGG16 features and corresponding labels</p>
+  <pre class="programlisting"><a id="pgfId-1030790"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np
+<a id="pgfId-1030791"></a>  
+<a id="pgfId-1030792"></a><b class="fm-codebrown">def</b> get_features_and_labels(dataset):
+<a id="pgfId-1030793"></a>    all_features = []
+<a id="pgfId-1030794"></a>    all_labels = []
+<a id="pgfId-1030795"></a>    <b class="fm-codebrown">for</b> images, labels <b class="fm-codebrown">in</b> dataset:
+<a id="pgfId-1030796"></a>        preprocessed_images = keras.applications.vgg16.preprocess_input(images)
+<a id="pgfId-1030797"></a>        features = conv_base.predict(preprocessed_images)
+<a id="pgfId-1030798"></a>        all_features.append(features)
+<a id="pgfId-1030799"></a>        all_labels.append(labels)
+<a id="pgfId-1030800"></a>    <b class="fm-codebrown">return</b> np.concatenate(all_features), np.concatenate(all_labels)
+<a id="pgfId-1030801"></a>  
+<a id="pgfId-1030802"></a>train_features, train_labels =  get_features_and_labels(train_dataset)
+<a id="pgfId-1030803"></a>val_features, val_labels =  get_features_and_labels(validation_dataset)
+<a id="pgfId-1019524"></a>test_features, test_labels =  get_features_and_labels(test_dataset)</pre>
+
+  <p class="body"><a id="pgfId-1019556"></a>Importantly, <code class="fm-code-in-text">predict()</code> only expects images, not labels, but our current dataset yields batches that contain both images and their labels. Moreover, the <code class="fm-code-in-text">VGG16</code> model expects inputs that are preprocessed with the function <code class="fm-code-in-text">keras.applications.vgg16.preprocess_input</code>, which scales pixel values to an appropriate range.</p>
+
+  <p class="body"><a id="pgfId-1019565"></a>The extracted features are currently of shape <code class="fm-code-in-text">(samples,</code> <code class="fm-code-in-text">5,</code> <code class="fm-code-in-text">5,</code> <code class="fm-code-in-text">512)</code>:</p>
+  <pre class="programlisting"><a id="pgfId-1019580"></a>&gt;&gt;&gt; train_features.shape
+<a id="pgfId-1019594"></a>(2000, 5, 5, 512)</pre>
+
+  <p class="body"><a id="pgfId-1019600"></a>At this point, we can define our densely connected classifier (note the use of dropout for regularization) and train it on the data and labels that we just recorded.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019657"></a>Listing 8.21 Defining and training the densely connected classifier</p>
+  <pre class="programlisting"><a id="pgfId-1030837"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">5</span>, <span class="fm-codeblue">5</span>, <span class="fm-codeblue">512</span>))
+<a id="pgfId-1019696"></a>x = layers.Flatten()(inputs)               <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1030860"></a>x = layers.Dense(<span class="fm-codeblue">256</span>)(x)
+<a id="pgfId-1030861"></a>x = layers.Dropout(<span class="fm-codeblue">0.5</span>)(x)
+<a id="pgfId-1030862"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)(x)
+<a id="pgfId-1030863"></a>model = keras.Model(inputs, outputs)
+<a id="pgfId-1030864"></a>model.compile(loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1030865"></a>              optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1030866"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1030867"></a>  
+<a id="pgfId-1030868"></a>callbacks = [
+<a id="pgfId-1030869"></a>    keras.callbacks.ModelCheckpoint(
+<a id="pgfId-1030870"></a>        filepath=<span class="fm-codegreen">"feature_extraction.keras"</span>,
+<a id="pgfId-1030871"></a>        save_best_only=<code class="fm-codegreen">True</code>,
+<a id="pgfId-1030872"></a>        monitor=<span class="fm-codegreen">"val_loss"</span>)
+<a id="pgfId-1030873"></a>]
+<a id="pgfId-1030874"></a>history = model.fit(
+<a id="pgfId-1030875"></a>    train_features, train_labels,
+<a id="pgfId-1030876"></a>    epochs=<span class="fm-codeblue">20</span>,
+<a id="pgfId-1030877"></a>    validation_data=(val_features, val_labels),
+<a id="pgfId-1019815"></a>    callbacks=callbacks)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1033029"></a><span class="fm-combinumeral">❶</span> Note the use of the Flatten layer before passing the features to a Dense layer.</p>
+
+  <p class="body"><a id="pgfId-1019841"></a>Training is very fast because we only have to deal with two <code class="fm-code-in-text">Dense</code> layers—an epoch takes less than one second even on CPU.</p>
+
+  <p class="body"><a id="pgfId-1019856"></a>Let’s look at the loss and accuracy curves during training (see figure 8.13).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-13.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1036010"></a>Figure 8.13 Training and validation metrics for plain feature extraction</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019913"></a>Listing 8.22 Plotting the results</p>
+  <pre class="programlisting"><a id="pgfId-1030896"></a><b class="fm-codebrown">import</b> matplotlib.pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1030897"></a>acc = history.history[<span class="fm-codegreen">"accuracy"</span>]
+<a id="pgfId-1030898"></a>val_acc = history.history[<span class="fm-codegreen">"val_accuracy"</span>]
+<a id="pgfId-1030899"></a>loss = history.history[<span class="fm-codegreen">"loss"</span>]
+<a id="pgfId-1030900"></a>val_loss = history.history[<span class="fm-codegreen">"val_loss"</span>]
+<a id="pgfId-1030901"></a>epochs = range(<span class="fm-codeblue">1</span>, len(acc) + <span class="fm-codeblue">1</span>)
+<a id="pgfId-1030902"></a>plt.plot(epochs, acc, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training accuracy"</span>)
+<a id="pgfId-1030903"></a>plt.plot(epochs, val_acc, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation accuracy"</span>)
+<a id="pgfId-1030904"></a>plt.title(<span class="fm-codegreen">"Training and validation accuracy"</span>)
+<a id="pgfId-1030905"></a>plt.legend()
+<a id="pgfId-1030906"></a>plt.figure()
+<a id="pgfId-1030907"></a>plt.plot(epochs, loss, <span class="fm-codegreen">"bo"</span>, label=<span class="fm-codegreen">"Training loss"</span>)
+<a id="pgfId-1030908"></a>plt.plot(epochs, val_loss, <span class="fm-codegreen">"b"</span>, label=<span class="fm-codegreen">"Validation loss"</span>)
+<a id="pgfId-1030909"></a>plt.title(<span class="fm-codegreen">"Training and validation loss"</span>)
+<a id="pgfId-1030910"></a>plt.legend()
+<a id="pgfId-1020036"></a>plt.show()</pre>
+
+  <p class="body"><a id="pgfId-1020052"></a>We reach a validation accuracy of about 97%—much better than we achieved in the previous section with the small model trained from scratch. This is a bit of an unfair comparison, however, because ImageNet contains many dog and cat instances, which means that our pretrained model already has the exact knowledge required for the task at hand. This won’t always be the case when you use pretrained features.</p>
+
+  <p class="body"><a id="pgfId-1020072"></a>However, the plots also indicate that we’re overfitting almost from the start—despite using dropout with a fairly large rate. That’s because this technique doesn’t use data augmentation, which is essential for preventing overfitting with small image datasets. <a id="marker-1020074"></a><a id="marker-1020077"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1020083"></a>Feature extraction together with data augmentation</p>
+
+  <p class="body"><a id="pgfId-1020106"></a><a id="marker-1020094"></a><a id="marker-1020096"></a>Now let’s review the second technique I mentioned for doing feature extraction, which is much slower and more expensive, but which allows us to use data augmentation during training: creating a model that chains the <code class="fm-code-in-text">conv_base</code> with a new dense classifier, and training it end to end on the inputs.</p>
+
+  <p class="body"><a id="pgfId-1020148"></a>In order to do this, we will <a id="marker-1020117"></a>first <i class="fm-italics">freeze the convolutional base</i>. <i class="fm-italics">Freezing</i> a layer or set of layers means preventing their weights from being updated during training. If we don’t do this, the representations that were previously learned by the convolutional base will be modified during training. Because the <code class="fm-code-in-text">Dense</code> layers on top are randomly initialized, very large weight updates would be propagated through the network, effectively destroying the representations previously learned.</p>
+
+  <p class="body"><a id="pgfId-1020173"></a>In Keras, we freeze a layer or model by setting its <code class="fm-code-in-text">trainable</code> attribute to <code class="fm-code-in-text">False</code>.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020233"></a>Listing 8.23 Instantiating and freezing the VGG16 convolutional base</p>
+  <pre class="programlisting"><a id="pgfId-1030929"></a>conv_base  = keras.applications.vgg16.VGG16(
+<a id="pgfId-1030930"></a>    weights=<span class="fm-codegreen">"imagenet"</span>,
+<a id="pgfId-1030931"></a>    include_top=<code class="fm-codegreen">False</code>)
+<a id="pgfId-1020284"></a>conv_base.trainable = <code class="fm-codegreen">False</code></pre>
+
+  <p class="body"><a id="pgfId-1020306"></a>Setting <code class="fm-code-in-text">trainable</code> to <code class="fm-code-in-text">False</code> empties the list of trainable weights of the layer or model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020366"></a>Listing 8.24 Printing the list of trainable weights before and after freezing</p>
+  <pre class="programlisting"><a id="pgfId-1031965"></a>&gt;&gt;&gt; conv_base.trainable = <code class="fm-codegreen">True</code>
+<a id="pgfId-1031966"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"This is the number of trainable weights "</span> 
+<a id="pgfId-1030948"></a>          <span class="fm-codegreen">"before freezing the conv base:"</span>, len(conv_base.trainable_weights))
+<a id="pgfId-1020417"></a>This is the number of trainable weights before freezing the conv base: 26 
+<a id="pgfId-1031983"></a>&gt;&gt;&gt; conv_base.trainable = <code class="fm-codegreen">False</code>
+<a id="pgfId-1031984"></a>&gt;&gt;&gt; <b class="fm-codebrown">print</b>(<span class="fm-codegreen">"This is the number of trainable weights "</span> 
+<a id="pgfId-1030961"></a>          <span class="fm-codegreen">"after freezing the conv base:"</span>, len(conv_base.trainable_weights))
+<a id="pgfId-1020441"></a>This is the number of trainable weights after freezing the conv base: 0 </pre>
+
+  <p class="body"><a id="pgfId-1020447"></a>Now we can create a new model that chains together</p>
+
+  <ol class="calibre14">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020453"></a>A data augmentation stage</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020467"></a>Our frozen convolutional base</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020477"></a>A dense classifier</p>
+    </li>
+  </ol>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020538"></a>Listing 8.25 Adding a data augmentation stage and a classifier to the convolutional base</p>
+  <pre class="programlisting"><a id="pgfId-1030976"></a>data_augmentation = keras.Sequential(
+<a id="pgfId-1030977"></a>    [
+<a id="pgfId-1030978"></a>        layers.RandomFlip(<span class="fm-codegreen">"horizontal"</span>),
+<a id="pgfId-1030979"></a>        layers.RandomRotation(<span class="fm-codeblue">0.1</span>),
+<a id="pgfId-1030980"></a>        layers.RandomZoom(<span class="fm-codeblue">0.2</span>),
+<a id="pgfId-1030981"></a>    ]
+<a id="pgfId-1030982"></a>)
+<a id="pgfId-1030983"></a>  
+<a id="pgfId-1030984"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">180</span>, <span class="fm-codeblue">180</span>, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1020624"></a>x = data_augmentation(inputs)                      <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1020636"></a>x = keras.applications.vgg16.preprocess_input(x)   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1031013"></a>x = conv_base(x)
+<a id="pgfId-1031014"></a>x = layers.Flatten()(x)
+<a id="pgfId-1031015"></a>x = layers.Dense(<span class="fm-codeblue">256</span>)(x)
+<a id="pgfId-1031016"></a>x = layers.Dropout(<span class="fm-codeblue">0.5</span>)(x)
+<a id="pgfId-1031017"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)(x)
+<a id="pgfId-1031018"></a>model = keras.Model(inputs, outputs)
+<a id="pgfId-1031019"></a>model.compile(loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1031020"></a>              optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1020696"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032808"></a><span class="fm-combinumeral">❶</span> Apply data augmentation.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1032809"></a><span class="fm-combinumeral">❷</span> Apply input value scaling.</p>
+
+  <p class="body"><a id="pgfId-1020738"></a>With this setup, only the weights from the two <code class="fm-code-in-text">Dense</code> layers that we added will be trained. That’s a total of four weight tensors: two per layer (the main weight matrix and the bias vector). Note that in order for these changes to take effect, you must first compile the model. If you ever modify weight trainability after compilation, you should then recompile the model, or these changes will be ignored.</p>
+
+  <p class="body"><a id="pgfId-1020753"></a>Let’s train our model. Thanks to data augmentation, it will take much longer for the model to start overfitting, so we can train for more epochs—let’s do 50.</p>
+
+  <p class="fm-callout"><a id="pgfId-1020759"></a><span class="fm-callout-head">Note</span> This technique is expensive enough that you should only attempt it if you have access to a GPU (such as the free GPU available in Colab)—it’s intractable on CPU. If you can’t run your code on GPU, then the previous technique is the way to go.</p>
+  <pre class="programlisting"><a id="pgfId-1031035"></a>callbacks = [
+<a id="pgfId-1031036"></a>    keras.callbacks.ModelCheckpoint(
+<a id="pgfId-1031037"></a>        filepath=<span class="fm-codegreen">"feature_extraction_with_data_augmentation.keras"</span>,
+<a id="pgfId-1031038"></a>        save_best_only=<code class="fm-codegreen">True</code>,
+<a id="pgfId-1031039"></a>        monitor=<span class="fm-codegreen">"val_loss"</span>)
+<a id="pgfId-1031040"></a>]
+<a id="pgfId-1031041"></a>history = model.fit(
+<a id="pgfId-1031042"></a>    train_dataset,
+<a id="pgfId-1031043"></a>    epochs=<span class="fm-codeblue">50</span>,
+<a id="pgfId-1031044"></a>    validation_data=validation_dataset,
+<a id="pgfId-1020843"></a>    callbacks=callbacks)</pre>
+
+  <p class="body"><a id="pgfId-1020849"></a>Let’s plot the results again (see figure 8.14). As you can see, we reach a validation accuracy of over 98%. This is a strong improvement over the previous model.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-14.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1036050"></a>Figure 8.14 Training and validation metrics for feature extraction with data augmentation</p>
+
+  <p class="body"><a id="pgfId-1020865"></a>Let’s check the test accuracy.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020936"></a>Listing 8.26 Evaluating the model on the test set</p>
+  <pre class="programlisting"><a id="pgfId-1031066"></a>test_model = keras.models.load_model(
+<a id="pgfId-1031067"></a>    <span class="fm-codegreen">"feature_extraction_with_data_augmentation.keras"</span>)
+<a id="pgfId-1031068"></a>test_loss, test_acc = test_model.evaluate(test_dataset)
+<a id="pgfId-1020987"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test accuracy: {test_acc:.3f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1020993"></a>We get a test accuracy of 97.5%. This is only a modest improvement compared to the previous test accuracy, which is a bit disappointing given the strong results on the validation data. A model’s accuracy always depends on the set of samples you evaluate it on! Some sample sets may be more difficult than others, and strong results on one set won’t necessarily fully translate to all other sets. <a id="marker-1020995"></a><a id="marker-1020998"></a><a id="marker-1021000"></a><a id="marker-1021002"></a><a id="marker-1021004"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_14"><a id="pgfId-1021010"></a>8.3.2 Fine-tuning a pretrained model</h3>
+
+  <p class="body"><a id="pgfId-1021043"></a><a id="marker-1021021"></a><a id="marker-1021023"></a>Another widely used technique for model reuse, complementary to feature extraction, is <i class="fm-italics">fine-tuning</i> (see figure 8.15). Fine-tuning consists of unfreezing a few of the top layers of a frozen model base used for feature extraction, and jointly training both the newly added part of the model (in this case, the fully connected classifier) and these top layers. This is called <i class="fm-italics">fine-tuning</i> because it slightly adjusts the more abstract representations of the model being reused in order to make them more relevant for the problem at hand.</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/08-15.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1035439"></a>Figure 8.15 Fine-tuning the last convolutional block of the VGG16 network</p>
+
+  <p class="body"><a id="pgfId-1021062"></a>I stated earlier that it’s necessary to freeze the convolution base of VGG16 in order to be able to train a randomly initialized classifier on top. For the same reason, it’s only possible to fine-tune the top layers of the convolutional base once the classifier on top has already been trained. If the classifier isn’t already trained, the error signal propagating through the network during training will be too large, and the representations previously learned by the layers being fine-tuned will be destroyed. Thus the steps for fine-tuning a network are as follows:</p>
+
+  <ol class="calibre14">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021082"></a>Add our custom network on top of an already-trained base network.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021096"></a>Freeze the base network.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021106"></a>Train the part we added.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021116"></a>Unfreeze some layers in the base network. (Note that you should not unfreeze “batch normalization” layers, which are not relevant here since there are no such layers in VGG16. Batch normalization and its impact on fine-tuning is explained in the next chapter.)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021126"></a>Jointly train both these layers and the part we added.</p>
+    </li>
+  </ol>
+
+  <p class="body"><a id="pgfId-1021136"></a>You already completed the first three steps when doing feature extraction. Let’s proceed with step 4: we’ll unfreeze our <code class="fm-code-in-text">conv_base</code> and then freeze individual layers inside it.</p>
+
+  <p class="body"><a id="pgfId-1021151"></a>As a reminder, this is what our convolutional base looks like:</p>
+  <pre class="programlisting"><a id="pgfId-1021157"></a>&gt;&gt;&gt; conv_base.summary()
+<a id="pgfId-1031087"></a>Model: "vgg16" 
+<a id="pgfId-1031088"></a>_________________________________________________________________
+<a id="pgfId-1031089"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1031090"></a>=================================================================
+<a id="pgfId-1031091"></a>input_19 (InputLayer)        [(None, 180, 180, 3)]     0 
+<a id="pgfId-1031092"></a>_________________________________________________________________
+<a id="pgfId-1031093"></a>block1_conv1 (Conv2D)        (None, 180, 180, 64)      1792 
+<a id="pgfId-1031094"></a>_________________________________________________________________
+<a id="pgfId-1031095"></a>block1_conv2 (Conv2D)        (None, 180, 180, 64)      36928 
+<a id="pgfId-1031096"></a>_________________________________________________________________
+<a id="pgfId-1031097"></a>block1_pool (MaxPooling2D)   (None, 90, 90, 64)        0 
+<a id="pgfId-1031098"></a>_________________________________________________________________
+<a id="pgfId-1031099"></a>block2_conv1 (Conv2D)        (None, 90, 90, 128)       73856 
+<a id="pgfId-1031100"></a>_________________________________________________________________ 
+<a id="pgfId-1031101"></a>block2_conv2 (Conv2D)        (None, 90, 90, 128)       147584 
+<a id="pgfId-1031102"></a>_________________________________________________________________
+<a id="pgfId-1031103"></a>block2_pool (MaxPooling2D)   (None, 45, 45, 128)       0 
+<a id="pgfId-1031104"></a>_________________________________________________________________
+<a id="pgfId-1031105"></a>block3_conv1 (Conv2D)        (None, 45, 45, 256)       295168 
+<a id="pgfId-1031106"></a>_________________________________________________________________
+<a id="pgfId-1031107"></a>block3_conv2 (Conv2D)        (None, 45, 45, 256)       590080 
+<a id="pgfId-1031108"></a>_________________________________________________________________
+<a id="pgfId-1031109"></a>block3_conv3 (Conv2D)        (None, 45, 45, 256)       590080 
+<a id="pgfId-1031110"></a>_________________________________________________________________
+<a id="pgfId-1031111"></a>block3_pool (MaxPooling2D)   (None, 22, 22, 256)       0 
+<a id="pgfId-1031112"></a>_________________________________________________________________
+<a id="pgfId-1031113"></a>block4_conv1 (Conv2D)        (None, 22, 22, 512)       1180160 
+<a id="pgfId-1031114"></a>_________________________________________________________________
+<a id="pgfId-1031115"></a>block4_conv2 (Conv2D)        (None, 22, 22, 512)       2359808 
+<a id="pgfId-1031116"></a>_________________________________________________________________
+<a id="pgfId-1031117"></a>block4_conv3 (Conv2D)        (None, 22, 22, 512)       2359808 
+<a id="pgfId-1031118"></a>_________________________________________________________________
+<a id="pgfId-1031119"></a>block4_pool (MaxPooling2D)   (None, 11, 11, 512)       0 
+<a id="pgfId-1031120"></a>_________________________________________________________________
+<a id="pgfId-1031121"></a>block5_conv1 (Conv2D)        (None, 11, 11, 512)       2359808 
+<a id="pgfId-1031122"></a>_________________________________________________________________
+<a id="pgfId-1031123"></a>block5_conv2 (Conv2D)        (None, 11, 11, 512)       2359808 
+<a id="pgfId-1031124"></a>_________________________________________________________________
+<a id="pgfId-1031125"></a>block5_conv3 (Conv2D)        (None, 11, 11, 512)       2359808 
+<a id="pgfId-1031126"></a>_________________________________________________________________
+<a id="pgfId-1031127"></a>block5_pool (MaxPooling2D)   (None, 5, 5, 512)         0 
+<a id="pgfId-1031128"></a>=================================================================
+<a id="pgfId-1031129"></a>Total params: 14,714,688 
+<a id="pgfId-1031130"></a>Trainable params: 14,714,688 
+<a id="pgfId-1031131"></a>Non-trainable params: 0 
+<a id="pgfId-1021441"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1021483"></a>We’ll fine-tune the last three convolutional layers, which means all layers up to <code class="fm-code-in-text">block4_ pool</code> should be frozen, and the layers <code class="fm-code-in-text">block5_conv1</code>, <code class="fm-code-in-text">block5_conv2</code>, and <code class="fm-code-in-text">block5_conv3</code> should be trainable.</p>
+
+  <p class="body"><a id="pgfId-1021492"></a>Why not fine-tune more layers? Why not fine-tune the entire convolutional base? You could. But you need to consider the following:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021498"></a>Earlier layers in the convolutional base encode more generic, reusable features, whereas layers higher up encode more specialized features. It’s more useful to fine-tune the more specialized features, because these are the ones that need to be repurposed on your new problem. There would be fast-decreasing returns in fine-tuning lower layers.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021512"></a>The more parameters you’re training, the more you’re at risk of overfitting. The convolutional base has 15 million parameters, so it would be risky to attempt to train it on your small dataset.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1021522"></a>Thus, in this situation, it’s a good strategy to fine-tune only the top two or three layers in the convolutional base. Let’s set this up, starting from where we left off in the previous example.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021579"></a>Listing 8.27 Freezing all layers until the fourth from the last</p>
+  <pre class="programlisting"><a id="pgfId-1031150"></a>conv_base.trainable = <code class="fm-codegreen">True</code>
+<a id="pgfId-1031151"></a><b class="fm-codebrown">for</b> layer <b class="fm-codebrown">in</b> conv_base.layers[:-<span class="fm-codeblue">4</span>]:
+<a id="pgfId-1021624"></a>    layer.trainable = <code class="fm-codegreen">False</code></pre>
+
+  <p class="body"><a id="pgfId-1021630"></a>Now we can begin fine-tuning the model. We’ll do this with the RMSprop optimizer, using a very low learning rate. The reason for using a low learning rate is that we want to limit the magnitude of the modifications we make to the representations of the three layers we’re fine-tuning. Updates that are too large may harm these representations.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021687"></a>Listing 8.28 Fine-tuning the model</p>
+  <pre class="programlisting"><a id="pgfId-1031168"></a>model.compile(loss=<span class="fm-codegreen">"binary_crossentropy"</span>,
+<a id="pgfId-1031169"></a>              optimizer=keras.optimizers.RMSprop(learning_rate=<span class="fm-codeblue">1e-5</span>),
+<a id="pgfId-1031170"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1031171"></a>  
+<a id="pgfId-1031172"></a>callbacks = [
+<a id="pgfId-1031173"></a>    keras.callbacks.ModelCheckpoint(
+<a id="pgfId-1031174"></a>        filepath=<span class="fm-codegreen">"fine_tuning.keras"</span>,
+<a id="pgfId-1031175"></a>        save_best_only=<code class="fm-codegreen">True</code>,
+<a id="pgfId-1031176"></a>        monitor=<span class="fm-codegreen">"val_loss"</span>)
+<a id="pgfId-1031177"></a>]
+<a id="pgfId-1031178"></a>history = model.fit(
+<a id="pgfId-1031179"></a>    train_dataset,
+<a id="pgfId-1031180"></a>    epochs=<span class="fm-codeblue">30</span>,
+<a id="pgfId-1031181"></a>    validation_data=validation_dataset,
+<a id="pgfId-1021803"></a>    callbacks=callbacks)</pre>
+
+  <p class="body"><a id="pgfId-1021809"></a>We can finally evaluate this model on the test data:</p>
+  <pre class="programlisting"><a id="pgfId-1031196"></a>model = keras.models.load_model(<span class="fm-codegreen">"fine_tuning.keras"</span>)
+<a id="pgfId-1031197"></a>test_loss, test_acc = model.evaluate(test_dataset) 
+<a id="pgfId-1021835"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Test accuracy: {test_acc:.3f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1021841"></a>Here, we get a test accuracy of 98.5% (again, your own results may be within one percentage point). In the original Kaggle competition around this dataset, this would have been one of the top results. It’s not quite a fair comparison, however, since we used pretrained features that already contained prior knowledge about cats and dogs, which competitors couldn’t use at the time.</p>
+
+  <p class="body"><a id="pgfId-1021847"></a>On the positive side, by leveraging modern deep learning techniques, we managed to reach this result using only a small fraction of the training data that was available for the competition (about 10%). There is a huge difference between being able to train on 20,000 samples compared to 2,000 samples!</p>
+
+  <p class="body"><a id="pgfId-1021853"></a>Now you have a solid set of tools for dealing with image-classification problems—in particular, with small datasets. <a id="marker-1021855"></a><a id="marker-1021858"></a><a id="marker-1021862"></a><a id="marker-1021864"></a></p>
+
+  <h2 class="fm-head" id="heading_id_15"><a id="pgfId-1021870"></a>Summary</h2>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021880"></a>Convnets are the best type of machine learning models for computer vision tasks. It’s possible to train one from scratch even on a very small dataset, with decent results.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021894"></a>Convnets work by learning a hierarchy of modular patterns and concepts to represent the visual world.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021904"></a>On a small dataset, overfitting will be the main issue. Data augmentation is a powerful way to fight overfitting when you’re working with image data.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021914"></a>It’s easy to reuse an existing convnet on a new dataset via feature extraction. This is a valuable technique for working with small image datasets.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1021924"></a>As a complement to feature extraction, you can use fine-tuning, which adapts to a new problem some of the representations previously learned by an existing model. This pushes performance a bit further.</p>
+    </li>
+  </ul>
+  <hr class="calibre15"/>
+
+  <p class="fm-footnote"><a href="../Text/08.htm#Id-1018503"><sup class="footnotenumber1">1</sup></a> <a id="pgfId-1018503"></a>Karen Simonyan and Andrew Zisserman, “Very Deep Convolutional Networks for Large-Scale Image Recognition,” arXiv (2014), <span class="fm-hyperlink"><a class="url" href="https://arxiv.org/abs/1409.1556">https://arxiv.org/abs/1409.1556</a></span>.</p>
+</body>
+</html>

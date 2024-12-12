@@ -1,0 +1,1899 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="eng">
+  <head>
+    <meta content="8a2ccaab-1ba4-493e-8957-947349c6b906" name="dtb:uid"/>
+    <meta content="4" name="dtb:depth"/>
+    <meta content="calibre (4.8.0)" name="dtb:generator"/>
+    <meta content="0" name="dtb:totalPageCount"/>
+    <meta content="0" name="dtb:maxPageNumber"/>
+  </head>
+  <docTitle>
+    <text>Deep Learning with Python, Second Edition</text>
+  </docTitle>
+  <navMap>
+    <navPoint class="chapter" id="navPoint-1" playOrder="1">
+      <navLabel>
+        <text>Deep Learning with Python</text>
+      </navLabel>
+      <content src="OEBPS/Text/title.htm"/>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-2" playOrder="2">
+      <navLabel>
+        <text>Copyright</text>
+      </navLabel>
+      <content src="OEBPS/Text/copyright.htm"/>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-3" playOrder="3">
+      <navLabel>
+        <text>dedication</text>
+      </navLabel>
+      <content src="OEBPS/Text/dedication.htm"/>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-4" playOrder="4">
+      <navLabel>
+        <text>brief contents</text>
+      </navLabel>
+      <content src="OEBPS/Text/btoc.htm"/>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-5" playOrder="5">
+      <navLabel>
+        <text>contents</text>
+      </navLabel>
+      <content src="OEBPS/Text/toc.htm"/>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-6" playOrder="6">
+      <navLabel>
+        <text>front matter</text>
+      </navLabel>
+      <content src="OEBPS/Text/fm.htm"/>
+      <navPoint class="chapter" id="navPoint-7" playOrder="7">
+        <navLabel>
+          <text>preface</text>
+        </navLabel>
+        <content src="OEBPS/Text/fm.htm#heading_id_3"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-8" playOrder="8">
+        <navLabel>
+          <text>acknowledgments</text>
+        </navLabel>
+        <content src="OEBPS/Text/fm.htm#heading_id_4"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-9" playOrder="9">
+        <navLabel>
+          <text>about this book</text>
+        </navLabel>
+        <content src="OEBPS/Text/fm.htm#heading_id_5"/>
+        <navPoint class="chapter" id="navPoint-10" playOrder="10">
+          <navLabel>
+            <text>Who should read this book</text>
+          </navLabel>
+          <content src="OEBPS/Text/fm.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-11" playOrder="11">
+          <navLabel>
+            <text>About the code</text>
+          </navLabel>
+          <content src="OEBPS/Text/fm.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-12" playOrder="12">
+          <navLabel>
+            <text>liveBook discussion forum</text>
+          </navLabel>
+          <content src="OEBPS/Text/fm.htm#heading_id_8"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-13" playOrder="13">
+        <navLabel>
+          <text>about the author</text>
+        </navLabel>
+        <content src="OEBPS/Text/fm.htm#heading_id_9"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-14" playOrder="14">
+        <navLabel>
+          <text>about the cover illustration</text>
+        </navLabel>
+        <content src="OEBPS/Text/fm.htm#heading_id_10"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-15" playOrder="15">
+      <navLabel>
+        <text>1 What is deep learning?</text>
+      </navLabel>
+      <content src="OEBPS/Text/01.htm"/>
+      <navPoint class="chapter" id="navPoint-16" playOrder="16">
+        <navLabel>
+          <text>1.1 Artificial intelligence, machine learning, and deep learning</text>
+        </navLabel>
+        <content src="OEBPS/Text/01.htm#heading_id_3"/>
+        <navPoint class="chapter" id="navPoint-17" playOrder="17">
+          <navLabel>
+            <text>1.1.1 Artificial intelligence</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_4"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-18" playOrder="18">
+          <navLabel>
+            <text>1.1.2 Machine learning</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-19" playOrder="19">
+          <navLabel>
+            <text>1.1.3 Learning rules and representations from data</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-20" playOrder="20">
+          <navLabel>
+            <text>1.1.4 The “deep” in “deep learning”</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-21" playOrder="21">
+          <navLabel>
+            <text>1.1.5 Understanding how deep learning works, in three figures</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-22" playOrder="22">
+          <navLabel>
+            <text>1.1.6 What deep learning has achieved so far</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_9"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-23" playOrder="23">
+          <navLabel>
+            <text>1.1.7 Don’t believe the short-term hype</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_10"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-24" playOrder="24">
+          <navLabel>
+            <text>1.1.8 The promise of AI</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_11"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-25" playOrder="25">
+        <navLabel>
+          <text>1.2 Before deep learning: A brief history of machine learning</text>
+        </navLabel>
+        <content src="OEBPS/Text/01.htm#heading_id_12"/>
+        <navPoint class="chapter" id="navPoint-26" playOrder="26">
+          <navLabel>
+            <text>1.2.1 Probabilistic modeling</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_13"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-27" playOrder="27">
+          <navLabel>
+            <text>1.2.2 Early neural networks</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_14"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-28" playOrder="28">
+          <navLabel>
+            <text>1.2.3 Kernel methods</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-29" playOrder="29">
+          <navLabel>
+            <text>1.2.4 Decision trees, random forests, and gradient boosting machines</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_16"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-30" playOrder="30">
+          <navLabel>
+            <text>1.2.5 Back to neural networks</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_17"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-31" playOrder="31">
+          <navLabel>
+            <text>1.2.6 What makes deep learning different</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_18"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-32" playOrder="32">
+          <navLabel>
+            <text>1.2.7 The modern machine learning landscape</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_19"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-33" playOrder="33">
+        <navLabel>
+          <text>1.3 Why deep learning? Why now?</text>
+        </navLabel>
+        <content src="OEBPS/Text/01.htm#heading_id_20"/>
+        <navPoint class="chapter" id="navPoint-34" playOrder="34">
+          <navLabel>
+            <text>1.3.1 Hardware</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_21"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-35" playOrder="35">
+          <navLabel>
+            <text>1.3.2 Data</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_22"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-36" playOrder="36">
+          <navLabel>
+            <text>1.3.3 Algorithms</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_23"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-37" playOrder="37">
+          <navLabel>
+            <text>1.3.4 A new wave of investment</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_24"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-38" playOrder="38">
+          <navLabel>
+            <text>1.3.5 The democratization of deep learning</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_25"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-39" playOrder="39">
+          <navLabel>
+            <text>1.3.6 Will it last?</text>
+          </navLabel>
+          <content src="OEBPS/Text/01.htm#heading_id_26"/>
+        </navPoint>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-40" playOrder="40">
+      <navLabel>
+        <text>2 The mathematical building blocks of neural networks</text>
+      </navLabel>
+      <content src="OEBPS/Text/02.htm"/>
+      <navPoint class="chapter" id="navPoint-41" playOrder="41">
+        <navLabel>
+          <text>2.1 A first look at a neural network</text>
+        </navLabel>
+        <content src="OEBPS/Text/02.htm#heading_id_3"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-42" playOrder="42">
+        <navLabel>
+          <text>2.2 Data representations for neural networks</text>
+        </navLabel>
+        <content src="OEBPS/Text/02.htm#heading_id_4"/>
+        <navPoint class="chapter" id="navPoint-43" playOrder="43">
+          <navLabel>
+            <text>2.2.1 Scalars (rank-0 tensors)</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-44" playOrder="44">
+          <navLabel>
+            <text>2.2.2 Vectors (rank-1 tensors)</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-45" playOrder="45">
+          <navLabel>
+            <text>2.2.3 Matrices (rank-2 tensors)</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-46" playOrder="46">
+          <navLabel>
+            <text>2.2.4 Rank-3 and higher-rank tensors</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-47" playOrder="47">
+          <navLabel>
+            <text>2.2.5 Key attributes</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_9"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-48" playOrder="48">
+          <navLabel>
+            <text>2.2.6 Manipulating tensors in NumPy</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_10"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-49" playOrder="49">
+          <navLabel>
+            <text>2.2.7 The notion of data batches</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_11"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-50" playOrder="50">
+          <navLabel>
+            <text>2.2.8 Real-world examples of data tensors</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_12"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-51" playOrder="51">
+          <navLabel>
+            <text>2.2.9 Vector data</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_13"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-52" playOrder="52">
+          <navLabel>
+            <text>2.2.10 Timeseries data or sequence data</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_14"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-53" playOrder="53">
+          <navLabel>
+            <text>2.2.11 Image data</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-54" playOrder="54">
+          <navLabel>
+            <text>2.2.12 Video data</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_16"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-55" playOrder="55">
+        <navLabel>
+          <text>2.3 The gears of neural networks: Tensor operations</text>
+        </navLabel>
+        <content src="OEBPS/Text/02.htm#heading_id_17"/>
+        <navPoint class="chapter" id="navPoint-56" playOrder="56">
+          <navLabel>
+            <text>2.3.1 Element-wise operations</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_18"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-57" playOrder="57">
+          <navLabel>
+            <text>2.3.2 Broadcasting</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_19"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-58" playOrder="58">
+          <navLabel>
+            <text>2.3.3 Tensor product</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_20"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-59" playOrder="59">
+          <navLabel>
+            <text>2.3.4 Tensor reshaping</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_21"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-60" playOrder="60">
+          <navLabel>
+            <text>2.3.5 Geometric interpretation of tensor operations</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_22"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-61" playOrder="61">
+          <navLabel>
+            <text>2.3.6 A geometric interpretation of deep learning</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_23"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-62" playOrder="62">
+        <navLabel>
+          <text>2.4 The engine of neural networks: Gradient-based optimization</text>
+        </navLabel>
+        <content src="OEBPS/Text/02.htm#heading_id_24"/>
+        <navPoint class="chapter" id="navPoint-63" playOrder="63">
+          <navLabel>
+            <text>2.4.1 What’s a derivative?</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_25"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-64" playOrder="64">
+          <navLabel>
+            <text>2.4.2 Derivative of a tensor operation: The gradient</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_26"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-65" playOrder="65">
+          <navLabel>
+            <text>2.4.3 Stochastic gradient descent</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_27"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-66" playOrder="66">
+          <navLabel>
+            <text>2.4.4 Chaining derivatives: The Backpropagation algorithm</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_28"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-67" playOrder="67">
+        <navLabel>
+          <text>2.5 Looking back at our first example</text>
+        </navLabel>
+        <content src="OEBPS/Text/02.htm#heading_id_29"/>
+        <navPoint class="chapter" id="navPoint-68" playOrder="68">
+          <navLabel>
+            <text>2.5.1 Reimplementing our first example from scratch in TensorFlow</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_30"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-69" playOrder="69">
+          <navLabel>
+            <text>2.5.2 Running one training step</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_31"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-70" playOrder="70">
+          <navLabel>
+            <text>2.5.3 The full training loop</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_32"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-71" playOrder="71">
+          <navLabel>
+            <text>2.5.4 Evaluating the model</text>
+          </navLabel>
+          <content src="OEBPS/Text/02.htm#heading_id_33"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-72" playOrder="72">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/02.htm#heading_id_34"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-73" playOrder="73">
+      <navLabel>
+        <text>3 Introduction to Keras and TensorFlow</text>
+      </navLabel>
+      <content src="OEBPS/Text/03.htm"/>
+      <navPoint class="chapter" id="navPoint-74" playOrder="74">
+        <navLabel>
+          <text>3.1 What’s TensorFlow?</text>
+        </navLabel>
+        <content src="OEBPS/Text/03.htm#heading_id_3"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-75" playOrder="75">
+        <navLabel>
+          <text>3.2 What’s Keras?</text>
+        </navLabel>
+        <content src="OEBPS/Text/03.htm#heading_id_4"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-76" playOrder="76">
+        <navLabel>
+          <text>3.3 Keras and TensorFlow: A brief history</text>
+        </navLabel>
+        <content src="OEBPS/Text/03.htm#heading_id_5"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-77" playOrder="77">
+        <navLabel>
+          <text>3.4 Setting up a deep learning workspace</text>
+        </navLabel>
+        <content src="OEBPS/Text/03.htm#heading_id_6"/>
+        <navPoint class="chapter" id="navPoint-78" playOrder="78">
+          <navLabel>
+            <text>3.4.1 Jupyter notebooks: The preferred way to run deep learning experiments</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-79" playOrder="79">
+          <navLabel>
+            <text>3.4.2 Using Colaboratory</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_8"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-80" playOrder="80">
+        <navLabel>
+          <text>3.5 First steps with TensorFlow</text>
+        </navLabel>
+        <content src="OEBPS/Text/03.htm#heading_id_9"/>
+        <navPoint class="chapter" id="navPoint-81" playOrder="81">
+          <navLabel>
+            <text>3.5.1 Constant tensors and variables</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_10"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-82" playOrder="82">
+          <navLabel>
+            <text>3.5.2 Tensor operations: Doing math in TensorFlow</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_11"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-83" playOrder="83">
+          <navLabel>
+            <text>3.5.3 A second look at the GradientTape API</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_12"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-84" playOrder="84">
+          <navLabel>
+            <text>3.5.4 An end-to-end example: A linear classifier in pure TensorFlow</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_13"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-85" playOrder="85">
+        <navLabel>
+          <text>3.6 Anatomy of a neural network: Understanding core Keras APIs</text>
+        </navLabel>
+        <content src="OEBPS/Text/03.htm#heading_id_14"/>
+        <navPoint class="chapter" id="navPoint-86" playOrder="86">
+          <navLabel>
+            <text>3.6.1 Layers: The building blocks of deep learning</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-87" playOrder="87">
+          <navLabel>
+            <text>3.6.2 From layers to models</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_16"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-88" playOrder="88">
+          <navLabel>
+            <text>3.6.3 The “compile” step: Configuring the learning process</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_17"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-89" playOrder="89">
+          <navLabel>
+            <text>3.6.4 Picking a loss function</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_18"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-90" playOrder="90">
+          <navLabel>
+            <text>3.6.5 Understanding the fit() method</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_19"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-91" playOrder="91">
+          <navLabel>
+            <text>3.6.6 Monitoring loss and metrics on validation data</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_20"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-92" playOrder="92">
+          <navLabel>
+            <text>3.6.7 Inference: Using a model after training</text>
+          </navLabel>
+          <content src="OEBPS/Text/03.htm#heading_id_21"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-93" playOrder="93">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/03.htm#heading_id_22"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-94" playOrder="94">
+      <navLabel>
+        <text>4 Getting started with neural networks: Classification and regression</text>
+      </navLabel>
+      <content src="OEBPS/Text/04.htm"/>
+      <navPoint class="chapter" id="navPoint-95" playOrder="95">
+        <navLabel>
+          <text>4.1 Classifying movie reviews: A binary classification example</text>
+        </navLabel>
+        <content src="OEBPS/Text/04.htm#heading_id_3"/>
+        <navPoint class="chapter" id="navPoint-96" playOrder="96">
+          <navLabel>
+            <text>4.1.1 The IMDB dataset</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_4"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-97" playOrder="97">
+          <navLabel>
+            <text>4.1.2 Preparing the data</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-98" playOrder="98">
+          <navLabel>
+            <text>4.1.3 Building your model</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-99" playOrder="99">
+          <navLabel>
+            <text>4.1.4 Validating your approach</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-100" playOrder="100">
+          <navLabel>
+            <text>4.1.5 Using a trained model to generate predictions on new data</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-101" playOrder="101">
+          <navLabel>
+            <text>4.1.6 Further experiments</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_9"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-102" playOrder="102">
+          <navLabel>
+            <text>4.1.7 Wrapping up</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_10"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-103" playOrder="103">
+        <navLabel>
+          <text>4.2 Classifying newswires: A multiclass classification example</text>
+        </navLabel>
+        <content src="OEBPS/Text/04.htm#heading_id_11"/>
+        <navPoint class="chapter" id="navPoint-104" playOrder="104">
+          <navLabel>
+            <text>4.2.1 The Reuters dataset</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_12"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-105" playOrder="105">
+          <navLabel>
+            <text>4.2.2 Preparing the data</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_13"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-106" playOrder="106">
+          <navLabel>
+            <text>4.2.3 Building your model</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_14"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-107" playOrder="107">
+          <navLabel>
+            <text>4.2.4 Validating your approach</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-108" playOrder="108">
+          <navLabel>
+            <text>4.2.5 Generating predictions on new data</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_16"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-109" playOrder="109">
+          <navLabel>
+            <text>4.2.6 A different way to handle the labels and the loss</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_17"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-110" playOrder="110">
+          <navLabel>
+            <text>4.2.7 The importance of having sufficiently large intermediate layers</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_18"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-111" playOrder="111">
+          <navLabel>
+            <text>4.2.8 Further experiments</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_19"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-112" playOrder="112">
+          <navLabel>
+            <text>4.2.9 Wrapping up</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_20"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-113" playOrder="113">
+        <navLabel>
+          <text>4.3 Predicting house prices: A regression example</text>
+        </navLabel>
+        <content src="OEBPS/Text/04.htm#heading_id_21"/>
+        <navPoint class="chapter" id="navPoint-114" playOrder="114">
+          <navLabel>
+            <text>4.3.1 The Boston housing price dataset</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_22"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-115" playOrder="115">
+          <navLabel>
+            <text>4.3.2 Preparing the data</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_23"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-116" playOrder="116">
+          <navLabel>
+            <text>4.3.3 Building your model</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_24"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-117" playOrder="117">
+          <navLabel>
+            <text>4.3.4 Validating your approach using K-fold validation</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_25"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-118" playOrder="118">
+          <navLabel>
+            <text>4.3.5 Generating predictions on new data</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_26"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-119" playOrder="119">
+          <navLabel>
+            <text>4.3.6 Wrapping up</text>
+          </navLabel>
+          <content src="OEBPS/Text/04.htm#heading_id_27"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-120" playOrder="120">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/04.htm#heading_id_28"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-121" playOrder="121">
+      <navLabel>
+        <text>5 Fundamentals of machine learning</text>
+      </navLabel>
+      <content src="OEBPS/Text/05.htm"/>
+      <navPoint class="chapter" id="navPoint-122" playOrder="122">
+        <navLabel>
+          <text>5.1 Generalization: The goal of machine learning</text>
+        </navLabel>
+        <content src="OEBPS/Text/05.htm#heading_id_3"/>
+        <navPoint class="chapter" id="navPoint-123" playOrder="123">
+          <navLabel>
+            <text>5.1.1 Underfitting and overfitting</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_4"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-124" playOrder="124">
+          <navLabel>
+            <text>5.1.2 The nature of generalization in deep learning</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_5"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-125" playOrder="125">
+        <navLabel>
+          <text>5.2 Evaluating machine learning models</text>
+        </navLabel>
+        <content src="OEBPS/Text/05.htm#heading_id_6"/>
+        <navPoint class="chapter" id="navPoint-126" playOrder="126">
+          <navLabel>
+            <text>5.2.1 Training, validation, and test sets</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-127" playOrder="127">
+          <navLabel>
+            <text>5.2.2 Beating a common-sense baseline</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-128" playOrder="128">
+          <navLabel>
+            <text>5.2.3 Things to keep in mind about model evaluation</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_9"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-129" playOrder="129">
+        <navLabel>
+          <text>5.3 Improving model fit</text>
+        </navLabel>
+        <content src="OEBPS/Text/05.htm#heading_id_10"/>
+        <navPoint class="chapter" id="navPoint-130" playOrder="130">
+          <navLabel>
+            <text>5.3.1 Tuning key gradient descent parameters</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_11"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-131" playOrder="131">
+          <navLabel>
+            <text>5.3.2 Leveraging better architecture priors</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_12"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-132" playOrder="132">
+          <navLabel>
+            <text>5.3.3 Increasing model capacity</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_13"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-133" playOrder="133">
+        <navLabel>
+          <text>5.4 Improving generalization</text>
+        </navLabel>
+        <content src="OEBPS/Text/05.htm#heading_id_14"/>
+        <navPoint class="chapter" id="navPoint-134" playOrder="134">
+          <navLabel>
+            <text>5.4.1 Dataset curation</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-135" playOrder="135">
+          <navLabel>
+            <text>5.4.2 Feature engineering</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_16"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-136" playOrder="136">
+          <navLabel>
+            <text>5.4.3 Using early stopping</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_17"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-137" playOrder="137">
+          <navLabel>
+            <text>5.4.4 Regularizing your model</text>
+          </navLabel>
+          <content src="OEBPS/Text/05.htm#heading_id_18"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-138" playOrder="138">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/05.htm#heading_id_19"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-139" playOrder="139">
+      <navLabel>
+        <text>6 The universal workflow of machine learning</text>
+      </navLabel>
+      <content src="OEBPS/Text/06.htm"/>
+      <navPoint class="chapter" id="navPoint-140" playOrder="140">
+        <navLabel>
+          <text>6.1 Define the task</text>
+        </navLabel>
+        <content src="OEBPS/Text/06.htm#heading_id_3"/>
+        <navPoint class="chapter" id="navPoint-141" playOrder="141">
+          <navLabel>
+            <text>6.1.1 Frame the problem</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_4"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-142" playOrder="142">
+          <navLabel>
+            <text>6.1.2 Collect a dataset</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-143" playOrder="143">
+          <navLabel>
+            <text>6.1.3 Understand your data</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-144" playOrder="144">
+          <navLabel>
+            <text>6.1.4 Choose a measure of success</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_7"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-145" playOrder="145">
+        <navLabel>
+          <text>6.2 Develop a model</text>
+        </navLabel>
+        <content src="OEBPS/Text/06.htm#heading_id_8"/>
+        <navPoint class="chapter" id="navPoint-146" playOrder="146">
+          <navLabel>
+            <text>6.2.1 Prepare the data</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_9"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-147" playOrder="147">
+          <navLabel>
+            <text>6.2.2 Choose an evaluation protocol</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_10"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-148" playOrder="148">
+          <navLabel>
+            <text>6.2.3 Beat a baseline</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_11"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-149" playOrder="149">
+          <navLabel>
+            <text>6.2.4 Scale up: Develop a model that overfits</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_12"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-150" playOrder="150">
+          <navLabel>
+            <text>6.2.5 Regularize and tune your model</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_13"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-151" playOrder="151">
+        <navLabel>
+          <text>6.3 Deploy the model</text>
+        </navLabel>
+        <content src="OEBPS/Text/06.htm#heading_id_14"/>
+        <navPoint class="chapter" id="navPoint-152" playOrder="152">
+          <navLabel>
+            <text>6.3.1 Explain your work to stakeholders and set expectations</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-153" playOrder="153">
+          <navLabel>
+            <text>6.3.2 Ship an inference model</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_16"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-154" playOrder="154">
+          <navLabel>
+            <text>6.3.3 Monitor your model in the wild</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_17"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-155" playOrder="155">
+          <navLabel>
+            <text>6.3.4 Maintain your model</text>
+          </navLabel>
+          <content src="OEBPS/Text/06.htm#heading_id_18"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-156" playOrder="156">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/06.htm#heading_id_19"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-157" playOrder="157">
+      <navLabel>
+        <text>7 Working with Keras: A deep dive</text>
+      </navLabel>
+      <content src="OEBPS/Text/07.htm"/>
+      <navPoint class="chapter" id="navPoint-158" playOrder="158">
+        <navLabel>
+          <text>7.1 A spectrum of workflows</text>
+        </navLabel>
+        <content src="OEBPS/Text/07.htm#heading_id_3"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-159" playOrder="159">
+        <navLabel>
+          <text>7.2 Different ways to build Keras models</text>
+        </navLabel>
+        <content src="OEBPS/Text/07.htm#heading_id_4"/>
+        <navPoint class="chapter" id="navPoint-160" playOrder="160">
+          <navLabel>
+            <text>7.2.1 The Sequential model</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-161" playOrder="161">
+          <navLabel>
+            <text>7.2.2 The Functional API</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-162" playOrder="162">
+          <navLabel>
+            <text>7.2.3 Subclassing the Model class</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-163" playOrder="163">
+          <navLabel>
+            <text>7.2.4 Mixing and matching different components</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-164" playOrder="164">
+          <navLabel>
+            <text>7.2.5 Remember: Use the right tool for the job</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_9"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-165" playOrder="165">
+        <navLabel>
+          <text>7.3 Using built-in training and evaluation loops</text>
+        </navLabel>
+        <content src="OEBPS/Text/07.htm#heading_id_10"/>
+        <navPoint class="chapter" id="navPoint-166" playOrder="166">
+          <navLabel>
+            <text>7.3.1 Writing your own metrics</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_11"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-167" playOrder="167">
+          <navLabel>
+            <text>7.3.2 Using callbacks</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_12"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-168" playOrder="168">
+          <navLabel>
+            <text>7.3.3 Writing your own callbacks</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_13"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-169" playOrder="169">
+          <navLabel>
+            <text>7.3.4 Monitoring and visualization with TensorBoard</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_14"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-170" playOrder="170">
+        <navLabel>
+          <text>7.4 Writing your own training and evaluation loops</text>
+        </navLabel>
+        <content src="OEBPS/Text/07.htm#heading_id_15"/>
+        <navPoint class="chapter" id="navPoint-171" playOrder="171">
+          <navLabel>
+            <text>7.4.1 Training versus inference</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_16"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-172" playOrder="172">
+          <navLabel>
+            <text>7.4.2 Low-level usage of metrics</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_17"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-173" playOrder="173">
+          <navLabel>
+            <text>7.4.3 A complete training and evaluation loop</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_18"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-174" playOrder="174">
+          <navLabel>
+            <text>7.4.4 Make it fast with tf.function</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_19"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-175" playOrder="175">
+          <navLabel>
+            <text>7.4.5 Leveraging fit() with a custom training loop</text>
+          </navLabel>
+          <content src="OEBPS/Text/07.htm#heading_id_20"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-176" playOrder="176">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/07.htm#heading_id_21"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-177" playOrder="177">
+      <navLabel>
+        <text>8 Introduction to deep learning for computer vision</text>
+      </navLabel>
+      <content src="OEBPS/Text/08.htm"/>
+      <navPoint class="chapter" id="navPoint-178" playOrder="178">
+        <navLabel>
+          <text>8.1 Introduction to convnets</text>
+        </navLabel>
+        <content src="OEBPS/Text/08.htm#heading_id_3"/>
+        <navPoint class="chapter" id="navPoint-179" playOrder="179">
+          <navLabel>
+            <text>8.1.1 The convolution operation</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_4"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-180" playOrder="180">
+          <navLabel>
+            <text>8.1.2 The max-pooling operation</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_5"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-181" playOrder="181">
+        <navLabel>
+          <text>8.2 Training a convnet from scratch on a small dataset</text>
+        </navLabel>
+        <content src="OEBPS/Text/08.htm#heading_id_6"/>
+        <navPoint class="chapter" id="navPoint-182" playOrder="182">
+          <navLabel>
+            <text>8.2.1 The relevance of deep learning for small-data problems</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-183" playOrder="183">
+          <navLabel>
+            <text>8.2.2 Downloading the data</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-184" playOrder="184">
+          <navLabel>
+            <text>8.2.3 Building the model</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_9"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-185" playOrder="185">
+          <navLabel>
+            <text>8.2.4 Data preprocessing</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_10"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-186" playOrder="186">
+          <navLabel>
+            <text>8.2.5 Using data augmentation</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_11"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-187" playOrder="187">
+        <navLabel>
+          <text>8.3 Leveraging a pretrained model</text>
+        </navLabel>
+        <content src="OEBPS/Text/08.htm#heading_id_12"/>
+        <navPoint class="chapter" id="navPoint-188" playOrder="188">
+          <navLabel>
+            <text>8.3.1 Feature extraction with a pretrained model</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_13"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-189" playOrder="189">
+          <navLabel>
+            <text>8.3.2 Fine-tuning a pretrained model</text>
+          </navLabel>
+          <content src="OEBPS/Text/08.htm#heading_id_14"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-190" playOrder="190">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/08.htm#heading_id_15"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-191" playOrder="191">
+      <navLabel>
+        <text>9 Advanced deep learning for computer vision</text>
+      </navLabel>
+      <content src="OEBPS/Text/09.htm"/>
+      <navPoint class="chapter" id="navPoint-192" playOrder="192">
+        <navLabel>
+          <text>9.1 Three essential computer vision tasks</text>
+        </navLabel>
+        <content src="OEBPS/Text/09.htm#heading_id_3"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-193" playOrder="193">
+        <navLabel>
+          <text>9.2 An image segmentation example</text>
+        </navLabel>
+        <content src="OEBPS/Text/09.htm#heading_id_4"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-194" playOrder="194">
+        <navLabel>
+          <text>9.3 Modern convnet architecture patterns</text>
+        </navLabel>
+        <content src="OEBPS/Text/09.htm#heading_id_5"/>
+        <navPoint class="chapter" id="navPoint-195" playOrder="195">
+          <navLabel>
+            <text>9.3.1 Modularity, hierarchy, and reuse</text>
+          </navLabel>
+          <content src="OEBPS/Text/09.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-196" playOrder="196">
+          <navLabel>
+            <text>9.3.2 Residual connections</text>
+          </navLabel>
+          <content src="OEBPS/Text/09.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-197" playOrder="197">
+          <navLabel>
+            <text>9.3.3 Batch normalization</text>
+          </navLabel>
+          <content src="OEBPS/Text/09.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-198" playOrder="198">
+          <navLabel>
+            <text>9.3.4 Depthwise separable convolutions</text>
+          </navLabel>
+          <content src="OEBPS/Text/09.htm#heading_id_9"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-199" playOrder="199">
+          <navLabel>
+            <text>9.3.5 Putting it together: A mini Xception-like model</text>
+          </navLabel>
+          <content src="OEBPS/Text/09.htm#heading_id_10"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-200" playOrder="200">
+        <navLabel>
+          <text>9.4 Interpreting what convnets learn</text>
+        </navLabel>
+        <content src="OEBPS/Text/09.htm#heading_id_11"/>
+        <navPoint class="chapter" id="navPoint-201" playOrder="201">
+          <navLabel>
+            <text>9.4.1 Visualizing intermediate activations</text>
+          </navLabel>
+          <content src="OEBPS/Text/09.htm#heading_id_12"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-202" playOrder="202">
+          <navLabel>
+            <text>9.4.2 Visualizing convnet filters</text>
+          </navLabel>
+          <content src="OEBPS/Text/09.htm#heading_id_13"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-203" playOrder="203">
+          <navLabel>
+            <text>9.4.3 Visualizing heatmaps of class activation</text>
+          </navLabel>
+          <content src="OEBPS/Text/09.htm#heading_id_14"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-204" playOrder="204">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/09.htm#heading_id_15"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-205" playOrder="205">
+      <navLabel>
+        <text>10 Deep learning for timeseries</text>
+      </navLabel>
+      <content src="OEBPS/Text/10.htm"/>
+      <navPoint class="chapter" id="navPoint-206" playOrder="206">
+        <navLabel>
+          <text>10.1 Different kinds of timeseries tasks</text>
+        </navLabel>
+        <content src="OEBPS/Text/10.htm#heading_id_3"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-207" playOrder="207">
+        <navLabel>
+          <text>10.2 A temperature-forecasting example</text>
+        </navLabel>
+        <content src="OEBPS/Text/10.htm#heading_id_4"/>
+        <navPoint class="chapter" id="navPoint-208" playOrder="208">
+          <navLabel>
+            <text>10.2.1 Preparing the data</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-209" playOrder="209">
+          <navLabel>
+            <text>10.2.2 A common-sense, non-machine learning baseline</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-210" playOrder="210">
+          <navLabel>
+            <text>10.2.3 Let’s try a basic machine learning model</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-211" playOrder="211">
+          <navLabel>
+            <text>10.2.4 Let’s try a 1D convolutional model</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-212" playOrder="212">
+          <navLabel>
+            <text>10.2.5 A first recurrent baseline</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_9"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-213" playOrder="213">
+        <navLabel>
+          <text>10.3 Understanding recurrent neural networks</text>
+        </navLabel>
+        <content src="OEBPS/Text/10.htm#heading_id_10"/>
+        <navPoint class="chapter" id="navPoint-214" playOrder="214">
+          <navLabel>
+            <text>10.3.1 A recurrent layer in Keras</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_11"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-215" playOrder="215">
+        <navLabel>
+          <text>10.4 Advanced use of recurrent neural networks</text>
+        </navLabel>
+        <content src="OEBPS/Text/10.htm#heading_id_12"/>
+        <navPoint class="chapter" id="navPoint-216" playOrder="216">
+          <navLabel>
+            <text>10.4.1 Using recurrent dropout to fight overfitting</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_13"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-217" playOrder="217">
+          <navLabel>
+            <text>10.4.2 Stacking recurrent layers</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_14"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-218" playOrder="218">
+          <navLabel>
+            <text>10.4.3 Using bidirectional RNNs</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-219" playOrder="219">
+          <navLabel>
+            <text>10.4.4 Going even further</text>
+          </navLabel>
+          <content src="OEBPS/Text/10.htm#heading_id_16"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-220" playOrder="220">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/10.htm#heading_id_17"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-221" playOrder="221">
+      <navLabel>
+        <text>11 Deep learning for text</text>
+      </navLabel>
+      <content src="OEBPS/Text/11.htm"/>
+      <navPoint class="chapter" id="navPoint-222" playOrder="222">
+        <navLabel>
+          <text>11.1 Natural language processing: The bird’s eye view</text>
+        </navLabel>
+        <content src="OEBPS/Text/11.htm#heading_id_3"/>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-223" playOrder="223">
+        <navLabel>
+          <text>11.2 Preparing text data</text>
+        </navLabel>
+        <content src="OEBPS/Text/11.htm#heading_id_4"/>
+        <navPoint class="chapter" id="navPoint-224" playOrder="224">
+          <navLabel>
+            <text>11.2.1 Text standardization</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-225" playOrder="225">
+          <navLabel>
+            <text>11.2.2 Text splitting (tokenization)</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-226" playOrder="226">
+          <navLabel>
+            <text>11.2.3 Vocabulary indexing</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-227" playOrder="227">
+          <navLabel>
+            <text>11.2.4 Using the TextVectorization layer</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_8"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-228" playOrder="228">
+        <navLabel>
+          <text>11.3 Two approaches for representing groups of words: Sets and sequences</text>
+        </navLabel>
+        <content src="OEBPS/Text/11.htm#heading_id_9"/>
+        <navPoint class="chapter" id="navPoint-229" playOrder="229">
+          <navLabel>
+            <text>11.3.1 Preparing the IMDB movie reviews data</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_10"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-230" playOrder="230">
+          <navLabel>
+            <text>11.3.2 Processing words as a set: The bag-of-words approach</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_11"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-231" playOrder="231">
+          <navLabel>
+            <text>11.3.3 Processing words as a sequence: The sequence model approach</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_12"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-232" playOrder="232">
+        <navLabel>
+          <text>11.4 The Transformer architecture</text>
+        </navLabel>
+        <content src="OEBPS/Text/11.htm#heading_id_13"/>
+        <navPoint class="chapter" id="navPoint-233" playOrder="233">
+          <navLabel>
+            <text>11.4.1 Understanding self-attention</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_14"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-234" playOrder="234">
+          <navLabel>
+            <text>11.4.2 Multi-head attention</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-235" playOrder="235">
+          <navLabel>
+            <text>11.4.3 The Transformer encoder</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_16"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-236" playOrder="236">
+          <navLabel>
+            <text>11.4.4 When to use sequence models over bag-of-words models</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_17"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-237" playOrder="237">
+        <navLabel>
+          <text>11.5 Beyond text classification: Sequence-to-sequence learning</text>
+        </navLabel>
+        <content src="OEBPS/Text/11.htm#heading_id_18"/>
+        <navPoint class="chapter" id="navPoint-238" playOrder="238">
+          <navLabel>
+            <text>11.5.1 A machine translation example</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_19"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-239" playOrder="239">
+          <navLabel>
+            <text>11.5.2 Sequence-to-sequence learning with RNNs</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_20"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-240" playOrder="240">
+          <navLabel>
+            <text>11.5.3 Sequence-to-sequence learning with Transformer</text>
+          </navLabel>
+          <content src="OEBPS/Text/11.htm#heading_id_21"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-241" playOrder="241">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/11.htm#heading_id_22"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-242" playOrder="242">
+      <navLabel>
+        <text>12 Generative deep learning</text>
+      </navLabel>
+      <content src="OEBPS/Text/12.htm"/>
+      <navPoint class="chapter" id="navPoint-243" playOrder="243">
+        <navLabel>
+          <text>12.1 Text generation</text>
+        </navLabel>
+        <content src="OEBPS/Text/12.htm#heading_id_3"/>
+        <navPoint class="chapter" id="navPoint-244" playOrder="244">
+          <navLabel>
+            <text>12.1.1 A brief history of generative deep learning for sequence generation</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_4"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-245" playOrder="245">
+          <navLabel>
+            <text>12.1.2 How do you generate sequence data?</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-246" playOrder="246">
+          <navLabel>
+            <text>12.1.3 The importance of the sampling strategy</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-247" playOrder="247">
+          <navLabel>
+            <text>12.1.4 Implementing text generation with Keras</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-248" playOrder="248">
+          <navLabel>
+            <text>12.1.5 A text-generation callback with variable-temperature sampling</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-249" playOrder="249">
+          <navLabel>
+            <text>12.1.6 Wrapping up</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_9"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-250" playOrder="250">
+        <navLabel>
+          <text>12.2 DeepDream</text>
+        </navLabel>
+        <content src="OEBPS/Text/12.htm#heading_id_10"/>
+        <navPoint class="chapter" id="navPoint-251" playOrder="251">
+          <navLabel>
+            <text>12.2.1 Implementing DeepDream in Keras</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_11"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-252" playOrder="252">
+          <navLabel>
+            <text>12.2.2 Wrapping up</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_12"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-253" playOrder="253">
+        <navLabel>
+          <text>12.3 Neural style transfer</text>
+        </navLabel>
+        <content src="OEBPS/Text/12.htm#heading_id_13"/>
+        <navPoint class="chapter" id="navPoint-254" playOrder="254">
+          <navLabel>
+            <text>12.3.1 The content loss</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_14"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-255" playOrder="255">
+          <navLabel>
+            <text>12.3.2 The style loss</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-256" playOrder="256">
+          <navLabel>
+            <text>12.3.3 Neural style transfer in Keras</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_16"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-257" playOrder="257">
+          <navLabel>
+            <text>12.3.4 Wrapping up</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_17"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-258" playOrder="258">
+        <navLabel>
+          <text>12.4 Generating images with variational autoencoders</text>
+        </navLabel>
+        <content src="OEBPS/Text/12.htm#heading_id_18"/>
+        <navPoint class="chapter" id="navPoint-259" playOrder="259">
+          <navLabel>
+            <text>12.4.1 Sampling from latent spaces of images</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_19"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-260" playOrder="260">
+          <navLabel>
+            <text>12.4.2 Concept vectors for image editing</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_20"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-261" playOrder="261">
+          <navLabel>
+            <text>12.4.3 Variational autoencoders</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_21"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-262" playOrder="262">
+          <navLabel>
+            <text>12.4.4 Implementing a VAE with Keras</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_22"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-263" playOrder="263">
+          <navLabel>
+            <text>12.4.5 Wrapping up</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_23"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-264" playOrder="264">
+        <navLabel>
+          <text>12.5 Introduction to generative adversarial networks</text>
+        </navLabel>
+        <content src="OEBPS/Text/12.htm#heading_id_24"/>
+        <navPoint class="chapter" id="navPoint-265" playOrder="265">
+          <navLabel>
+            <text>12.5.1 A schematic GAN implementation</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_25"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-266" playOrder="266">
+          <navLabel>
+            <text>12.5.2 A bag of tricks</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_26"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-267" playOrder="267">
+          <navLabel>
+            <text>12.5.3 Getting our hands on the CelebA dataset</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_27"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-268" playOrder="268">
+          <navLabel>
+            <text>12.5.4 The discriminator</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_28"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-269" playOrder="269">
+          <navLabel>
+            <text>12.5.5 The generator</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_29"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-270" playOrder="270">
+          <navLabel>
+            <text>12.5.6 The adversarial network</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_30"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-271" playOrder="271">
+          <navLabel>
+            <text>12.5.7 Wrapping up</text>
+          </navLabel>
+          <content src="OEBPS/Text/12.htm#heading_id_31"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-272" playOrder="272">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/12.htm#heading_id_32"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-273" playOrder="273">
+      <navLabel>
+        <text>13 Best practices for the real world</text>
+      </navLabel>
+      <content src="OEBPS/Text/13.htm"/>
+      <navPoint class="chapter" id="navPoint-274" playOrder="274">
+        <navLabel>
+          <text>13.1 Getting the most out of your models</text>
+        </navLabel>
+        <content src="OEBPS/Text/13.htm#heading_id_3"/>
+        <navPoint class="chapter" id="navPoint-275" playOrder="275">
+          <navLabel>
+            <text>13.1.1 Hyperparameter optimization</text>
+          </navLabel>
+          <content src="OEBPS/Text/13.htm#heading_id_4"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-276" playOrder="276">
+          <navLabel>
+            <text>13.1.2 ensembling</text>
+          </navLabel>
+          <content src="OEBPS/Text/13.htm#heading_id_5"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-277" playOrder="277">
+        <navLabel>
+          <text>13.2 Scaling-up model training</text>
+        </navLabel>
+        <content src="OEBPS/Text/13.htm#heading_id_6"/>
+        <navPoint class="chapter" id="navPoint-278" playOrder="278">
+          <navLabel>
+            <text>13.2.1 Speeding up training on GPU with mixed precision</text>
+          </navLabel>
+          <content src="OEBPS/Text/13.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-279" playOrder="279">
+          <navLabel>
+            <text>13.2.2 Multi-GPU training</text>
+          </navLabel>
+          <content src="OEBPS/Text/13.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-280" playOrder="280">
+          <navLabel>
+            <text>13.2.3 TPU training</text>
+          </navLabel>
+          <content src="OEBPS/Text/13.htm#heading_id_9"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-281" playOrder="281">
+        <navLabel>
+          <text>Summary</text>
+        </navLabel>
+        <content src="OEBPS/Text/13.htm#heading_id_10"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-282" playOrder="282">
+      <navLabel>
+        <text>14 Conclusions</text>
+      </navLabel>
+      <content src="OEBPS/Text/14.htm"/>
+      <navPoint class="chapter" id="navPoint-283" playOrder="283">
+        <navLabel>
+          <text>14.1 Key concepts in review</text>
+        </navLabel>
+        <content src="OEBPS/Text/14.htm#heading_id_3"/>
+        <navPoint class="chapter" id="navPoint-284" playOrder="284">
+          <navLabel>
+            <text>14.1.1 Various approaches to AI</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_4"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-285" playOrder="285">
+          <navLabel>
+            <text>14.1.2 What makes deep learning special within the field of machine learning</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_5"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-286" playOrder="286">
+          <navLabel>
+            <text>14.1.3 How to think about deep learning</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_6"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-287" playOrder="287">
+          <navLabel>
+            <text>14.1.4 Key enabling technologies</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_7"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-288" playOrder="288">
+          <navLabel>
+            <text>14.1.5 The universal machine learning workflow</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_8"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-289" playOrder="289">
+          <navLabel>
+            <text>14.1.6 Key network architectures</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_9"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-290" playOrder="290">
+          <navLabel>
+            <text>14.1.7 The space of possibilities</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_10"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-291" playOrder="291">
+        <navLabel>
+          <text>14.2 The limitations of deep learning</text>
+        </navLabel>
+        <content src="OEBPS/Text/14.htm#heading_id_11"/>
+        <navPoint class="chapter" id="navPoint-292" playOrder="292">
+          <navLabel>
+            <text>14.2.1 The risk of anthropomorphizing machine learning models</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_12"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-293" playOrder="293">
+          <navLabel>
+            <text>14.2.2 Automatons vs. intelligent agents</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_13"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-294" playOrder="294">
+          <navLabel>
+            <text>14.2.3 Local generalization vs. extreme generalization</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_14"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-295" playOrder="295">
+          <navLabel>
+            <text>14.2.4 The purpose of intelligence</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_15"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-296" playOrder="296">
+          <navLabel>
+            <text>14.2.5 Climbing the spectrum of generalization</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_16"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-297" playOrder="297">
+        <navLabel>
+          <text>14.3 Setting the course toward greater generality in AI</text>
+        </navLabel>
+        <content src="OEBPS/Text/14.htm#heading_id_17"/>
+        <navPoint class="chapter" id="navPoint-298" playOrder="298">
+          <navLabel>
+            <text>14.3.1 On the importance of setting the right objective: The shortcut rule</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_18"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-299" playOrder="299">
+          <navLabel>
+            <text>14.3.2 A new target</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_19"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-300" playOrder="300">
+        <navLabel>
+          <text>14.4 Implementing intelligence: The missing ingredients</text>
+        </navLabel>
+        <content src="OEBPS/Text/14.htm#heading_id_20"/>
+        <navPoint class="chapter" id="navPoint-301" playOrder="301">
+          <navLabel>
+            <text>14.4.1 Intelligence as sensitivity to abstract analogies</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_21"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-302" playOrder="302">
+          <navLabel>
+            <text>14.4.2 The two poles of abstraction</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_22"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-303" playOrder="303">
+          <navLabel>
+            <text>14.4.3 The missing half of the picture</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_23"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-304" playOrder="304">
+        <navLabel>
+          <text>14.5 The future of deep learning</text>
+        </navLabel>
+        <content src="OEBPS/Text/14.htm#heading_id_24"/>
+        <navPoint class="chapter" id="navPoint-305" playOrder="305">
+          <navLabel>
+            <text>14.5.1 Models as programs</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_25"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-306" playOrder="306">
+          <navLabel>
+            <text>14.5.2 Blending together deep learning and program synthesis</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_26"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-307" playOrder="307">
+          <navLabel>
+            <text>14.5.3 Lifelong learning and modular subroutine reuse</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_27"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-308" playOrder="308">
+          <navLabel>
+            <text>14.5.4 The long-term vision</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_28"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-309" playOrder="309">
+        <navLabel>
+          <text>14.6 Staying up to date in a fast-moving field</text>
+        </navLabel>
+        <content src="OEBPS/Text/14.htm#heading_id_29"/>
+        <navPoint class="chapter" id="navPoint-310" playOrder="310">
+          <navLabel>
+            <text>14.6.1 Practice on real-world problems using Kaggle</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_30"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-311" playOrder="311">
+          <navLabel>
+            <text>14.6.2 Read about the latest developments on arXiv</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_31"/>
+        </navPoint>
+        <navPoint class="chapter" id="navPoint-312" playOrder="312">
+          <navLabel>
+            <text>14.6.3 Explore the Keras ecosystem</text>
+          </navLabel>
+          <content src="OEBPS/Text/14.htm#heading_id_32"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="navPoint-313" playOrder="313">
+        <navLabel>
+          <text>Final words</text>
+        </navLabel>
+        <content src="OEBPS/Text/14.htm#heading_id_33"/>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="navPoint-314" playOrder="314">
+      <navLabel>
+        <text>index</text>
+      </navLabel>
+      <content src="OEBPS/Text/index.htm"/>
+    </navPoint>
+  </navMap>
+</ncx>

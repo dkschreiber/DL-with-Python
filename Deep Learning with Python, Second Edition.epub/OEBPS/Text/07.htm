@@ -1,0 +1,1241 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>7</title>
+    
+  <link href="../../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+  <h1 class="tochead" id="heading_id_2"><a id="pgfId-998407"></a><a id="pgfId-1023953"></a>7 Working with Keras: A deep dive</h1>
+
+  <p class="co-summary-head"><a id="pgfId-1011754"></a>This chapter covers</p>
+
+  <ul class="calibre10">
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011760"></a>Creating Keras models with the <code class="fm-code-in-text">Sequential</code> class, the Functional API, and model subclassing</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011783"></a>Using built-in Keras training and evaluation loops</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011793"></a>Using Keras callbacks to customize training</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011803"></a>Using TensorBoard to monitor training and evaluation metrics</li>
+
+    <li class="co-summary-bullet"><a class="calibre11" id="pgfId-1011813"></a>Writing training and evaluation loops from scratch</li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1011889"></a>You’ve now got some experience with Keras—you’re familiar with the Sequential model, <code class="fm-code-in-text">Dense</code> layers, and built-in APIs for training, evaluation, and inference—<code class="fm-code-in-text">compile()</code>, <code class="fm-code-in-text">fit()</code>, <code class="fm-code-in-text">evaluate()</code>, and <code class="fm-code-in-text">predict()</code>. You even learned in chapter 3 how to inherit from the <code class="fm-code-in-text">Layer</code> class to create custom layers, and how to use the TensorFlow <code class="fm-code-in-text">GradientTape</code> to implement a step-by-step training loop.</p>
+
+  <p class="body"><a id="pgfId-1011914"></a>In the coming chapters, we’ll dig into computer vision, timeseries forecasting, natural language processing, and generative deep learning. These complex applications will require much more than a <code class="fm-code-in-text">Sequential</code> architecture and the default <code class="fm-code-in-text">fit()</code> loop. So let’s first turn you into a Keras expert! In this chapter, you’ll get a complete overview of the key ways to work with Keras APIs: everything you’re going to need to handle the advanced deep learning use cases you’ll encounter next.</p>
+
+  <h2 class="fm-head" id="heading_id_3"><a id="pgfId-1011923"></a>7.1 A spectrum of workflows</h2>
+
+  <p class="body"><a id="pgfId-1011959"></a><a id="marker-1028486"></a>The design of the Keras API is guided by the principle of <i class="fm-italics">progressive disclosure of complexity</i>: make it <a id="marker-1028488"></a>easy to get started, yet make it possible to handle high-complexity use cases, only requiring incremental learning at each step. Simple use cases should be easy and approachable, and arbitrarily advanced workflows should be <i class="fm-italics">possible</i>: no matter how niche and complex the thing you want to do, there should be a clear path to it. A path that builds upon the various things you’ve learned from simpler workflows. This means that you can grow from beginner to expert and still use the same tools—only in different ways.</p>
+
+  <p class="body"><a id="pgfId-1012000"></a>As such, there’s not a single “true” way of using Keras. Rather, Keras offers a <i class="fm-italics">spectrum of workflows</i>, from the very simple to the very flexible. There are different ways to build Keras models, and different ways to train them, answering different needs. Because all these workflows are based on shared <a id="marker-1028490"></a>APIs, such as <code class="fm-code-in-text">Layer</code> and <code class="fm-code-in-text">Model</code>, components from any workflow can be used in any other workflow—they can all talk to each other. <a id="marker-1028491"></a></p>
+
+  <h2 class="fm-head" id="heading_id_4"><a id="pgfId-1012012"></a>7.2 Different ways to build Keras models</h2>
+
+  <p class="body"><a id="pgfId-1012022"></a><a id="marker-1012023"></a>There are three APIs for building models in Keras (see figure 7.1):</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012031"></a>The <i class="fm-italics1">Sequential model</i>, the most <a class="calibre11" id="marker-1012050"></a>approachable API—it’s basically a Python list. As such, it’s limited to simple stacks of layers.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012060"></a>The <i class="fm-italics1">Functional API</i>, which focuses <a class="calibre11" id="marker-1012075"></a>on graph-like model architectures. It represents a nice mid-point between usability and flexibility, and as such, it’s the most commonly used model-building API.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1012085"></a><i class="fm-italics1">Model subclassing</i>, a low-level option where you write everything yourself from scratch. This is ideal if you want full control over every little thing. However, you won’t get access to many built-in Keras features, and you will be more at risk of making mistakes.</p>
+    </li>
+  </ul>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/07-01.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1043752"></a>Figure 7.1 Progressive disclosure of complexity for model building</p>
+
+  <h3 class="fm-head1" id="heading_id_5"><a id="pgfId-1012112"></a>7.2.1 The Sequential model</h3>
+
+  <p class="body"><a id="pgfId-1012143"></a><a id="marker-1012137"></a><a id="marker-1012139"></a>The simplest way to build a Keras model is to use the Sequential model, which you already know about.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012199"></a>Listing 7.1 The <code class="fm-code-in-text">Sequential</code> class</p>
+  <pre class="programlisting"><a id="pgfId-1032573"></a><b class="fm-codebrown">from</b> tensorflow <b class="fm-codebrown">import</b> keras 
+<a id="pgfId-1032574"></a><b class="fm-codebrown">from</b> tensorflow.keras <b class="fm-codebrown">import</b> layers
+<a id="pgfId-1032575"></a>  
+<a id="pgfId-1032576"></a>model = keras.Sequential([
+<a id="pgfId-1032577"></a>    layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>),
+<a id="pgfId-1032578"></a>    layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1012280"></a>])</pre>
+
+  <p class="body"><a id="pgfId-1012308"></a>Note that it’s possible to build the same model incrementally via the <code class="fm-code-in-text">add()</code> method, which is <a id="marker-1012297"></a>similar to the <code class="fm-code-in-text">append()</code> method of a Python list.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012374"></a>Listing 7.2 Incrementally building a Sequential model</p>
+  <pre class="programlisting"><a id="pgfId-1032591"></a>model = keras.Sequential()
+<a id="pgfId-1032592"></a>model.add(layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>))
+<a id="pgfId-1012419"></a>model.add(layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>))</pre>
+
+  <p class="body"><a id="pgfId-1012425"></a>You saw in chapter 4 that layers only get built (which is to say, create their weights) when they are called for the first time. That’s because the shape of the layers' weights depends on the shape of their input: until the input shape is known, they can’t be created.</p>
+
+  <p class="body"><a id="pgfId-1012431"></a>As such, the preceding Sequential model does not have any weights (listing 7.3) until you actually call it on some data, or call its <code class="fm-code-in-text">build()</code> method with an <a id="marker-1012442"></a>input shape (listing 7.4).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012503"></a>Listing 7.3 Models that aren’t yet built have no weights</p>
+  <pre class="programlisting"><a id="pgfId-1012452"></a>&gt;&gt;&gt; model.weights           <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1012548"></a>ValueError: Weights for model sequential_1 have not yet been created.</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042828"></a><span class="fm-combinumeral">❶</span> At that point, the model isn’t built yet.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012625"></a>Listing 7.4 Calling a model for the first time to build it</p>
+  <pre class="programlisting"><a id="pgfId-1012574"></a>&gt;&gt;&gt; model.build(input_shape=(<code class="fm-codegreen">None</code>, <span class="fm-codeblue">3</span>))       <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1012670"></a>&gt;&gt;&gt; model.weights                            <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1032625"></a>[&lt;tf.Variable "dense_2/kernel:0" shape=(3, 64) dtype=float32, ... &gt;,
+<a id="pgfId-1032626"></a> &lt;tf.Variable "dense_2/bias:0" shape=(64,) dtype=float32, ... &gt;
+<a id="pgfId-1032627"></a> &lt;tf.Variable "dense_3/kernel:0" shape=(64, 10) dtype=float32, ... &gt;,
+<a id="pgfId-1012700"></a> &lt;tf.Variable "dense_3/bias:0" shape=(10,) dtype=float32, ... &gt;]</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042716"></a><span class="fm-combinumeral">❶</span> Builds the model—now the model will expect samples of shape (3,). The None in the input shape signals that the batch size could be anything.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042744"></a><span class="fm-combinumeral">❷</span> Now you can retrieve the model’s weights.</p>
+
+  <p class="body"><a id="pgfId-1012755"></a>After the model is built, you can display its contents via <a id="marker-1012744"></a>the <code class="fm-code-in-text">summary()</code> method, which comes in handy for debugging.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012815"></a>Listing 7.5 The <code class="fm-code-in-text">summary()</code> method</p>
+  <pre class="programlisting"><a id="pgfId-1012764"></a>&gt;&gt;&gt; model.summary()
+<a id="pgfId-1032646"></a>Model: "sequential_1" 
+<a id="pgfId-1032647"></a>_________________________________________________________________
+<a id="pgfId-1032648"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1032649"></a>=================================================================
+<a id="pgfId-1032650"></a>dense_2 (Dense)              (None, 64)                256 
+<a id="pgfId-1032651"></a>_________________________________________________________________
+<a id="pgfId-1032652"></a>dense_3 (Dense)              (None, 10)                650 
+<a id="pgfId-1032653"></a>=================================================================
+<a id="pgfId-1032654"></a>Total params: 906 
+<a id="pgfId-1032655"></a>Trainable params: 906 
+<a id="pgfId-1032656"></a>Non-trainable params: 0 
+<a id="pgfId-1012920"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1012926"></a>As you can see, this model happens to be named “sequential_1.” You can give names to everything in Keras—every model, every layer.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1012983"></a>Listing 7.6 Naming models and layers with the <code class="fm-code-in-text">name</code> argument</p>
+  <pre class="programlisting"><a id="pgfId-1036627"></a>&gt;&gt;&gt; model = keras.Sequential(name=<span class="fm-codegreen">"my_example_model"</span>)
+<a id="pgfId-1036628"></a>&gt;&gt;&gt; model.add(layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>, name=<span class="fm-codegreen">"my_first_layer"</span>))
+<a id="pgfId-1036629"></a>&gt;&gt;&gt; model.add(layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>, name=<span class="fm-codegreen">"my_last_layer"</span>))
+<a id="pgfId-1036630"></a>&gt;&gt;&gt; model.build((<code class="fm-codegreen">None</code>, <span class="fm-codeblue">3</span>))
+<a id="pgfId-1036631"></a>&gt;&gt;&gt; model.summary()
+<a id="pgfId-1032675"></a>Model: "my_example_model" 
+<a id="pgfId-1032676"></a>_________________________________________________________________
+<a id="pgfId-1032677"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1032678"></a>=================================================================
+<a id="pgfId-1032679"></a>my_first_layer (Dense)       (None, 64)                256 
+<a id="pgfId-1032680"></a>_________________________________________________________________
+<a id="pgfId-1032681"></a>my_last_layer (Dense)        (None, 10)                650 
+<a id="pgfId-1032682"></a>=================================================================
+<a id="pgfId-1032683"></a>Total params: 906 
+<a id="pgfId-1032684"></a>Trainable params: 906 
+<a id="pgfId-1032685"></a>Non-trainable params: 0 
+<a id="pgfId-1013125"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1013153"></a>When building a Sequential model incrementally, it’s useful to be able to print a summary of what the current model looks like after you add each layer. But you can’t print a summary until the model is built! There’s actually a way to have your <code class="fm-code-in-text">Sequential</code> built on the fly: just declare the shape of the model’s inputs in advance. You can do this via <a id="marker-1013142"></a>the <code class="fm-code-in-text">Input</code> class.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1013213"></a>Listing 7.7 Specifying the input shape of your model in advance</p>
+  <pre class="programlisting"><a id="pgfId-1032704"></a>model = keras.Sequential()
+<a id="pgfId-1013252"></a>model.add(keras.Input(shape=(<span class="fm-codeblue">3</span>,)))               <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1013264"></a>model.add(layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>))</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042649"></a><span class="fm-combinumeral">❶</span> Use Input to declare the shape of the inputs. Note that the shape argument must be the shape of each sample, not the shape of one batch.</p>
+
+  <p class="body"><a id="pgfId-1013290"></a>Now you can use <code class="fm-code-in-text">summary()</code> to follow how the output shape of your model changes as you add more layers:</p>
+  <pre class="programlisting"><a id="pgfId-1013305"></a>&gt;&gt;&gt; model.summary()
+<a id="pgfId-1032735"></a>Model: "sequential_2" 
+<a id="pgfId-1032736"></a>_________________________________________________________________
+<a id="pgfId-1032737"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1032738"></a>=================================================================
+<a id="pgfId-1032739"></a>dense_4 (Dense)              (None, 64)                256 
+<a id="pgfId-1032740"></a>=================================================================
+<a id="pgfId-1032741"></a>Total params: 256 
+<a id="pgfId-1032742"></a>Trainable params: 256 
+<a id="pgfId-1032743"></a>Non-trainable params: 0 
+<a id="pgfId-1032744"></a>_________________________________________________________________
+<a id="pgfId-1032745"></a>&gt;&gt;&gt; model.add(layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>))
+<a id="pgfId-1032746"></a>&gt;&gt;&gt; model.summary()
+<a id="pgfId-1032747"></a>Model: "sequential_2" 
+<a id="pgfId-1032748"></a>_________________________________________________________________
+<a id="pgfId-1032749"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1032750"></a>=================================================================
+<a id="pgfId-1032751"></a>dense_4 (Dense)              (None, 64)                256 
+<a id="pgfId-1032752"></a>_________________________________________________________________
+<a id="pgfId-1032753"></a>dense_5 (Dense)              (None, 10)                650 
+<a id="pgfId-1032754"></a>=================================================================
+<a id="pgfId-1032755"></a>Total params: 906 
+<a id="pgfId-1032756"></a>Trainable params: 906 
+<a id="pgfId-1032757"></a>Non-trainable params: 0 
+<a id="pgfId-1013457"></a>_________________________________________________________________</pre>
+
+  <p class="body"><a id="pgfId-1013463"></a>This is a pretty common debugging workflow when dealing with layers that transform their inputs in complex ways, such as the convolutional layers you’ll learn about in chapter 8. <a id="marker-1013465"></a><a id="marker-1013468"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_6"><a id="pgfId-1013474"></a>7.2.2 The Functional API</h3>
+
+  <p class="body"><a id="pgfId-1013484"></a><a id="marker-1013485"></a>The Sequential model is easy to use, but its applicability is extremely limited: it can only express models with a single input and a single output, applying one layer after the other in a sequential fashion. In practice, it’s pretty common to encounter models with multiple inputs (say, an image and its metadata), multiple outputs (different things you want to predict about the data), or a nonlinear topology.</p>
+
+  <p class="body"><a id="pgfId-1013493"></a>In such cases, you’d build your model using the Functional API. This is what most Keras models you’ll encounter in the wild use. It’s fun and powerful—it feels like playing with LEGO bricks.</p>
+
+  <p class="fm-head2"><a id="pgfId-1013499"></a>A simple example</p>
+
+  <p class="body"><a id="pgfId-1013509"></a><a id="marker-1013510"></a>Let’s start with something simple: the stack of two layers we used in the previous section. Its Functional API version looks like the following listing.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1013569"></a>Listing 7.8 A simple Functional model with two <code class="fm-code-in-text">Dense</code> layers</p>
+  <pre class="programlisting"><a id="pgfId-1032777"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">3</span>,), name=<span class="fm-codegreen">"my_input"</span>)
+<a id="pgfId-1032778"></a>features = layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1032779"></a>outputs = layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)(features)
+<a id="pgfId-1013633"></a>model = keras.Model(inputs=inputs, outputs=outputs)</pre>
+
+  <p class="body"><a id="pgfId-1013639"></a>Let’s go over this step by step.</p>
+
+  <p class="body"><a id="pgfId-1013645"></a>We started by declaring an <code class="fm-code-in-text">Input</code> (note that you can also give names to these input objects, like everything else):</p>
+  <pre class="programlisting"><a id="pgfId-1013660"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">3</span>,), name=<span class="fm-codegreen">"my_input"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1013674"></a>This <code class="fm-code-in-text">inputs</code> object holds information about the shape and dtype of the data that the model will process:</p>
+  <pre class="programlisting"><a id="pgfId-1013695"></a>&gt;&gt;&gt; inputs.shape
+<a id="pgfId-1013709"></a>(None, 3)          <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1013721"></a>&gt;&gt;&gt; inputs.dtype   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1013733"></a>float32</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042544"></a><span class="fm-combinumeral">❶</span> The model will process batches where each sample has shape (3,). The number of samples per batch is variable (indicated by the None batch size).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042565"></a><span class="fm-combinumeral">❷</span> These batches will have dtype float32.</p>
+
+  <p class="body"><a id="pgfId-1013798"></a>We call such an <a id="marker-1013777"></a>object a <i class="fm-italics">symbolic tensor</i>. It doesn’t contain any actual data, but it encodes the specifications of the actual tensors of data that the model will see when you use it. It <i class="fm-italics">stands for</i> future tensors of data.</p>
+
+  <p class="body"><a id="pgfId-1013807"></a>Next, we created a layer and called it on the input:</p>
+  <pre class="programlisting"><a id="pgfId-1013813"></a>features = layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)</pre>
+
+  <p class="body"><a id="pgfId-1013827"></a>All Keras layers can be called both on real tensors of data and on these symbolic tensors. In the latter case, they return a new symbolic tensor, with updated shape and dtype information:</p>
+  <pre class="programlisting"><a id="pgfId-1013833"></a>&gt;&gt;&gt; features.shape
+<a id="pgfId-1013847"></a>(None, 64)</pre>
+
+  <p class="body"><a id="pgfId-1013853"></a>After obtaining the final outputs, we instantiated the model by specifying its inputs and outputs in the <code class="fm-code-in-text">Model</code> constructor:</p>
+  <pre class="programlisting"><a id="pgfId-1013868"></a>outputs = layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)(features)
+<a id="pgfId-1013882"></a>model = keras.Model(inputs=inputs, outputs=outputs)</pre>
+
+  <p class="body"><a id="pgfId-1013888"></a>Here’s the summary of our model:<a id="marker-1013890"></a></p>
+  <pre class="programlisting"><a id="pgfId-1013897"></a>&gt;&gt;&gt; model.summary()
+<a id="pgfId-1032828"></a>Model: "functional_1" 
+<a id="pgfId-1032829"></a>_________________________________________________________________
+<a id="pgfId-1032830"></a>Layer (type)                 Output Shape              Param # 
+<a id="pgfId-1032831"></a>=================================================================
+<a id="pgfId-1032832"></a>my_input (InputLayer)        [(None, 3)]               0 
+<a id="pgfId-1032833"></a>_________________________________________________________________
+<a id="pgfId-1032834"></a>dense_6 (Dense)              (None, 64)                256 
+<a id="pgfId-1032835"></a>_________________________________________________________________
+<a id="pgfId-1032836"></a>dense_7 (Dense)              (None, 10)                650 
+<a id="pgfId-1032837"></a>=================================================================
+<a id="pgfId-1032838"></a>Total params: 906 
+<a id="pgfId-1032839"></a>Trainable params: 906 
+<a id="pgfId-1032840"></a>Non-trainable params: 0 
+<a id="pgfId-1013989"></a>_________________________________________________________________</pre>
+
+  <p class="fm-head2"><a id="pgfId-1013995"></a>Multi-input, multi-output models</p>
+
+  <p class="body"><a id="pgfId-1014012"></a><a id="marker-1014006"></a><a id="marker-1014008"></a>Unlike this toy model, most deep learning models don’t look like lists—they look like graphs. They may, for instance, have multiple inputs or multiple outputs. It’s for this kind of model that the Functional API really shines.</p>
+
+  <p class="body"><a id="pgfId-1014017"></a>Let’s say you’re building a system to rank customer support tickets by priority and route them to the appropriate department. Your model has three inputs:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014023"></a>The title of the ticket (text input)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014037"></a>The text body of the ticket (text input)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014047"></a>Any tags added by the user (categorical input, assumed here to be one-hot encoded)</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1014057"></a>We can encode the text inputs as arrays of ones and zeros of size <code class="fm-code-in-text">vocabulary_size</code> (see chapter 11 for detailed information about text encoding techniques).</p>
+
+  <p class="body"><a id="pgfId-1014072"></a>Your model also has two outputs:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014078"></a>The priority score of the ticket, a scalar between 0 and 1 (sigmoid output)</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1014092"></a>The department that should handle the ticket (a softmax over the set of departments)</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1014102"></a>You can build this model in a few lines with the Functional API.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014159"></a>Listing 7.9 A multi-input, multi-output Functional model</p>
+  <pre class="programlisting"><a id="pgfId-1032859"></a>vocabulary_size = <span class="fm-codeblue">10000</span> 
+<a id="pgfId-1032860"></a>num_tags = <span class="fm-codeblue">100</span> 
+<a id="pgfId-1032861"></a>num_departments = <span class="fm-codeblue">4</span> 
+<a id="pgfId-1032862"></a>  
+<a id="pgfId-1014210"></a>title = keras.Input(shape=(vocabulary_size,), name=<span class="fm-codegreen">"title"</span>)                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014227"></a>text_body = keras.Input(shape=(vocabulary_size,), name=<span class="fm-codegreen">"text_body"</span>)        <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014239"></a>tags = keras.Input(shape=(num_tags,), name=<span class="fm-codegreen">"tags"</span>)                         <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014256"></a> 
+<a id="pgfId-1014251"></a>features = layers.Concatenate()([title, text_body, tags])                  <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014268"></a>features = layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>)(features)                   <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1014285"></a> 
+<a id="pgfId-1014280"></a>priority = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>, name=<span class="fm-codegreen">"priority"</span>)(features)<span class="fm-combinumeral">❹</span>
+<a id="pgfId-1014297"></a>department = layers.Dense(
+<a id="pgfId-1014303"></a>    num_departments, activation=<span class="fm-codegreen">"softmax"</span>, name=<span class="fm-codegreen">"department"</span>)(features)    <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1014320"></a> 
+<a id="pgfId-1014315"></a>model = keras.Model(inputs=[title, text_body, tags],                       <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1037087"></a>                    outputs=[priority, department])                        <span class="fm-combinumeral">❺</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042103"></a><span class="fm-combinumeral">❶</span> Define model inputs.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042124"></a><span class="fm-combinumeral">❷</span> Combine input features into a single tensor, features, by concatenating them.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042141"></a><span class="fm-combinumeral">❸</span> Apply an intermediate layer to recombine input features into richer representations.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042158"></a><span class="fm-combinumeral">❹</span> Define model outputs.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1042175"></a><span class="fm-combinumeral">❺</span> Create the model by specifying its inputs and outputs.</p>
+
+  <p class="body"><a id="pgfId-1014425"></a>The Functional API is a simple, LEGO-like, yet very flexible way to define arbitrary graphs of layers like these. <a id="marker-1014427"></a><a id="marker-1014430"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1014436"></a>Training a multi-input, multi-output model</p>
+
+  <p class="body"><a id="pgfId-1014477"></a><a id="marker-1014447"></a><a id="marker-1014449"></a><a id="marker-1014451"></a>You can train your model in much the same way as you would train a Sequential model, by calling <code class="fm-code-in-text">fit()</code> with lists of input and output data. These lists of data should be in the same order as the inputs you passed to <a id="marker-1014466"></a>the <code class="fm-code-in-text">Model</code> constructor.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014537"></a>Listing 7.10 Training a model by providing lists of input and target arrays</p>
+  <pre class="programlisting"><a id="pgfId-1032965"></a><b class="fm-codebrown">import</b> numpy <b class="fm-codebrown">as</b> np
+<a id="pgfId-1032966"></a>  
+<a id="pgfId-1032967"></a>num_samples = <span class="fm-codeblue">1280</span> 
+<a id="pgfId-1032968"></a>  
+<a id="pgfId-1014589"></a>title_data = np.random.randint(<span class="fm-codeblue">0</span>, <span class="fm-codeblue">2</span>, size=(num_samples, vocabulary_size))     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014606"></a>text_body_data = np.random.randint(<span class="fm-codeblue">0</span>, <span class="fm-codeblue">2</span>, size=(num_samples, vocabulary_size)) <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014618"></a>tags_data = np.random.randint(<span class="fm-codeblue">0</span>, <span class="fm-codeblue">2</span>, size=(num_samples, num_tags))             <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1014635"></a> 
+<a id="pgfId-1014630"></a>priority_data = np.random.random(size=(num_samples, <span class="fm-codeblue">1</span>))                       <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014647"></a>department_data = np.random.randint(<span class="fm-codeblue">0</span>, <span class="fm-codeblue">2</span>, size=(num_samples, num_departments))<span class="fm-combinumeral">❷</span>
+<a id="pgfId-1014664"></a> 
+<a id="pgfId-1033049"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1033050"></a>              loss=[<span class="fm-codegreen">"mean_squared_error"</span>, <span class="fm-codegreen">"categorical_crossentropy"</span>],
+<a id="pgfId-1033051"></a>              metrics=[[<span class="fm-codegreen">"mean_absolute_error"</span>], [<span class="fm-codegreen">"accuracy"</span>]])
+<a id="pgfId-1033052"></a>model.fit([title_data, text_body_data, tags_data],
+<a id="pgfId-1033053"></a>          [priority_data, department_data],
+<a id="pgfId-1033054"></a>          epochs=<span class="fm-codeblue">1</span>)
+<a id="pgfId-1033055"></a>model.evaluate([title_data, text_body_data, tags_data],
+<a id="pgfId-1033056"></a>               [priority_data, department_data])
+<a id="pgfId-1014712"></a>priority_preds, department_preds = model.predict(
+<a id="pgfId-1037163"></a>    [title_data, text_body_data, tags_data])</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041944"></a><span class="fm-combinumeral">❶</span> Dummy input data</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041965"></a><span class="fm-combinumeral">❷</span> Dummy target data</p>
+
+  <p class="body"><a id="pgfId-1014754"></a>If you don’t want to rely on input order (for instance, because you have many inputs or outputs), you can also leverage the names you gave to the <code class="fm-code-in-text">Input</code> objects and the output layers, and pass data via dictionaries. <a id="marker-1014765"></a><a id="marker-1014768"></a><a id="marker-1014770"></a></p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1014827"></a>Listing 7.11 Training a model by providing dicts of input and target arrays</p>
+  <pre class="programlisting"><a id="pgfId-1033074"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1033075"></a>              loss={<span class="fm-codegreen">"priority"</span>: <span class="fm-codegreen">"mean_squared_error"</span>, <span class="fm-codegreen">"department"</span>:
+<a id="pgfId-1037190"></a>                    <span class="fm-codegreen">"categorical_crossentropy"</span>},
+<a id="pgfId-1033076"></a>              metrics={<span class="fm-codegreen">"priority"</span>: [<span class="fm-codegreen">"mean_absolute_error"</span>], <span class="fm-codegreen">"department"</span>:
+<a id="pgfId-1037212"></a>                       [<span class="fm-codegreen">"accuracy"</span>]})
+<a id="pgfId-1033077"></a>model.fit({<span class="fm-codegreen">"title"</span>: title_data, <span class="fm-codegreen">"text_body"</span>: text_body_data,
+<a id="pgfId-1037244"></a>           <span class="fm-codegreen">"tags"</span>: tags_data},
+<a id="pgfId-1033078"></a>          {<span class="fm-codegreen">"priority"</span>: priority_data, <span class="fm-codegreen">"department"</span>: department_data},
+<a id="pgfId-1033079"></a>          epochs=<span class="fm-codeblue">1</span>)
+<a id="pgfId-1033080"></a>model.evaluate({<span class="fm-codegreen">"title"</span>: title_data, <span class="fm-codegreen">"text_body"</span>: text_body_data,
+<a id="pgfId-1037259"></a>                <span class="fm-codegreen">"tags"</span>: tags_data},
+<a id="pgfId-1033081"></a>               {<span class="fm-codegreen">"priority"</span>: priority_data, <span class="fm-codegreen">"department"</span>: department_data})
+<a id="pgfId-1033082"></a>priority_preds, department_preds = model.predict(
+<a id="pgfId-1014916"></a>    {<span class="fm-codegreen">"title"</span>: title_data, <span class="fm-codegreen">"text_body"</span>: text_body_data, <span class="fm-codegreen">"tags"</span>: tags_data})</pre>
+
+  <p class="fm-head2"><a id="pgfId-1014922"></a>The power of the Functional API: Access to layer connectivity</p>
+
+  <p class="body"><a id="pgfId-1014955"></a><a id="marker-1014933"></a><a id="marker-1014935"></a>A Functional model is an explicit graph data structure. This makes it possible to inspect how layers are connected and reuse previous graph nodes (which are layer outputs) as part of new models. It also nicely fits the “mental model” that most researchers use when thinking about a deep neural network: a graph of layers. This enables two important use cases: model visualization and feature extraction.</p>
+
+  <p class="body"><a id="pgfId-1014986"></a>Let’s visualize the connectivity of the model we just defined (the <i class="fm-italics">topology</i> of the model). You can plot a Functional model as a graph with <a id="marker-1034411"></a>the <code class="fm-code-in-text">plot_model()</code> utility (see figure 7.2).</p>
+  <pre class="programlisting"><a id="pgfId-1014995"></a>keras.utils.plot_model(model, <span class="fm-codegreen">"ticket_classifier.png"</span>)</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/07-02.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1043798"></a>Figure 7.2 Plot generated by <code class="fm-code-in-text">plot_model()</code> on our ticket classifier model</p>
+
+  <p class="body"><a id="pgfId-1015028"></a>You can add to this plot the input and output shapes of each layer in the model, which can be helpful during debugging (see figure 7.3).</p>
+  <pre class="programlisting"><a id="pgfId-1015048"></a>keras.utils.plot_model(
+<a id="pgfId-1037279"></a>    model, <span class="fm-codegreen">"ticket_classifier_with_shape_info.png"</span>, show_shapes=<code class="fm-codegreen">True</code>)</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/07-03.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1043844"></a>Figure 7.3 Model plot with shape information added</p>
+
+  <p class="body"><a id="pgfId-1015072"></a>The “None” in the tensor shapes represents the batch size: this model allows batches of any size.</p>
+
+  <p class="body"><a id="pgfId-1015124"></a>Access to layer connectivity also means that you can inspect and reuse individual nodes (layer calls) in the graph. The <code class="fm-code-in-text">model.layers</code> model property <a id="marker-1015103"></a>provides the list of layers that make up the model, and for each layer you can query <code class="fm-code-in-text">layer.input</code> and <code class="fm-code-in-text">layer.output</code>.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015184"></a>Listing 7.12 Retrieving the inputs or outputs of a layer in a Functional model</p>
+  <pre class="programlisting"><a id="pgfId-1015133"></a>&gt;&gt;&gt; model.layers
+<a id="pgfId-1034457"></a>[&lt;tensorflow.python.keras.engine.input_layer.InputLayer at 0x7fa963f9d358&gt;,
+<a id="pgfId-1034458"></a> &lt;tensorflow.python.keras.engine.input_layer.InputLayer at 0x7fa963f9d2e8&gt;,
+<a id="pgfId-1034459"></a> &lt;tensorflow.python.keras.engine.input_layer.InputLayer at 0x7fa963f9d470&gt;,
+<a id="pgfId-1034460"></a> &lt;tensorflow.python.keras.layers.merge.Concatenate at 0x7fa963f9d860&gt;,
+<a id="pgfId-1034461"></a> &lt;tensorflow.python.keras.layers.core.Dense at 0x7fa964074390&gt;,
+<a id="pgfId-1034462"></a> &lt;tensorflow.python.keras.layers.core.Dense at 0x7fa963f9d898&gt;,
+<a id="pgfId-1015259"></a> &lt;tensorflow.python.keras.layers.core.Dense at 0x7fa963f95470&gt;]
+<a id="pgfId-1037295"></a>&gt;&gt;&gt; model.layers[<span class="fm-codeblue">3</span>].input
+<a id="pgfId-1034479"></a>[&lt;tf.Tensor "title:0" shape=(None, 10000) dtype=float32&gt;,
+<a id="pgfId-1034480"></a> &lt;tf.Tensor "text_body:0" shape=(None, 10000) dtype=float32&gt;,
+<a id="pgfId-1015283"></a> &lt;tf.Tensor "tags:0" shape=(None, 100) dtype=float32&gt;]
+<a id="pgfId-1015289"></a>&gt;&gt;&gt; model.layers[<span class="fm-codeblue">3</span>].output
+<a id="pgfId-1015295"></a>&lt;tf.Tensor "concatenate/concat:0" shape=(None, 20100) dtype=float32&gt;</pre>
+
+  <p class="body"><a id="pgfId-1015301"></a>This enables you to do <i class="fm-italics">feature extraction</i>, creating models <a id="marker-1015312"></a>that reuse intermediate features from another model.</p>
+
+  <p class="body"><a id="pgfId-1015322"></a>Let’s say you want to add another output to the previous model—you want to estimate how long a given issue ticket will take to resolve, a kind of difficulty rating. You could do this via a classification layer over three categories: “quick,” “medium,” and “difficult.” You don’t need to recreate and retrain a model from scratch. You can start from the intermediate features of your previous model, since you have access to them, like this.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015379"></a>Listing 7.13 Creating a new model by reusing intermediate layer outputs</p>
+  <pre class="programlisting"><a id="pgfId-1015328"></a>features = model.layers[<span class="fm-codeblue">4</span>].output                                            <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1034550"></a>difficulty = layers.Dense(<span class="fm-codeblue">3</span>, activation=<span class="fm-codegreen">"softmax"</span>, name=<span class="fm-codegreen">"difficulty"</span>)(features)
+<a id="pgfId-1034551"></a>  
+<a id="pgfId-1034552"></a>new_model = keras.Model(
+<a id="pgfId-1034553"></a>    inputs=[title, text_body, tags],
+<a id="pgfId-1015447"></a>    outputs=[priority, department, difficulty])</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041850"></a><span class="fm-combinumeral">❶</span> layers[4] is our intermediate Dense layer</p>
+
+  <p class="body"><a id="pgfId-1015473"></a>Let’s plot our new model (see figure 7.4):<a id="marker-1034583"></a><a id="marker-1034584"></a><a id="marker-1034586"></a></p>
+  <pre class="programlisting"><a id="pgfId-1015488"></a>keras.utils.plot_model(
+<a id="pgfId-1037334"></a>    new_model, <span class="fm-codegreen">"updated_ticket_classifier.png"</span>, show_shapes=<code class="fm-codegreen">True</code>)</pre>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/07-04.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1043890"></a>Figure 7.4 Plot of our new model</p>
+
+  <h3 class="fm-head1" id="heading_id_7"><a id="pgfId-1015512"></a>7.2.3 Subclassing the Model class</h3>
+
+  <p class="body"><a id="pgfId-1015569"></a><a id="marker-1015537"></a><a id="marker-1015539"></a>The last model-building pattern you should know about is the most advanced one: <code class="fm-code-in-text">Model</code> subclassing. You learned in chapter 3 how to subclass the <code class="fm-code-in-text">Layer</code> class to create custom layers. Subclassing <code class="fm-code-in-text">Model</code> is pretty similar:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015578"></a>In the <code class="fm-code-in-text">__init__()</code> method, define the layers the model will use.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015607"></a>In the <code class="fm-code-in-text">call()</code> method, define the <a class="calibre11" id="marker-1015622"></a>forward pass of the model, reusing the layers previously created.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1015632"></a>Instantiate your subclass, and call it on data to create its weights.</p>
+    </li>
+  </ul>
+
+  <p class="fm-head2"><a id="pgfId-1015642"></a>Rewriting our previous example as a subclassed model</p>
+
+  <p class="body"><a id="pgfId-1015668"></a><a id="marker-1015653"></a>Let’s take a look at a simple example: we will reimplement the customer support ticket management model <a id="marker-1015657"></a>using a <code class="fm-code-in-text">Model</code> subclass.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1015728"></a>Listing 7.14 A simple subclassed model</p>
+  <pre class="programlisting"><a id="pgfId-1034619"></a><b class="fm-codebrown">class</b> CustomerTicketModel(keras.Model):
+<a id="pgfId-1034620"></a>  
+<a id="pgfId-1034621"></a>    <b class="fm-codebrown">def</b> __init__(self, num_departments):
+<a id="pgfId-1015778"></a>        super().__init__()                                           <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1015790"></a>        self.concat_layer = layers.Concatenate()                     <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1015802"></a>        self.mixing_layer = layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>)      <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1015814"></a>        self.priority_scorer = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>) <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1015826"></a>        self.department_classifier = layers.Dense(                   <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1015838"></a>            num_departments, activation=<span class="fm-codegreen">"softmax"</span>)
+<a id="pgfId-1015849"></a> 
+<a id="pgfId-1015844"></a>    <b class="fm-codebrown">def</b> call(self, inputs):                                          <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1034697"></a>        title = inputs[<span class="fm-codegreen">"title"</span>]
+<a id="pgfId-1034698"></a>        text_body = inputs[<span class="fm-codegreen">"text_body"</span>]
+<a id="pgfId-1034699"></a>        tags = inputs[<span class="fm-codegreen">"tags"</span>]
+<a id="pgfId-1034700"></a>  
+<a id="pgfId-1034701"></a>        features = self.concat_layer([title, text_body, tags])
+<a id="pgfId-1034702"></a>        features = self.mixing_layer(features)
+<a id="pgfId-1034703"></a>        priority = self.priority_scorer(features)
+<a id="pgfId-1034704"></a>        department = self.department_classifier(features)
+<a id="pgfId-1015908"></a>        <b class="fm-codebrown">return</b> priority, department</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041589"></a><span class="fm-combinumeral">❶</span> Don’t forget to call the super() constructor!</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041610"></a><span class="fm-combinumeral">❷</span> Define sublayers in the constructor.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041627"></a><span class="fm-combinumeral">❸</span> Define the forward pass in the call() method.</p>
+
+  <p class="body"><a id="pgfId-1015979"></a>Once you’ve defined the model, you can instantiate it. Note that it will only create its weights the first time you call it on some <a id="marker-1015968"></a>data, much like <code class="fm-code-in-text">Layer</code> subclasses:</p>
+  <pre class="programlisting"><a id="pgfId-1015988"></a>model = CustomerTicketModel(num_departments=<span class="fm-codeblue">4</span>)
+<a id="pgfId-1016007"></a> 
+<a id="pgfId-1016002"></a>priority, department = model(
+<a id="pgfId-1016013"></a>    {<span class="fm-codegreen">"title"</span>: title_data, <span class="fm-codegreen">"text_body"</span>: text_body_data, <span class="fm-codegreen">"tags"</span>: tags_data})</pre>
+
+  <p class="body"><a id="pgfId-1016113"></a>So far, everything looks very similar to <code class="fm-code-in-text">Layer</code> subclassing, a workflow you encountered in chapter 3. What, then, is the difference between a <code class="fm-code-in-text">Layer</code> subclass and a <code class="fm-code-in-text">Model</code> subclass? It’s simple: a “layer” is a building block you use to create models, and a “model” is the top-level object that you will actually <a id="marker-1016050"></a>train, export for <a id="marker-1016056"></a>inference, etc. In short, a <code class="fm-code-in-text">Model</code> has <code class="fm-code-in-text">fit()</code>, <code class="fm-code-in-text">evaluate()</code>, and <code class="fm-code-in-text">predict()</code> methods. Layers don’t. Other than <a id="marker-1016102"></a>that, the two classes are virtually identical. (Another difference is that you can <i class="fm-italics">save</i> a model to a file on disk, which we will cover in a few sections.)</p>
+
+  <p class="body"><a id="pgfId-1016122"></a>You can compile and train a <code class="fm-code-in-text">Model</code> subclass just like a Sequential or Functional model:</p>
+  <pre class="programlisting"><a id="pgfId-1034751"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1016151"></a>              loss=[<span class="fm-codegreen">"mean_squared_error"</span>, <span class="fm-codegreen">"categorical_crossentropy"</span>],  <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1016163"></a>              metrics=[[<span class="fm-codegreen">"mean_absolute_error"</span>], [<span class="fm-codegreen">"accuracy"</span>]])          <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1016175"></a>model.fit({<span class="fm-codegreen">"title"</span>: title_data,                                         <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1016187"></a>           <span class="fm-codegreen">"text_body"</span>: text_body_data,                                 <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1016199"></a>           <span class="fm-codegreen">"tags"</span>: tags_data},                                          <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1016211"></a>          [priority_data, department_data],                             <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1016223"></a>          epochs=<span class="fm-codeblue">1</span>)
+<a id="pgfId-1034899"></a>model.evaluate({<span class="fm-codegreen">"title"</span>: title_data,
+<a id="pgfId-1034900"></a>                <span class="fm-codegreen">"text_body"</span>: text_body_data,
+<a id="pgfId-1034901"></a>                <span class="fm-codegreen">"tags"</span>: tags_data},
+<a id="pgfId-1034902"></a>               [priority_data, department_data])
+<a id="pgfId-1034903"></a>priority_preds, department_preds = model.predict({<span class="fm-codegreen">"title"</span>: title_data,
+<a id="pgfId-1034904"></a>                                                  <span class="fm-codegreen">"text_body"</span>: text_body_data,
+<a id="pgfId-1016265"></a>                                                  <span class="fm-codegreen">"tags"</span>: tags_data})</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041277"></a><span class="fm-combinumeral">❶</span> The structure of what you pass as the loss and metrics arguments must match exactly what gets returned by call()—here, a list of two elements.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041298"></a><span class="fm-combinumeral">❷</span> The structure of the input data must match exactly what is expected by the call() method—here, a dict with keys title, text_body, and tags.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1041315"></a><span class="fm-combinumeral">❸</span> The structure of the target data must match exactly what is returned by the call() method—here, a list of two elements.</p>
+
+  <p class="body"><a id="pgfId-1016349"></a>The <code class="fm-code-in-text">Model</code> subclassing workflow is the most flexible way to build a model. It enables you to build models that cannot be expressed as directed acyclic graphs of layers—imagine, for instance, a model where the <code class="fm-code-in-text">call()</code> method uses layers inside a <code class="fm-code-in-text">for</code> loop, or even <a id="marker-1016354"></a>calls them recursively. Anything is possible—you’re in charge. <a id="marker-1016360"></a></p>
+
+  <p class="fm-head2"><a id="pgfId-1016367"></a>Beware: What subclassed models don’t support</p>
+
+  <p class="body"><a id="pgfId-1016377"></a><a id="marker-1016378"></a>This freedom comes at a cost: with subclassed models, you are responsible for more of the model logic, which means your potential error surface is much larger. As a result, you will have more debugging work to do. You are developing a new Python object, not just snapping together LEGO bricks.</p>
+
+  <p class="body"><a id="pgfId-1016386"></a>Functional and subclassed models are also substantially different in nature. A Functional model is an explicit data structure—a graph of layers, which you can view, inspect, and modify. A subclassed model is a piece of bytecode—a Python class with a <code class="fm-code-in-text">call()</code> method that contains raw code. This is the source of the subclassing workflow’s flexibility—you can code up whatever functionality you like—but it introduces new limitations.</p>
+
+  <p class="body"><a id="pgfId-1016427"></a>For instance, because the way layers are connected to each other is hidden inside the body of the <code class="fm-code-in-text">call()</code> method, you cannot access that information. Calling <code class="fm-code-in-text">summary()</code> will not display layer connectivity, and you cannot plot the model topology via <code class="fm-code-in-text">plot_model()</code>. Likewise, if you have a subclassed model, you cannot access the nodes of the graph of layers to do feature extraction because there is simply no graph. Once the model is instantiated, its forward pass becomes a complete black box. <a id="marker-1016432"></a><a id="marker-1016435"></a><a id="marker-1016437"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_8"><a id="pgfId-1016443"></a>7.2.4 Mixing and matching different components</h3>
+
+  <p class="body"><a id="pgfId-1016463"></a><a id="marker-1016454"></a>Crucially, choosing one of these patterns—the Sequential model, the Functional API, or <code class="fm-code-in-text">Model</code> subclassing—does not lock you out of the others. All models in the Keras API can smoothly interoperate with each other, whether they’re Sequential models, Functional models, or subclassed models written from scratch. They’re all part of the same spectrum of workflows.</p>
+
+  <p class="body"><a id="pgfId-1016472"></a>For instance, you can use a subclassed layer or model in a Functional model.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016529"></a>Listing 7.15 Creating a Functional model that includes a subclassed model</p>
+  <pre class="programlisting"><a id="pgfId-1034936"></a><b class="fm-codebrown">class</b> Classifier(keras.Model):
+<a id="pgfId-1034937"></a>  
+<a id="pgfId-1034938"></a>    <b class="fm-codebrown">def</b> __init__(self, num_classes=<span class="fm-codeblue">2</span>):
+<a id="pgfId-1034939"></a>        super().__init__()
+<a id="pgfId-1034940"></a>        <b class="fm-codebrown">if</b> num_classes == <span class="fm-codeblue">2</span>:
+<a id="pgfId-1034941"></a>            num_units = <span class="fm-codeblue">1</span> 
+<a id="pgfId-1034942"></a>            activation = <span class="fm-codegreen">"sigmoid"</span> 
+<a id="pgfId-1034943"></a>        <b class="fm-codebrown">else</b>:
+<a id="pgfId-1034944"></a>            num_units = num_classes
+<a id="pgfId-1034945"></a>            activation = <span class="fm-codegreen">"softmax"</span> 
+<a id="pgfId-1034946"></a>        self.dense = layers.Dense(num_units, activation=activation)
+<a id="pgfId-1034947"></a>  
+<a id="pgfId-1034948"></a>    <b class="fm-codebrown">def</b> call(self, inputs):
+<a id="pgfId-1034949"></a>        <b class="fm-codebrown">return</b> self.dense(inputs)
+<a id="pgfId-1034950"></a>  
+<a id="pgfId-1034951"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">3</span>,))
+<a id="pgfId-1034952"></a>features = layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1034953"></a>outputs = Classifier(num_classes=<span class="fm-codeblue">10</span>)(features)
+<a id="pgfId-1016667"></a>model = keras.Model(inputs=inputs, outputs=outputs)</pre>
+
+  <p class="body"><a id="pgfId-1016673"></a>Inversely, you can use a Functional model as part of a subclassed layer or model. <a id="marker-1016675"></a></p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1016733"></a>Listing 7.16 Creating a subclassed model that includes a Functional model</p>
+  <pre class="programlisting"><a id="pgfId-1034972"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">64</span>,))
+<a id="pgfId-1034973"></a>outputs = layers.Dense(<span class="fm-codeblue">1</span>, activation=<span class="fm-codegreen">"sigmoid"</span>)(inputs)
+<a id="pgfId-1034974"></a>binary_classifier = keras.Model(inputs=inputs, outputs=outputs)
+<a id="pgfId-1034976"></a><b class="fm-codebrown">class</b> MyModel(keras.Model):
+<a id="pgfId-1034977"></a>  
+<a id="pgfId-1034978"></a>    <b class="fm-codebrown">def</b> __init__(self, num_classes=<span class="fm-codeblue">2</span>):
+<a id="pgfId-1034979"></a>        super().__init__()
+<a id="pgfId-1034980"></a>        self.dense = layers.Dense(<span class="fm-codeblue">64</span>, activation=<span class="fm-codegreen">"relu"</span>)
+<a id="pgfId-1034981"></a>        self.classifier = binary_classifier
+<a id="pgfId-1034982"></a>  
+<a id="pgfId-1034983"></a>    <b class="fm-codebrown">def</b> call(self, inputs):
+<a id="pgfId-1034984"></a>        features = self.dense(inputs)
+<a id="pgfId-1034985"></a>        <b class="fm-codebrown">return</b> self.classifier(features)
+<a id="pgfId-1034986"></a>  
+<a id="pgfId-1016847"></a>model = MyModel()</pre>
+
+  <h3 class="fm-head1" id="heading_id_9"><a id="pgfId-1016858"></a>7.2.5 Remember: Use the right tool for the job</h3>
+
+  <p class="body"><a id="pgfId-1016868"></a><a id="marker-1016869"></a>You’ve learned about the spectrum of workflows for building Keras models, from the simplest workflow, the Sequential model, to the most advanced one, model subclassing. When should you use one over the other? Each one has its pros and cons—pick the one most suitable for the job at hand.</p>
+
+  <p class="body"><a id="pgfId-1016877"></a>In general, the Functional API provides you with a pretty good trade-off between ease of use and flexibility. It also gives you direct access to layer connectivity, which is very powerful for use cases such as model plotting or feature extraction. If you <i class="fm-italics">can</i> use the Functional API—that is, if your model can be expressed as a directed acyclic graph of layers—I recommend using it over model subclassing.</p>
+
+  <p class="body"><a id="pgfId-1016892"></a>Going forward, all examples in this book will use the Functional API, simply because all the models we will work with are expressible as graphs of layers. We will, however, make frequent use of subclassed layers. In general, using Functional models that include subclassed layers provides the best of both worlds: high development flexibility while retaining the advantages of the Functional API. <a id="marker-1016894"></a><a id="marker-1016897"></a></p>
+
+  <h2 class="fm-head" id="heading_id_10"><a id="pgfId-1016903"></a>7.3 Using built-in training and evaluation loops</h2>
+
+  <p class="body"><a id="pgfId-1016928"></a><a id="marker-1016914"></a><a id="marker-1016916"></a><a id="marker-1016918"></a>The principle of progressive disclosure of complexity—access to a spectrum of workflows that go from dead easy to arbitrarily flexible, one step at a time—also applies to model training. Keras provides you with different workflows for training models. They can be as simple as calling <code class="fm-code-in-text">fit()</code> on your data, or as advanced as writing a new training algorithm from scratch.</p>
+
+  <p class="body"><a id="pgfId-1016980"></a>You are already familiar with <a id="marker-1016939"></a>the <code class="fm-code-in-text">compile()</code>, <code class="fm-code-in-text">fit()</code>, <code class="fm-code-in-text">evaluate()</code>, <code class="fm-code-in-text">predict()</code> workflow. As a reminder, take a look at the following listing.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017099"></a>Listing 7.17 The standard workflow: <code class="fm-code-in-text">compile()</code>, <code class="fm-code-in-text">fit()</code>, <code class="fm-code-in-text">evaluate()</code>, <code class="fm-code-in-text">predict()</code></p>
+  <pre class="programlisting"><a id="pgfId-1035010"></a><b class="fm-codebrown">from</b> tensorflow.keras.datasets <b class="fm-codebrown">import</b> mnist
+<a id="pgfId-1035011"></a>  
+<a id="pgfId-1017123"></a><b class="fm-codebrown">def</b> get_mnist_model():                                                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1035028"></a>    inputs = keras.Input(shape=(<span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>,))
+<a id="pgfId-1035029"></a>    features = layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1035030"></a>    features = layers.Dropout(<span class="fm-codeblue">0.5</span>)(features)
+<a id="pgfId-1035031"></a>    outputs = layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)(features)
+<a id="pgfId-1035032"></a>    model = keras.Model(inputs, outputs)
+<a id="pgfId-1035033"></a>    <b class="fm-codebrown">return</b> model
+<a id="pgfId-1035034"></a>  
+<a id="pgfId-1017176"></a>(images, labels), (test_images, test_labels) = mnist.load_data()      <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1035047"></a>images = images.reshape((<span class="fm-codeblue">60000</span>, <span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>)).astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1035048"></a>test_images = test_images.reshape((<span class="fm-codeblue">10000</span>, <span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>)).astype(<span class="fm-codegreen">"float32"</span>) / <span class="fm-codeblue">255</span> 
+<a id="pgfId-1035049"></a>train_images, val_images = images[<span class="fm-codeblue">10000</span>:], images[:<span class="fm-codeblue">10000</span>]
+<a id="pgfId-1035050"></a>train_labels, val_labels = labels[<span class="fm-codeblue">10000</span>:], labels[:<span class="fm-codeblue">10000</span>]
+<a id="pgfId-1035051"></a>  
+<a id="pgfId-1035052"></a>model = get_mnist_model()
+<a id="pgfId-1017228"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,                                    <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1017240"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,                 <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1017252"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])                                   <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1017264"></a>model.fit(train_images, train_labels,                                 <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1017276"></a>          epochs=<span class="fm-codeblue">3</span>,                                                   <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1017288"></a>          validation_data=(val_images, val_labels))                   <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1017300"></a>test_metrics = model.evaluate(test_images, test_labels)               <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1017312"></a>predictions = model.predict(test_images)                              <span class="fm-combinumeral">❻</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040705"></a><span class="fm-combinumeral">❶</span> Create a model (we factor this into a separate function so as to reuse it later).</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040726"></a><span class="fm-combinumeral">❷</span> Load your data, reserving some for validation.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040746"></a><span class="fm-combinumeral">❸</span> Compile the model by specifying its optimizer, the loss function to minimize, and the metrics to monitor.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040763"></a><span class="fm-combinumeral">❹</span> Use fit() to train the model, optionally providing validation data to monitor performance on unseen data.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040780"></a><span class="fm-combinumeral">❺</span> Use evaluate() to compute the loss and metrics on new data.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040797"></a><span class="fm-combinumeral">❻</span> Use predict() to compute classification probabilities on new data.</p>
+
+  <p class="body"><a id="pgfId-1017451"></a>There are a couple of ways you can customize this simple workflow:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017457"></a>Provide your own custom metrics.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1017491"></a>Pass <i class="fm-italics1">callbacks</i> to the <code class="fm-code-in-text">fit()</code> method to schedule actions to be taken at specific points during training.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1017500"></a>Let’s take a look at these.</p>
+
+  <h3 class="fm-head1" id="heading_id_11"><a id="pgfId-1017506"></a>7.3.1 Writing your own metrics</h3>
+
+  <p class="body"><a id="pgfId-1017539"></a><a id="marker-1017517"></a><a id="marker-1017519"></a><a id="marker-1017521"></a><a id="marker-1017523"></a>Metrics are key to measuring the performance of your model—in particular, to measuring the difference between its performance on the training data and its performance on the test data. Commonly used metrics for classification and regression are already part of the <a id="marker-1017528"></a>built-in <code class="fm-code-in-text">keras.metrics</code> module, and most of the time that’s what you will use. But if you’re doing anything out of the ordinary, you will need to be able to write your own metrics. It’s simple!</p>
+
+  <p class="body"><a id="pgfId-1017577"></a>A Keras metric is a subclass of <a id="marker-1017550"></a>the <code class="fm-code-in-text">keras.metrics.Metric</code> class. Like layers, a metric has an internal state stored in TensorFlow variables. Unlike layers, these variables aren’t updated via backpropagation, so you have to write the state-update logic yourself, which happens in <a id="marker-1017566"></a>the <code class="fm-code-in-text">update_state()</code> method.</p>
+
+  <p class="body"><a id="pgfId-1017586"></a>For example, here’s a simple custom metric that measures the root mean squared error (RMSE).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1017643"></a>Listing 7.18 Implementing a custom metric by subclassing the <code class="fm-code-in-text">Metric</code> class</p>
+  <pre class="programlisting"><a id="pgfId-1035103"></a><b class="fm-codebrown">import</b> tensorflow <b class="fm-codebrown">as</b> tf
+<a id="pgfId-1035104"></a>  
+<a id="pgfId-1017695"></a><b class="fm-codebrown">class</b> RootMeanSquaredError(keras.metrics.Metric):                          <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1017717"></a> 
+<a id="pgfId-1017712"></a>    <b class="fm-codebrown">def</b> __init__(self, name=<span class="fm-codegreen">"rmse"</span>, **kwargs):                             <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1017729"></a>        super().__init__(name=name, **kwargs)                              <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1017741"></a>        self.mse_sum = self.add_weight(name=<span class="fm-codegreen">"mse_sum"</span>, initializer=<span class="fm-codegreen">"zeros"</span>)<span class="fm-combinumeral">❷</span>
+<a id="pgfId-1017753"></a>        self.total_samples = self.add_weight(                              <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1017765"></a>            name=<span class="fm-codegreen">"total_samples"</span>, initializer=<span class="fm-codegreen">"zeros"</span>, dtype=<span class="fm-codegreen">"int32"</span>)      <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1017782"></a> 
+<a id="pgfId-1017777"></a>    <b class="fm-codebrown">def</b> update_state(self, y_true, y_pred, sample_weight=<code class="fm-codegreen">None</code>):            <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1017794"></a>        y_true = tf.one_hot(y_true, depth=tf.shape(y_pred)[<span class="fm-codeblue">1</span>])             <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1017806"></a>        mse = tf.reduce_sum(tf.square(y_true - y_pred))
+<a id="pgfId-1017812"></a>        self.mse_sum.assign_add(mse)
+<a id="pgfId-1017818"></a>        num_samples = tf.shape(y_pred)[<span class="fm-codeblue">0</span>]
+<a id="pgfId-1017824"></a>        self.total_samples.assign_add(num_samples)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040393"></a><span class="fm-combinumeral">❶</span> Subclass the Metric class.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040414"></a><span class="fm-combinumeral">❷</span> Define the state variables in the constructor. Like for layers, you have access to the add_weight() method.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040431"></a><span class="fm-combinumeral">❸</span> Implement the state update logic in update_state(). The y_true argument is the targets (or labels) for one batch, while y_pred represents the corresponding predictions from the model. You can ignore the sample_weight argument—we won’t use it here.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1040448"></a><span class="fm-combinumeral">❹</span> To match our MNIST model, we expect categorical predictions and integer labels.</p>
+
+  <p class="body"><a id="pgfId-1017898"></a>You use the <code class="fm-code-in-text">result()</code> method to <a id="marker-1035360"></a>return the current value of the metric:</p>
+  <pre class="programlisting"><a id="pgfId-1035388"></a>    <b class="fm-codebrown">def</b> result(self):
+<a id="pgfId-1017933"></a>        <b class="fm-codebrown">return</b> tf.sqrt(self.mse_sum / tf.cast(self.total_samples, tf.float32))</pre>
+
+  <p class="body"><a id="pgfId-1017952"></a>Meanwhile, you also need to expose a way to reset the metric state without having to reinstantiate it—this enables the same metric objects to be used across different epochs of training or across both training and evaluation. You do this with <a id="marker-1035365"></a>the <code class="fm-code-in-text">reset_state()</code> method:</p>
+  <pre class="programlisting"><a id="pgfId-1035371"></a>    <b class="fm-codebrown">def</b> reset_state(self):
+<a id="pgfId-1035372"></a>        self.mse_sum.assign(<span class="fm-codeblue">0.</span>)
+<a id="pgfId-1017981"></a>        self.total_samples.assign(<span class="fm-codeblue">0</span>)</pre>
+
+  <p class="body"><a id="pgfId-1017987"></a>Custom metrics can be used just like built-in ones. Let’s test-drive our own metric:</p>
+  <pre class="programlisting"><a id="pgfId-1035407"></a>model = get_mnist_model()
+<a id="pgfId-1035408"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1035409"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1035410"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>, RootMeanSquaredError()])
+<a id="pgfId-1035411"></a>model.fit(train_images, train_labels,
+<a id="pgfId-1035412"></a>          epochs=<span class="fm-codeblue">3</span>,
+<a id="pgfId-1035413"></a>          validation_data=(val_images, val_labels))
+<a id="pgfId-1018043"></a>test_metrics = model.evaluate(test_images, test_labels)</pre>
+
+  <p class="body"><a id="pgfId-1018049"></a>You can now see the <code class="fm-code-in-text">fit()</code> progress bar displaying the RMSE of your model. <a id="marker-1018060"></a><a id="marker-1018063"></a><a id="marker-1018065"></a><a id="marker-1018067"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_12"><a id="pgfId-1018073"></a>7.3.2 Using callbacks</h3>
+
+  <p class="body"><a id="pgfId-1018126"></a><a id="marker-1018084"></a><a id="marker-1018086"></a><a id="marker-1018088"></a><a id="marker-1018090"></a>Launching a training run on a large dataset for tens of epochs using <code class="fm-code-in-text">model.fit()</code> can be <a id="marker-1018105"></a>a bit like launching a paper airplane: past the initial impulse, you don’t have any control over its trajectory or its landing spot. If you want to avoid bad outcomes (and thus wasted paper airplanes), it’s smarter to use, not a paper plane, but a drone that can sense its environment, send data back to its operator, and automatically make steering decisions based on its current state. The Keras <i class="fm-italics">callbacks</i> API will help you transform your call to <code class="fm-code-in-text">model.fit()</code> from a paper airplane into a smart, autonomous drone that can self-introspect and dynamically take action.</p>
+
+  <p class="body"><a id="pgfId-1018151"></a>A callback is an object (a class instance implementing specific methods) that is passed to the model in the call to <code class="fm-code-in-text">fit()</code> and that is called by the model at various points during training. It has access to all the available data about the state of the model and its performance, and it can take action: interrupt training, save a model, load a different weight set, or otherwise alter the state of the model.</p>
+
+  <p class="body"><a id="pgfId-1018160"></a>Here are some examples of ways you can use callbacks:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018166"></a><i class="fm-italics1">Model checkpointing</i>—Saving the current state of the model at different points during training.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018187"></a><i class="fm-italics1">Early stopping</i>—Interrupting training when the validation loss is no longer improving (and of course, saving the best model obtained during training).</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018204"></a><i class="fm-italics1">Dynamically adjusting the value of certain parameters during training</i>—Such as the learning rate of the optimizer.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1018239"></a><i class="fm-italics1">Logging training and validation metrics during training, or visualizing the representations learned by the model as they’re updated</i>—The <code class="fm-code-in-text">fit()</code> progress bar that you’re familiar with is in fact a callback!</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1018248"></a>The <code class="fm-code-in-text">keras.callbacks</code> module includes <a id="marker-1018259"></a>a number of built-in callbacks (this is not an exhaustive list):</p>
+  <pre class="programlisting"><a id="pgfId-1018269"></a>keras.callbacks.ModelCheckpoint
+<a id="pgfId-1018283"></a>keras.callbacks.EarlyStopping
+<a id="pgfId-1018289"></a>keras.callbacks.LearningRateScheduler
+<a id="pgfId-1018295"></a>keras.callbacks.ReduceLROnPlateau
+<a id="pgfId-1018301"></a>keras.callbacks.CSVLogger</pre>
+
+  <p class="body"><a id="pgfId-1018323"></a>Let’s review two of them to give you an idea of how to use them: <code class="fm-code-in-text">EarlyStopping</code> and <code class="fm-code-in-text">ModelCheckpoint</code>.</p>
+
+  <p class="fm-head2"><a id="pgfId-1018332"></a>The EarlyStopping and ModelCheckpoint callbacks</p>
+
+  <p class="body"><a id="pgfId-1018357"></a><a id="marker-1018343"></a><a id="marker-1018345"></a><a id="marker-1018347"></a>When you’re training a model, there are many things you can’t predict from the start. In particular, you can’t tell how many epochs will be needed to get to an optimal validation loss. Our examples so far have adopted the strategy of training for enough epochs that you begin overfitting, using the first run to figure out the proper number of epochs to train for, and then finally launching a new training run from scratch using this optimal number. Of course, this approach is wasteful. A much better way to handle this is to stop training when you measure that the validation loss is no longer improving. This can be achieved using the <code class="fm-code-in-text">EarlyStopping</code> callback.</p>
+
+  <p class="body"><a id="pgfId-1018382"></a>The <code class="fm-code-in-text">EarlyStopping</code> callback interrupts training once a target metric being monitored has stopped improving for a fixed number of epochs. For instance, this callback allows you to interrupt training as soon as you start overfitting, thus avoiding having to retrain your model for a smaller number of epochs. This callback is typically used in combination with <code class="fm-code-in-text">ModelCheckpoint</code>, which lets you continually save the model during training (and, optionally, save only the current best model so far: the version of the model that achieved the best performance at the end of an epoch).</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1018481"></a>Listing 7.19 Using the <code class="fm-code-in-text">callbacks</code> argument in the <code class="fm-code-in-text">fit()</code> method</p>
+  <pre class="programlisting"><a id="pgfId-1018391"></a>callbacks_list = [                                     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1018512"></a>    keras.callbacks.EarlyStopping(                     <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1018524"></a>        monitor=<span class="fm-codegreen">"val_accuracy"</span>,                        <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1018536"></a>        patience=<span class="fm-codeblue">2</span>,                                    <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1018548"></a>    ),
+<a id="pgfId-1018554"></a>    keras.callbacks.ModelCheckpoint(                   <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1018566"></a>        filepath=<span class="fm-codegreen">"checkpoint_path.keras"</span>,              <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1018578"></a>        monitor=<span class="fm-codegreen">"val_loss"</span>,                            <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1018590"></a>        save_best_only=<code class="fm-codegreen">True</code>,                           <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1018602"></a>    )
+<a id="pgfId-1018608"></a>]
+<a id="pgfId-1018614"></a>model = get_mnist_model()
+<a id="pgfId-1018620"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1018626"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1018632"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])                    <span class="fm-combinumeral">❽</span>
+<a id="pgfId-1018644"></a>model.fit(train_images, train_labels,                  <span class="fm-combinumeral">❾</span>
+<a id="pgfId-1018656"></a>          epochs=<span class="fm-codeblue">10</span>,                                   <span class="fm-combinumeral">❾</span>
+<a id="pgfId-1018668"></a>          callbacks=callbacks_list,                    <span class="fm-combinumeral">❾</span>
+<a id="pgfId-1018680"></a>          validation_data=(val_images, val_labels))    <span class="fm-combinumeral">❾</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039780"></a><span class="fm-combinumeral">❶</span> Callbacks are passed to the model via the callbacks argument in fit(), which takes a list of callbacks. You can pass any number of callbacks.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039801"></a><span class="fm-combinumeral">❷</span> Interrupts training when improvement stops</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039818"></a><span class="fm-combinumeral">❸</span> Monitors the model’s validation accuracy</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039835"></a><span class="fm-combinumeral">❹</span> Interrupts training when accuracy has stopped improving for two epochs</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039852"></a><span class="fm-combinumeral">❺</span> Saves the current weights after every epoch</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039869"></a><span class="fm-combinumeral">❻</span> Path to the destination model file</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039886"></a><span class="fm-combinumeral">❼</span> These two arguments mean you won’t overwrite the model file unless val_loss has improved, which allows you to keep the best model seen during training.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039903"></a><span class="fm-combinumeral">❽</span> You monitor accuracy, so it should be part of the model’s metrics.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039920"></a><span class="fm-combinumeral">❾</span> Note that because the callback will monitor validation loss and validation accuracy, you need to pass validation_data to the call to fit().</p>
+
+  <p class="body"><a id="pgfId-1018853"></a>Note that you can always save models manually after training as <a id="marker-1018842"></a>well—just call <code class="fm-code-in-text">model.save('my_checkpoint_path')</code>. To reload the model you’ve saved, just use <a id="marker-1018858"></a><a id="marker-1018861"></a><a id="marker-1018863"></a><a id="marker-1018865"></a><a id="marker-1018867"></a><a id="marker-1018869"></a><a id="marker-1018871"></a></p>
+  <pre class="programlisting"><a id="pgfId-1018877"></a>model = keras.models.load_model(<span class="fm-codegreen">"checkpoint_path.keras"</span>)</pre>
+
+  <h3 class="fm-head1" id="heading_id_13"><a id="pgfId-1018891"></a>7.3.3 Writing your own callbacks</h3>
+
+  <p class="body"><a id="pgfId-1018917"></a><a id="marker-1018902"></a>If you need to take a specific action during training that isn’t covered by one of the built-in callbacks, you can write your own callback. Callbacks are implemented by subclassing <a id="marker-1018906"></a>the <code class="fm-code-in-text">keras.callbacks.Callback</code> class. You can then implement any number of the following transparently named methods, which are called at various points during training:</p>
+  <pre class="programlisting"><a id="pgfId-1018926"></a>on_epoch_begin(epoch, logs)      <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1018946"></a>on_epoch_end(epoch, logs)        <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1018958"></a>on_batch_begin(batch, logs)      <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1018970"></a>on_batch_end(batch, logs)        <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1018982"></a>on_train_begin(logs)             <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1018994"></a>on_train_end(logs)               <span class="fm-combinumeral">❻</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039430"></a><span class="fm-combinumeral">❶</span> Called at the start of every epoch</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039458"></a><span class="fm-combinumeral">❷</span> Called at the end of every epoch</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039478"></a><span class="fm-combinumeral">❸</span> Called right before processing each batch</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039495"></a><span class="fm-combinumeral">❹</span> Called right after processing each batch</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039512"></a><span class="fm-combinumeral">❺</span> Called at the start of training</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1039529"></a><span class="fm-combinumeral">❻</span> Called at the end of training</p>
+
+  <p class="body"><a id="pgfId-1019138"></a>These methods are all called with a <code class="fm-code-in-text">logs</code> argument, which is a dictionary containing information about the previous batch, epoch, or training run—training and validation metrics, and so <a id="marker-1019117"></a>on. The <code class="fm-code-in-text">on_epoch_*</code> and <code class="fm-code-in-text">on_batch_*</code> methods also <a id="marker-1019143"></a>take the epoch or batch index as their first argument (an integer).</p>
+
+  <p class="body"><a id="pgfId-1019153"></a>Here’s a simple example that saves a list of per-batch loss values during training and saves a graph of these values at the end of each epoch.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1019210"></a>Listing 7.20 Creating a custom callback by subclassing the <code class="fm-code-in-text">Callback</code> class</p>
+  <pre class="programlisting"><a id="pgfId-1035601"></a><b class="fm-codebrown">from</b> matplotlib <b class="fm-codebrown">import</b> pyplot <b class="fm-codebrown">as</b> plt
+<a id="pgfId-1035602"></a>  
+<a id="pgfId-1035603"></a><b class="fm-codebrown">class</b> LossHistory(keras.callbacks.Callback):
+<a id="pgfId-1035604"></a>    <b class="fm-codebrown">def</b> on_train_begin(self, logs):
+<a id="pgfId-1035605"></a>        self.per_batch_losses = []
+<a id="pgfId-1035606"></a>  
+<a id="pgfId-1035607"></a>    <b class="fm-codebrown">def</b> on_batch_end(self, batch, logs):
+<a id="pgfId-1035608"></a>        self.per_batch_losses.append(logs.get(<span class="fm-codegreen">"loss"</span>))
+<a id="pgfId-1035609"></a>  
+<a id="pgfId-1035610"></a>    <b class="fm-codebrown">def</b> on_epoch_end(self, epoch, logs):
+<a id="pgfId-1035611"></a>        plt.clf()
+<a id="pgfId-1035612"></a>        plt.plot(range(len(self.per_batch_losses)), self.per_batch_losses,
+<a id="pgfId-1035613"></a>                 label=<span>"Training loss for each batch"</span>)
+<a id="pgfId-1035614"></a>        plt.xlabel(f<span>"Batch (epoch {epoch})"</span>)
+<a id="pgfId-1035615"></a>        plt.ylabel(<span class="fm-codegreen">"Loss"</span>)
+<a id="pgfId-1035616"></a>        plt.legend()
+<a id="pgfId-1035617"></a>        plt.savefig(f<span class="fm-codegreen">"plot_at_epoch_{epoch}"</span>)
+<a id="pgfId-1019355"></a>        self.per_batch_losses = []</pre>
+
+  <p class="body"><a id="pgfId-1019361"></a>Let’s test-drive it:</p>
+  <pre class="programlisting"><a id="pgfId-1035630"></a>model = get_mnist_model()
+<a id="pgfId-1035631"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1035632"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1035633"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1035634"></a>model.fit(train_images, train_labels,
+<a id="pgfId-1035635"></a>          epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1035636"></a>          callbacks=[LossHistory()],
+<a id="pgfId-1019417"></a>          validation_data=(val_images, val_labels))</pre>
+
+  <p class="body"><a id="pgfId-1019423"></a>We get plots that look like figure 7.5. <a id="marker-1019425"></a></p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/07-05.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1043932"></a>Figure 7.5 The output of our custom history plotting callback</p>
+
+  <h3 class="fm-head1" id="heading_id_14"><a id="pgfId-1019442"></a>7.3.4 Monitoring and visualization with TensorBoard</h3>
+
+  <p class="body"><a id="pgfId-1019479"></a><a id="marker-1019467"></a><a id="marker-1019469"></a><a id="marker-1019471"></a><a id="marker-1019473"></a><a id="marker-1019475"></a>To do good research or develop good models, you need rich, frequent feedback about what’s going on inside your models during your experiments. That’s the point of running experiments: to get information about how well a model performs—as much information as possible. Making progress is an iterative process, a loop—you start with an idea and express it as an experiment, attempting to validate or invalidate your idea. You run this experiment and process the information it generates. This inspires your next idea. The more iterations of this loop you’re able to run, the more refined and powerful your ideas become. Keras helps you go from idea to experiment in the least possible time, and fast GPUs can help you get from experiment to result as quickly as possible. But what about processing the experiment’s results? That’s where TensorBoard comes in (see figure 7.6).</p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/07-06.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1043974"></a>Figure 7.6 The loop of progress</p>
+
+  <p class="body"><a id="pgfId-1019494"></a>TensorBoard (<span class="fm-hyperlink"><a class="url" href="https://www.tensorflow.org/tensorboard">www.tensorflow.org/tensorboard</a></span>) is a browser-based application that you can run locally. It’s the best way to monitor everything that goes on inside your model during training. With TensorBoard, you can</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019514"></a>Visually monitor metrics during training</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019528"></a>Visualize your model architecture</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019538"></a>Visualize histograms of activations and gradients</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019548"></a>Explore embeddings in 3D</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1019558"></a>If you’re monitoring more information than just the model’s final loss, you can develop a clearer vision of what the model does and doesn’t do, and you can make progress more quickly.</p>
+
+  <p class="body"><a id="pgfId-1019586"></a>The easiest way to use TensorBoard with a Keras model and the <code class="fm-code-in-text">fit()</code> method is to use <a id="marker-1019575"></a>the <code class="fm-code-in-text">keras.callbacks.TensorBoard</code> callback.</p>
+
+  <p class="body"><a id="pgfId-1019595"></a>In the simplest case, just specify where you want the callback to write logs, and you’re good to go:</p>
+  <pre class="programlisting"><a id="pgfId-1019601"></a>model = get_mnist_model()
+<a id="pgfId-1035655"></a>model.compile(optimizer=<span class="fm-codegreen">"rmsprop"</span>,
+<a id="pgfId-1035656"></a>              loss=<span class="fm-codegreen">"sparse_categorical_crossentropy"</span>,
+<a id="pgfId-1035657"></a>              metrics=[<span class="fm-codegreen">"accuracy"</span>])
+<a id="pgfId-1035658"></a>  
+<a id="pgfId-1035659"></a>tensorboard = keras.callbacks.TensorBoard(
+<a id="pgfId-1035660"></a>    log_dir=<span class="fm-codegreen">"/full_path_to_your_log_dir"</span>,
+<a id="pgfId-1035661"></a>)
+<a id="pgfId-1035662"></a>model.fit(train_images, train_labels,
+<a id="pgfId-1035663"></a>          epochs=<span class="fm-codeblue">10</span>,
+<a id="pgfId-1035664"></a>          validation_data=(val_images, val_labels),
+<a id="pgfId-1019674"></a>          callbacks=[tensorboard])</pre>
+
+  <p class="body"><a id="pgfId-1019706"></a>Once the model starts running, it will write logs at the target location. If you are running your Python script on a local machine, you can then launch the local TensorBoard server using the following command (note that the <code class="fm-code-in-text">tensorboard</code> executable should be already available if you have installed TensorFlow via <code class="fm-code-in-text">pip</code>; if not, you can install TensorBoard manually via <code class="fm-code-in-text">pip</code> <code class="fm-code-in-text">install</code> <code class="fm-code-in-text">tensorboard</code>):</p>
+  <pre class="programlisting"><a id="pgfId-1019715"></a>tensorboard --logdir /full_path_to_your_log_dir</pre>
+
+  <p class="body"><a id="pgfId-1019729"></a>You can then navigate to the URL that the command returns in order to access the TensorBoard interface.</p>
+
+  <p class="body"><a id="pgfId-1019735"></a>If you are running your script in a Colab notebook, you can run an embedded TensorBoard instance as part of your notebook, using the following commands:</p>
+  <pre class="programlisting"><a id="pgfId-1019741"></a>%load_ext tensorboard
+<a id="pgfId-1019755"></a>%tensorboard --logdir /full_path_to_your_log_dir</pre>
+
+  <p class="body"><a id="pgfId-1019761"></a>In the TensorBoard interface, you will be able to monitor live graphs of your training and evaluation metrics (see figure 7.7). <a id="marker-1019763"></a><a id="marker-1019766"></a><a id="marker-1019768"></a><a id="marker-1019770"></a><a id="marker-1019772"></a><a id="marker-1019774"></a><a id="marker-1019776"></a><a id="marker-1019778"></a></p>
+
+  <p class="fm-figure"><img alt="" class="calibre13" src="../Images/07-07.png"/></p>
+
+  <p class="fm-figure-caption"><a id="pgfId-1044016"></a>Figure 7.7 TensorBoard can be used for easy monitoring of training and evaluation metrics.</p>
+
+  <h2 class="fm-head" id="heading_id_15"><a id="pgfId-1019794"></a>7.4 Writing your own training and evaluation loops</h2>
+
+  <p class="body"><a id="pgfId-1019833"></a><a id="marker-1019819"></a><a id="marker-1019821"></a><a id="marker-1019823"></a>The <code class="fm-code-in-text">fit()</code> workflow strikes a nice balance between ease of use and flexibility. It’s what you will use most of the time. However, it isn’t meant to support everything a deep learning researcher may want to do, even with custom metrics, custom losses, and custom callbacks.</p>
+
+  <p class="body"><a id="pgfId-1019942"></a>After all, the built-in <code class="fm-code-in-text">fit()</code> workflow is solely focused on <i class="fm-italics">supervised learning</i>: a setup <a id="marker-1028495"></a>where there are <a id="marker-1028496"></a>known <i class="fm-italics">targets</i> (also called <i class="fm-italics">labels</i> or <i class="fm-italics">annotations</i>) associated with your input data, and where you compute your loss as a function of these targets and the model’s predictions. However, not every form of machine learning falls into this category. There are other setups where no explicit targets are present, such as <i class="fm-italics">generative learning</i> (which we <a id="marker-1028497"></a>will discuss in chapter 12), <i class="fm-italics">self-supervised learning</i> (where targets <a id="marker-1028498"></a>are obtained from the inputs), and <i class="fm-italics">reinforcement learning</i> (where learning <a id="marker-1028499"></a>is driven by occasional “rewards,” much like training a dog). Even if you’re doing regular supervised learning, as a researcher, you may want to add some novel bells and whistles that require low-level flexibility.</p>
+
+  <p class="body"><a id="pgfId-1019957"></a>Whenever you find yourself in a situation where the built-in <code class="fm-code-in-text">fit()</code> is not enough, you will need to write your own custom training logic. You already saw simple examples of low-level training loops in chapters 2 and 3. As a reminder, the contents of a typical training loop look like this:</p>
+
+  <ol class="calibre14">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019972"></a>Run the forward pass (compute the model’s output) inside a gradient tape to obtain a loss value for the current batch of data.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019986"></a>Retrieve the gradients of the loss with regard to the model’s weights.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1019996"></a>Update the model’s weights so as to lower the loss value on the current batch of data.</p>
+    </li>
+  </ol>
+
+  <p class="body"><a id="pgfId-1020022"></a>These steps are repeated for as many batches as necessary. This is essentially what <code class="fm-code-in-text">fit()</code> does under the hood. In this section, you will learn to reimplement <code class="fm-code-in-text">fit()</code> from scratch, which will give you all the knowledge you need to write any training algorithm you may come up with.</p>
+
+  <p class="body"><a id="pgfId-1020031"></a>Let’s go over the details.</p>
+
+  <h3 class="fm-head1" id="heading_id_16"><a id="pgfId-1020037"></a>7.4.1 Training versus inference</h3>
+
+  <p class="body"><a id="pgfId-1020074"></a><a id="marker-1020048"></a><a id="marker-1020050"></a><a id="marker-1020052"></a><a id="marker-1020054"></a>In the low-level training loop examples you’ve seen so far, step 1 (the forward pass) was done via <code class="fm-code-in-text">predictions</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">model(inputs)</code>, and step 2 (retrieving the gradients computed by the gradient tape) was done via <code class="fm-code-in-text">gradients</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">tape.gradient(loss,</code> <code class="fm-code-in-text">model.weights)</code>. In the general case, there are actually two subtleties you need to take into account.</p>
+
+  <p class="body"><a id="pgfId-1020196"></a>Some Keras layers, such as <a id="marker-1028828"></a>the <code class="fm-code-in-text">Dropout</code> layer, have different behaviors during <i class="fm-italics">training</i> and during <i class="fm-italics">inference</i> (when you use them to generate predictions). Such layers expose a <code class="fm-code-in-text">training</code> Boolean argument in their <code class="fm-code-in-text">call()</code> method. Calling <code class="fm-code-in-text">dropout(inputs,</code> <code class="fm-code-in-text">training=True)</code> will drop some activation entries, while calling <code class="fm-code-in-text">dropout(inputs,</code> <code class="fm-code-in-text">training=False)</code> does nothing. By extension, Functional and Sequential models also expose this <code class="fm-code-in-text">training</code> argument in their <code class="fm-code-in-text">call()</code> methods. Remember to pass <code class="fm-code-in-text">training =True</code> when you call a Keras model during the forward pass! Our forward pass thus becomes <code class="fm-code-in-text">predictions</code> <code class="fm-code-in-text">=</code> <code class="fm-code-in-text">model(inputs,</code> <code class="fm-code-in-text">training=True)</code>.</p>
+
+  <p class="body"><a id="pgfId-1020221"></a>In addition, note that when you retrieve the gradients of the weights of your model, you should not use <code class="fm-code-in-text">tape.gradients(loss,</code> <code class="fm-code-in-text">model.weights)</code>, but rather <code class="fm-code-in-text">tape .gradients(loss,</code> <code class="fm-code-in-text">model.trainable_weights)</code>. Indeed, layers and models own two kinds of weights:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020258"></a><i class="fm-italics1">Trainable weights</i>—These are <a class="calibre11" id="marker-1020247"></a>meant to be updated via backpropagation to minimize the loss of the model, such as the kernel and bias of a <code class="fm-code-in-text">Dense</code> layer.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1020267"></a><i class="fm-italics1">Non-trainable weights</i>—These are <a class="calibre11" id="marker-1020280"></a>meant to be updated during the forward pass by the layers that own them. For instance, if you wanted a custom layer to keep a counter of how many batches it has processed so far, that information would be stored in a non-trainable weight, and at each batch, your layer would increment the counter by one.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1020323"></a>Among Keras built-in layers, the only layer that features non-trainable weights is <a id="marker-1020292"></a>the <code class="fm-code-in-text">BatchNormalization</code> layer, which we will discuss in chapter 9. The <code class="fm-code-in-text">BatchNormalization</code> layer needs non-trainable weights in order to track information about the mean and standard deviation of the data that passes through it, so as to perform an online approximation of <i class="fm-italics">feature normalization</i> (a concept <a id="marker-1020328"></a>you learned about in chapter 6).</p>
+
+  <p class="body"><a id="pgfId-1020338"></a>Taking into account these two details, a supervised-learning training step ends up looking like this:<a id="marker-1020340"></a><a id="marker-1020343"></a><a id="marker-1020345"></a><a id="marker-1020347"></a></p>
+  <pre class="programlisting"><a id="pgfId-1035681"></a><b class="fm-codebrown">def</b> train_step(inputs, targets):
+<a id="pgfId-1035682"></a>    <b class="fm-codebrown">with</b> tf.GradientTape() <b class="fm-codebrown">as</b> tape:
+<a id="pgfId-1035683"></a>        predictions = model(inputs, training=<code class="fm-codegreen">True</code>)
+<a id="pgfId-1035684"></a>        loss = loss_fn(targets, predictions)
+<a id="pgfId-1035685"></a>    gradients = tape.gradients(loss, model.trainable_weights)
+<a id="pgfId-1020391"></a>    optimizer.apply_gradients(zip(model.trainable_weights, gradients))</pre>
+
+  <h3 class="fm-head1" id="heading_id_17"><a id="pgfId-1020397"></a>7.4.2 Low-level usage of metrics</h3>
+
+  <p class="body"><a id="pgfId-1020434"></a><a id="marker-1020408"></a><a id="marker-1020410"></a><a id="marker-1020412"></a><a id="marker-1020414"></a>In a low-level training loop, you will probably want to leverage Keras metrics (whether custom ones or the built-in ones). You’ve already learned about the metrics API: simply call <code class="fm-code-in-text">update_state(y_true,</code> <code class="fm-code-in-text">y_pred)</code> for each batch of targets and predictions, and then use <code class="fm-code-in-text">result()</code> to query the current metric value:</p>
+  <pre class="programlisting"><a id="pgfId-1035703"></a>metric = keras.metrics.SparseCategoricalAccuracy()
+<a id="pgfId-1035704"></a>targets = [<span class="fm-codeblue">0</span>, <span class="fm-codeblue">1</span>, <span class="fm-codeblue">2</span>]
+<a id="pgfId-1035705"></a>predictions = [[<span class="fm-codeblue">1</span>, <span class="fm-codeblue">0</span>, <span class="fm-codeblue">0</span>], [<span class="fm-codeblue">0</span>, <span class="fm-codeblue">1</span>, <span class="fm-codeblue">0</span>], [<span class="fm-codeblue">0</span>, <span class="fm-codeblue">0</span>, <span class="fm-codeblue">1</span>]]
+<a id="pgfId-1035706"></a>metric.update_state(targets, predictions)
+<a id="pgfId-1035707"></a>current_result = metric.result()
+<a id="pgfId-1020443"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"result: {current_result:.2f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1020500"></a>You may also need to track the average of a scalar value, such as the model’s loss. You can do this via <a id="marker-1020489"></a>the <code class="fm-code-in-text">keras.metrics.Mean</code> metric:</p>
+  <pre class="programlisting"><a id="pgfId-1035730"></a>values = [<span class="fm-codeblue">0</span>, <span class="fm-codeblue">1</span>, <span class="fm-codeblue">2</span>, <span class="fm-codeblue">3</span>, <span class="fm-codeblue">4</span>]
+<a id="pgfId-1035731"></a>mean_tracker = keras.metrics.Mean() 
+<a id="pgfId-1035732"></a><b class="fm-codebrown">for</b> value <b class="fm-codebrown">in</b> values:
+<a id="pgfId-1035733"></a>    mean_tracker.update_state(value) 
+<a id="pgfId-1020541"></a><b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Mean of values: {mean_tracker.result():.2f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1020547"></a>Remember to use <code class="fm-code-in-text">metric.reset_state()</code> when you <a id="marker-1020558"></a>want to reset the current results (at the start of a training epoch or at the start of evaluation). <a id="marker-1020564"></a><a id="marker-1020567"></a><a id="marker-1020569"></a><a id="marker-1020571"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_18"><a id="pgfId-1020577"></a>7.4.3 A complete training and evaluation loop</h3>
+
+  <p class="body"><a id="pgfId-1020612"></a><a id="marker-1020588"></a><a id="marker-1020590"></a><a id="marker-1020592"></a>Let’s combine the forward pass, backward pass, and metrics tracking into a <code class="fm-code-in-text">fit()</code>-like training step function that takes a batch of data and targets and returns the logs that would get displayed by the <code class="fm-code-in-text">fit()</code> progress bar.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1020672"></a>Listing 7.21 Writing a step-by-step training loop: the training step function</p>
+  <pre class="programlisting"><a id="pgfId-1020621"></a>model = get_mnist_model()
+<a id="pgfId-1020716"></a> 
+<a id="pgfId-1020711"></a>loss_fn = keras.losses.SparseCategoricalCrossentropy()                    <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1020728"></a>optimizer = keras.optimizers.RMSprop()                                    <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1020740"></a>metrics = [keras.metrics.SparseCategoricalAccuracy()]                     <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1020752"></a>loss_tracking_metric = keras.metrics.Mean()                               <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1020769"></a> 
+<a id="pgfId-1035749"></a><b class="fm-codebrown">def</b> train_step(inputs, targets):
+<a id="pgfId-1020775"></a>    <b class="fm-codebrown">with</b> tf.GradientTape() <b class="fm-codebrown">as</b> tape:                                       <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1020787"></a>        predictions = model(inputs, training=<code class="fm-codegreen">True</code>)                        <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1020799"></a>        loss = loss_fn(targets, predictions)                              <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1020811"></a>    gradients = tape.gradient(loss, model.trainable_weights)              <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1020823"></a>    optimizer.apply_gradients(zip(gradients, model.trainable_weights))    <span class="fm-combinumeral">❻</span>
+<a id="pgfId-1020840"></a> 
+<a id="pgfId-1020835"></a>    logs = {}                                                             <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020852"></a>    <b class="fm-codebrown">for</b> metric <b class="fm-codebrown">in</b> metrics:                                                <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020864"></a>        metric.update_state(targets, predictions)                         <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020876"></a>        logs[metric.name] = metric.result()                               <span class="fm-combinumeral">❼</span>
+<a id="pgfId-1020893"></a> 
+<a id="pgfId-1020888"></a>    loss_tracking_metric.update_state(loss)                               <span class="fm-combinumeral">❽</span>
+<a id="pgfId-1020905"></a>    logs[<span class="fm-codegreen">"loss"</span>] = loss_tracking_metric.result()                          <span class="fm-combinumeral">❽</span>
+<a id="pgfId-1020917"></a>    <b class="fm-codebrown">return</b> logs                                                           <span class="fm-combinumeral">❾</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038561"></a><span class="fm-combinumeral">❶</span> Prepare the loss function.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038582"></a><span class="fm-combinumeral">❷</span> Prepare the optimizer.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038599"></a><span class="fm-combinumeral">❸</span> Prepare the list of metrics to monitor.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038619"></a><span class="fm-combinumeral">❹</span> Prepare a Mean metric tracker to keep track of the loss average.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038636"></a><span class="fm-combinumeral">❺</span> Run the forward pass. Note that we pass training=True.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038653"></a><span class="fm-combinumeral">❻</span> Run the backward pass. Note that we use model.trainable_weights.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038670"></a><span class="fm-combinumeral">❼</span> Keep track of metrics.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038687"></a><span class="fm-combinumeral">❽</span> Keep track of the loss average.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038704"></a><span class="fm-combinumeral">❾</span> Return the current values of the metrics and the loss.</p>
+
+  <p class="body"><a id="pgfId-1021077"></a>We will need to reset the state of our metrics at the start of each epoch and before running evaluation. Here’s a utility function to do it.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021134"></a>Listing 7.22 Writing a step-by-step training loop: resetting the metrics</p>
+  <pre class="programlisting"><a id="pgfId-1035800"></a><b class="fm-codebrown">def</b> reset_metrics():
+<a id="pgfId-1035801"></a>    <b class="fm-codebrown">for</b> metric <b class="fm-codebrown">in</b> metrics:
+<a id="pgfId-1035802"></a>        metric.reset_state()
+<a id="pgfId-1021185"></a>    loss_tracking_metric.reset_state()</pre>
+
+  <p class="body"><a id="pgfId-1021191"></a>We can now lay out our complete training loop. Note that we use a <code class="fm-code-in-text">tf.data.Dataset</code> object to <a id="marker-1021202"></a>turn our NumPy data into an iterator that iterates over the data in batches of size 32.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021263"></a>Listing 7.23 Writing a step-by-step training loop: the loop itself</p>
+  <pre class="programlisting"><a id="pgfId-1035821"></a>training_dataset = tf.data.Dataset.from_tensor_slices(
+<a id="pgfId-1037370"></a>    (train_images, train_labels))
+<a id="pgfId-1035822"></a>training_dataset = training_dataset.batch(<span class="fm-codeblue">32</span>)
+<a id="pgfId-1035823"></a>epochs = <span class="fm-codeblue">3</span> 
+<a id="pgfId-1035824"></a><b class="fm-codebrown">for</b> epoch <b class="fm-codebrown">in</b> range(epochs):
+<a id="pgfId-1035825"></a>    reset_metrics()
+<a id="pgfId-1035826"></a>    <b class="fm-codebrown">for</b> inputs_batch, targets_batch <b class="fm-codebrown">in</b> training_dataset:
+<a id="pgfId-1035827"></a>        logs = train_step(inputs_batch, targets_batch)
+<a id="pgfId-1035828"></a>    <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"Results at the end of epoch {epoch}"</span>)
+<a id="pgfId-1035829"></a>    <b class="fm-codebrown">for</b> key, value <b class="fm-codebrown">in</b> logs.items():
+<a id="pgfId-1021350"></a>        <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"...{key}: {value:.4f}"</span>)</pre>
+
+  <p class="body"><a id="pgfId-1021408"></a>And here’s the evaluation loop: a simple <code class="fm-code-in-text">for</code> loop that repeatedly <a id="marker-1021367"></a>calls a <code class="fm-code-in-text">test_step()</code> function, which processes a single batch of data. The <code class="fm-code-in-text">test_step()</code> function is just a subset of the logic of <code class="fm-code-in-text">train_step()</code>. It omits the code that deals with updating the weights of the model—that is to say, everything involving the <code class="fm-code-in-text">GradientTape</code> and the <a id="marker-1021413"></a>optimizer.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021474"></a>Listing 7.24 Writing a step-by-step evaluation loop</p>
+  <pre class="programlisting"><a id="pgfId-1035848"></a><b class="fm-codebrown">def</b> test_step(inputs, targets):
+<a id="pgfId-1021513"></a>    predictions = model(inputs, training=<code class="fm-codegreen">False</code>)     <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1035865"></a>    loss = loss_fn(targets, predictions)
+<a id="pgfId-1035866"></a>  
+<a id="pgfId-1035867"></a>    logs = {}
+<a id="pgfId-1035868"></a>    <b class="fm-codebrown">for</b> metric <b class="fm-codebrown">in</b> metrics:
+<a id="pgfId-1035869"></a>        metric.update_state(targets, predictions)
+<a id="pgfId-1035870"></a>        logs[<span class="fm-codegreen">"val_"</span> + metric.name] = metric.result()
+<a id="pgfId-1035872"></a>    loss_tracking_metric.update_state(loss)
+<a id="pgfId-1035873"></a>    logs[<span class="fm-codegreen">"val_loss"</span>] = loss_tracking_metric.result()
+<a id="pgfId-1035874"></a>    <b class="fm-codebrown">return</b> logs
+<a id="pgfId-1035875"></a>  
+<a id="pgfId-1035876"></a>val_dataset = tf.data.Dataset.from_tensor_slices((val_images, val_labels))
+<a id="pgfId-1035877"></a>val_dataset = val_dataset.batch(<span class="fm-codeblue">32</span>)
+<a id="pgfId-1035878"></a>reset_metrics() 
+<a id="pgfId-1035879"></a><b class="fm-codebrown">for</b> inputs_batch, targets_batch <b class="fm-codebrown">in</b> val_dataset:
+<a id="pgfId-1035880"></a>    logs = test_step(inputs_batch, targets_batch) 
+<a id="pgfId-1035881"></a><b class="fm-codebrown">print</b>(<span class="fm-codegreen">"Evaluation results:"</span>) 
+<a id="pgfId-1035882"></a><b class="fm-codebrown">for</b> key, value <b class="fm-codebrown">in</b> logs.items(): 
+<a id="pgfId-1021630"></a>    <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"...{key}: {value:.4f}"</span>)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038506"></a><span class="fm-combinumeral">❶</span> Note that we pass training=False.</p>
+
+  <p class="body"><a id="pgfId-1021692"></a>Congrats—you’ve just reimplemented <code class="fm-code-in-text">fit()</code> and <code class="fm-code-in-text">evaluate()</code>! Or almost: <code class="fm-code-in-text">fit()</code> and <code class="fm-code-in-text">evaluate()</code> support many more features, including large-scale distributed computation, which requires a bit more work. It also includes several key performance optimizations.</p>
+
+  <p class="body"><a id="pgfId-1021701"></a>Let’s take a look at one of these optimizations: TensorFlow function compilation. <a id="marker-1021703"></a><a id="marker-1021706"></a><a id="marker-1021708"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_19"><a id="pgfId-1021714"></a>7.4.4 Make it fast with tf.function</h3>
+
+  <p class="body"><a id="pgfId-1021761"></a><a id="marker-1021725"></a><a id="marker-1021727"></a><a id="marker-1021729"></a><a id="marker-1021731"></a>You may have noticed that your custom loops are running significantly slower than the built-in <code class="fm-code-in-text">fit()</code> and <code class="fm-code-in-text">evaluate()</code>, despite implementing essentially the same logic. That’s because, by default, TensorFlow code is executed line by line, <i class="fm-italics">eagerly</i>, much like NumPy code or regular Python code. Eager execution makes it easier to debug your code, but it is far from optimal from a performance standpoint.</p>
+
+  <p class="body"><a id="pgfId-1021804"></a>It’s more performant to <i class="fm-italics">compile</i> your TensorFlow code into a <i class="fm-italics">computation graph</i> that can <a id="marker-1021791"></a><a id="marker-1021794"></a>be globally optimized in a way that code interpreted line by line cannot. The syntax to do this is very simple: just add a <code class="fm-code-in-text">@tf.function</code> to any function you want to compile before executing, as shown in the following listing.</p>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1021864"></a>Listing 7.25 Adding a <code class="fm-code-in-text">@tf.function</code> decorator to our evaluation-step function</p>
+  <pre class="programlisting"><a id="pgfId-1021813"></a><code class="fm-codeblue">@tf.function</code>                                   <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1035920"></a><b class="fm-codebrown">def</b> test_step(inputs, targets):
+<a id="pgfId-1035921"></a>    predictions = model(inputs, training=<code class="fm-codegreen">False</code>)
+<a id="pgfId-1035922"></a>    loss = loss_fn(targets, predictions)
+<a id="pgfId-1035923"></a>  
+<a id="pgfId-1035924"></a>    logs = {}
+<a id="pgfId-1035925"></a>    <b class="fm-codebrown">for</b> metric <b class="fm-codebrown">in</b> metrics:
+<a id="pgfId-1035926"></a>        metric.update_state(targets, predictions)
+<a id="pgfId-1035927"></a>        logs[<span class="fm-codegreen">"val_"</span> + metric.name] = metric.result()
+<a id="pgfId-1035928"></a>  
+<a id="pgfId-1035929"></a>    loss_tracking_metric.update_state(loss)
+<a id="pgfId-1035930"></a>    logs[<span class="fm-codegreen">"val_loss"</span>] = loss_tracking_metric.result()
+<a id="pgfId-1035931"></a>    <b class="fm-codebrown">return</b> logs
+<a id="pgfId-1035932"></a>  
+<a id="pgfId-1035933"></a>val_dataset = tf.data.Dataset.from_tensor_slices((val_images, val_labels))
+<a id="pgfId-1035934"></a>val_dataset = val_dataset.batch(<span class="fm-codeblue">32</span>)
+<a id="pgfId-1035935"></a>reset_metrics() 
+<a id="pgfId-1035936"></a><b class="fm-codebrown">for</b> inputs_batch, targets_batch <b class="fm-codebrown">in</b> val_dataset:
+<a id="pgfId-1035937"></a>    logs = test_step(inputs_batch, targets_batch) 
+<a id="pgfId-1035938"></a><b class="fm-codebrown">print</b>(<span class="fm-codegreen">"Evaluation results:"</span>) 
+<a id="pgfId-1035939"></a><b class="fm-codebrown">for</b> key, value <b class="fm-codebrown">in</b> logs.items():
+<a id="pgfId-1022039"></a>    <b class="fm-codebrown">print</b>(f<span class="fm-codegreen">"...{key}: {value:.4f}"</span>)</pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038428"></a><span class="fm-combinumeral">❶</span> This is the only line that changed.</p>
+
+  <p class="body"><a id="pgfId-1022065"></a>On the Colab CPU, we go from taking 1.80 s to run the evaluation loop to only 0.8 s. Much faster!</p>
+
+  <p class="body"><a id="pgfId-1022093"></a>Remember, while you are debugging your code, prefer running it eagerly, without any <code class="fm-code-in-text">@tf.function</code> decorator. It’s easier to <a id="marker-1022082"></a>track bugs this way. Once your code is working and you want to make it fast, add a <code class="fm-code-in-text">@tf.function</code> decorator to your training step and your evaluation step—or any other performance-critical function. <a id="marker-1022098"></a><a id="marker-1022101"></a><a id="marker-1022103"></a><a id="marker-1022105"></a></p>
+
+  <h3 class="fm-head1" id="heading_id_20"><a id="pgfId-1022111"></a>7.4.5 Leveraging fit() with a custom training loop</h3>
+
+  <p class="body"><a id="pgfId-1022138"></a><a id="marker-1022122"></a><a id="marker-1022124"></a><a id="marker-1022126"></a><a id="marker-1022128"></a>In the previous sections, we were writing our own training loop entirely from scratch. Doing so provides you with the most flexibility, but you end up writing a lot of code while simultaneously missing out on many convenient features of <code class="fm-code-in-text">fit()</code>, such as callbacks or built-in support for distributed training.</p>
+
+  <p class="body"><a id="pgfId-1022147"></a>What if you need a custom training algorithm, but you still want to leverage the power of the built-in Keras training logic? There’s actually a middle ground between <code class="fm-code-in-text">fit()</code> and a training loop written from scratch: you can provide a custom training step function and let the framework do the rest.</p>
+
+  <p class="body"><a id="pgfId-1022214"></a>You can do <a id="marker-1022164"></a>this by overriding the <code class="fm-code-in-text">train_step()</code> method of the <code class="fm-code-in-text">Model</code> class. This is the function that is called by <code class="fm-code-in-text">fit()</code> for every batch of data. You will then be able to call <code class="fm-code-in-text">fit()</code> as usual, and it will be running your own learning algorithm under the hood.</p>
+
+  <p class="body"><a id="pgfId-1022223"></a>Here’s a simple example:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022229"></a>We create a new class that subclasses <code class="fm-code-in-text">keras.Model</code>.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022252"></a>We override the method <code class="fm-code-in-text">train_step(self,</code> <code class="fm-code-in-text">data)</code>. Its contents are nearly identical to what we used in the previous section. It returns a dictionary mapping metric names (including the loss) to their current values.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022317"></a>We implement a <code class="fm-code-in-text">metrics</code> property that <a class="calibre11" id="marker-1022286"></a>tracks the model’s <code class="fm-code-in-text">Metric</code> instances. This enables the model to automatically call <code class="fm-code-in-text">reset_state()</code> on the model’s metrics at the start of each epoch and at the start of a call to <code class="fm-code-in-text">evaluate()</code>, so you don’t have to do it by hand.</p>
+    </li>
+  </ul>
+
+  <p class="fm-code-listing-caption"><a id="pgfId-1022377"></a>Listing 7.26 Implementing a custom training step to use with <code class="fm-code-in-text">fit()</code></p>
+  <pre class="programlisting"><a id="pgfId-1035954"></a>loss_fn = keras.losses.SparseCategoricalCrossentropy()
+<a id="pgfId-1022424"></a>loss_tracker = keras.metrics.Mean(name=<span class="fm-codegreen">"loss"</span>)                <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1022441"></a> 
+<a id="pgfId-1035971"></a><b class="fm-codebrown">class</b> CustomModel(keras.Model):
+<a id="pgfId-1022447"></a>    <b class="fm-codebrown">def</b> train_step(self, data):                               <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1035984"></a>        inputs, targets = data
+<a id="pgfId-1035985"></a>        <b class="fm-codebrown">with</b> tf.GradientTape() <b class="fm-codebrown">as</b> tape:
+<a id="pgfId-1022471"></a>            predictions = self(inputs, training=<code class="fm-codegreen">True</code>)         <span class="fm-combinumeral">❸</span>
+<a id="pgfId-1035998"></a>            loss = loss_fn(targets, predictions)
+<a id="pgfId-1035999"></a>        gradients = tape.gradient(loss, model.trainable_weights)
+<a id="pgfId-1036000"></a>        optimizer.apply_gradients(zip(gradients, model.trainable_weights))
+<a id="pgfId-1036001"></a>  
+<a id="pgfId-1022501"></a>        loss_tracker.update_state(loss)                       <span class="fm-combinumeral">❹</span>
+<a id="pgfId-1022518"></a>        <b class="fm-codebrown">return</b> {<span class="fm-codegreen">"loss"</span>: loss_tracker.result()}                <span class="fm-combinumeral">❺</span>
+<a id="pgfId-1022535"></a> 
+<a id="pgfId-1036032"></a>    <code class="fm-codeblue">@property</code> 
+<a id="pgfId-1022541"></a>    <b class="fm-codebrown">def</b> metrics(self):                                        <span class="fm-combinumeral">❻</span> 
+<a id="pgfId-1022553"></a>        <b class="fm-codebrown">return</b> [loss_tracker]                                 <span class="fm-combinumeral">❻</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1037995"></a><span class="fm-combinumeral">❶</span> This metric object will be used to track the average of per-batch losses during training and evaluation.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038016"></a><span class="fm-combinumeral">❷</span> We override the train_step method.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038033"></a><span class="fm-combinumeral">❸</span> We use self(inputs, training=True) instead of model(inputs, training=True), since our model is the class itself.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038057"></a><span class="fm-combinumeral">❹</span> We update the loss tracker metric that tracks the average of the loss.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038074"></a><span class="fm-combinumeral">❺</span> We return the average loss so far by querying the loss tracker metric.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1038091"></a><span class="fm-combinumeral">❻</span> Any metric you would like to reset across epochs should be listed here.</p>
+
+  <p class="body"><a id="pgfId-1022665"></a>We can now instantiate our custom model, compile it (we only pass the optimizer, since the loss is already defined outside of the model), and train it using <code class="fm-code-in-text">fit()</code> as usual:</p>
+  <pre class="programlisting"><a id="pgfId-1036063"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>,))
+<a id="pgfId-1036064"></a>features = layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1036065"></a>features = layers.Dropout(<span class="fm-codeblue">0.5</span>)(features)
+<a id="pgfId-1036066"></a>outputs = layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)(features)
+<a id="pgfId-1036067"></a>model = CustomModel(inputs, outputs)
+<a id="pgfId-1036068"></a>  
+<a id="pgfId-1036069"></a>model.compile(optimizer=keras.optimizers.RMSprop())
+<a id="pgfId-1022729"></a>model.fit(train_images, train_labels, epochs=<span class="fm-codeblue">3</span>)</pre>
+
+  <p class="body"><a id="pgfId-1022735"></a>There are a couple of points to note:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022741"></a>This pattern does not prevent you from building models with the Functional API. You can do this whether you’re building Sequential models, Functional API models, or subclassed models.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022775"></a>You don’t need to use a <code class="fm-code-in-text">@tf.function</code> decorator when you override <code class="fm-code-in-text">train_ step</code>—the framework does it for you.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1022800"></a>Now, what about metrics, and what about configuring the loss via <code class="fm-code-in-text">compile()</code>? After you’ve called <code class="fm-code-in-text">compile()</code>, you get access to the following:</p>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022837"></a><code class="fm-code-in-text">self.compiled_loss</code>—The loss function you passed to <code class="fm-code-in-text">compile()</code>.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022870"></a><code class="fm-code-in-text">self.compiled_metrics</code>—A wrapper for the list of metrics you passed, which allows you to call <code class="fm-code-in-text">self.compiled_metrics.update_state()</code> to update all of your metrics at once.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1022913"></a><code class="fm-code-in-text">self.metrics</code>—The actual list of metrics you passed to <code class="fm-code-in-text">compile()</code>. Note that it also includes a metric that tracks the loss, similar to what we did manually with our <code class="fm-code-in-text">loss_tracking_metric</code> earlier.</p>
+    </li>
+  </ul>
+
+  <p class="body"><a id="pgfId-1022922"></a>We can thus write</p>
+  <pre class="programlisting"><a id="pgfId-1036088"></a><b class="fm-codebrown">class</b> CustomModel(keras.Model):
+<a id="pgfId-1036089"></a>    <b class="fm-codebrown">def</b> train_step(self, data):
+<a id="pgfId-1036090"></a>        inputs, targets = data
+<a id="pgfId-1036091"></a>        <b class="fm-codebrown">with</b> tf.GradientTape() <b class="fm-codebrown">as</b> tape:
+<a id="pgfId-1036092"></a>            predictions = self(inputs, training=<code class="fm-codegreen">True</code>)
+<a id="pgfId-1022966"></a>            loss = self.compiled_loss(targets, predictions)               <span class="fm-combinumeral">❶</span>
+<a id="pgfId-1036109"></a>        gradients = tape.gradient(loss, model.trainable_weights)
+<a id="pgfId-1036110"></a>        optimizer.apply_gradients(zip(gradients, model.trainable_weights))
+<a id="pgfId-1022990"></a>        self.compiled_metrics.update_state(targets, predictions)          <span class="fm-combinumeral">❷</span>
+<a id="pgfId-1023002"></a>        <b class="fm-codebrown">return</b> {m.name: m.result() <b class="fm-codebrown">for</b> m <b class="fm-codebrown">in</b> self.metrics}                 <span class="fm-combinumeral">❸</span></pre>
+
+  <p class="fm-code-annotation"><a id="pgfId-1037808"></a><span class="fm-combinumeral">❶</span> Compute the loss via self.compiled_loss.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1037844"></a><span class="fm-combinumeral">❷</span> Update the model’s metrics via self.compiled_metrics.</p>
+
+  <p class="fm-code-annotation"><a id="pgfId-1037809"></a><span class="fm-combinumeral">❸</span> Return a dict mapping metric names to their current value.</p>
+
+  <p class="body"><a id="pgfId-1023066"></a>Let’s try it:</p>
+  <pre class="programlisting"><a id="pgfId-1036137"></a>inputs = keras.Input(shape=(<span class="fm-codeblue">28</span> * <span class="fm-codeblue">28</span>,))
+<a id="pgfId-1036138"></a>features = layers.Dense(<span class="fm-codeblue">512</span>, activation=<span class="fm-codegreen">"relu"</span>)(inputs)
+<a id="pgfId-1036139"></a>features = layers.Dropout(<span class="fm-codeblue">0.5</span>)(features)
+<a id="pgfId-1036140"></a>outputs = layers.Dense(<span class="fm-codeblue">10</span>, activation=<span class="fm-codegreen">"softmax"</span>)(features)
+<a id="pgfId-1036141"></a>model = CustomModel(inputs, outputs)
+<a id="pgfId-1036142"></a>  
+<a id="pgfId-1036143"></a>model.compile(optimizer=keras.optimizers.RMSprop(),
+<a id="pgfId-1036144"></a>              loss=keras.losses.SparseCategoricalCrossentropy(),
+<a id="pgfId-1036145"></a>              metrics=[keras.metrics.SparseCategoricalAccuracy()])
+<a id="pgfId-1023133"></a>model.fit(train_images, train_labels, epochs=<span class="fm-codeblue">3</span>)</pre>
+
+  <p class="body"><a id="pgfId-1023139"></a>That was a lot of information, but you now know enough to use Keras to do almost anything. <a id="marker-1023141"></a><a id="marker-1023144"></a><a id="marker-1023146"></a><a id="marker-1023148"></a><a id="marker-1023150"></a><a id="marker-1023152"></a><a id="marker-1023154"></a></p>
+
+  <h2 class="fm-head" id="heading_id_21"><a id="pgfId-1023160"></a>Summary</h2>
+
+  <ul class="calibre10">
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023170"></a>Keras offers a spectrum of different workflows, based on the principle of <i class="fm-italics1">progressive disclosure of complexity</i>. They all smoothly inter-operate together.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023213"></a>You can build models via the <code class="fm-code-in-text">Sequential</code> class, via the Functional API, or by subclassing the <code class="fm-code-in-text">Model</code> class. Most of the time, you’ll be using the Functional API.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023242"></a>The simplest way to train and evaluate a model is via the default <code class="fm-code-in-text">fit()</code> and <code class="fm-code-in-text">evaluate()</code> methods.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023251"></a>Keras callbacks provide a simple way to monitor models during your call to <code class="fm-code-in-text">fit()</code> and automatically take action based on the state of the model.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023290"></a>You can also fully take control of what <code class="fm-code-in-text">fit()</code> does by overriding the <code class="fm-code-in-text">train_ step()</code> method.</p>
+    </li>
+
+    <li class="fm-list-bullet">
+      <p class="list"><a class="calibre11" id="pgfId-1023299"></a>Beyond <code class="fm-code-in-text">fit()</code>, you can also write your own training loops entirely from scratch. This is useful for researchers implementing brand-new training algorithms.</p>
+    </li>
+  </ul>
+</body>
+</html>
